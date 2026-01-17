@@ -64,6 +64,7 @@ class StudentResult(models.Model):
     grade = models.CharField(max_length=2)
     term = models.CharField(max_length=50, default="First Term")
     session = models.CharField(max_length=20, default="2025/2026")
+    student_class = models.CharField(max_length=50, default="JSS 1")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

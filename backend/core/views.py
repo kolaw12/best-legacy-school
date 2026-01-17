@@ -22,8 +22,11 @@ class AdmissionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Admission.objects.all()
         student_id = self.request.query_params.get('student_id')
+        class_name = self.request.query_params.get('class')
         if student_id:
             queryset = queryset.filter(student_id=student_id)
+        if class_name:
+            queryset = queryset.filter(class_applying_for=class_name)
         return queryset
 
     def perform_create(self, serializer):
@@ -70,6 +73,7 @@ class StudentResultViewSet(viewsets.ModelViewSet):
         student_id = self.request.query_params.get('student_id')
         term = self.request.query_params.get('term')
         session = self.request.query_params.get('session')
+        student_class = self.request.query_params.get('student_class')
         
         if student_id:
             queryset = queryset.filter(student_id=student_id)
@@ -77,5 +81,7 @@ class StudentResultViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(term=term)
         if session:
             queryset = queryset.filter(session=session)
+        if student_class:
+            queryset = queryset.filter(student_class=student_class)
             
         return queryset

@@ -19,21 +19,36 @@ const TeacherPortal = () => {
     const [searchId, setSearchId] = useState('');
     const [message, setMessage] = useState('');
     const [isEditing, setIsEditing] = useState(false);
+    const [teacherClass, setTeacherClass] = useState('');
+    const [classStudents, setClassStudents] = useState([]);
 
     useEffect(() => {
-        fetchResults();
-    }, []);
+        const storedClass = localStorage.getItem('teacherClass');
+        if (!storedClass) {
+            // navigate('/academics'); // For now let's not force it if they use hardcoded login
+            setTeacherClass('JSS 1'); // Fallback
+        } else {
+            setTeacherClass(storedClass);
+        }
+        fetchResults(storedClass || 'JSS 1');
+        fetchClassStudents(storedClass || 'JSS 1');
+    }, [navigate]);
 
-    const fetchResults = async () => {
+    const fetchClassStudents = async (className) => {
         try {
-            const response = await axios.get(`${API_URL}/api/results/`);
-            setResults(response.data.slice(0, 10)); // Just the last 10 for management
+            const response = await axios.get(`${API_URL}/api/admissions/?class=${className}`);
+            setClassStudents(response.data);
         } catch (error) {
-            console.error('Error fetching results from:', `${API_URL}/api/results/`);
-            if (error.response) {
-                console.error('Status Code:', error.response.status);
-                console.error('Response Data:', error.response.data);
-            }
+            console.error('Error fetching class students:', error);
+        }
+    };
+
+    const fetchResults = async (className) => {
+        try {
+            const response = await axios.get(`${API_URL}/api/results/${className ? `?student_class=${className}` : ''}`);
+            setResults(response.data.slice(0, 20)); // Last 20 for this class
+        } catch (error) {
+            console.error('Error fetching results:', error);
         }
     };
 
@@ -61,16 +76,17 @@ const TeacherPortal = () => {
         e.preventDefault();
         setMessage('Processing...');
         try {
+            const payload = { ...resultData, student_class: teacherClass };
             if (isEditing) {
-                await axios.put(`${API_URL}/api/results/${resultData.id}/`, resultData);
+                await axios.put(`${API_URL}/api/results/${resultData.id}/`, payload);
                 setMessage('Result Updated Successfully!');
                 setIsEditing(false);
             } else {
-                await axios.post(`${API_URL}/api/results/`, resultData);
+                await axios.post(`${API_URL}/api/results/`, payload);
                 setMessage('Result Uploaded Successfully!');
             }
             setResultData({ ...resultData, subject: '', score: '', grade: '' });
-            fetchResults();
+            fetchResults(teacherClass);
         } catch (error) {
             console.error('Error saving result to:', `${API_URL}/api/results/`);
             if (error.response) {
@@ -131,231 +147,298 @@ const TeacherPortal = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 p-8">
-            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="bg-primary px-6 py-4 flex justify-between items-center text-white">
-                    <h1 className="text-2xl font-bold">Teacher Portal - Result Upload</h1>
-                    <button onClick={handleLogout} className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded text-sm">Logout</button>
+        <div className="min-h-screen bg-gray-100 p-4 md:p-8">
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-lg shadow-md border-l-8 border-primary">
+                    <div>
+                        <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Teacher Portal</h1>
+                        <p className="text-primary font-bold uppercase tracking-widest text-[10px] bg-primary/10 px-3 py-1 rounded-full inline-block mt-2">
+                            Academic Management • {teacherClass}
+                        </p>
+                    </div>
+                    <button onClick={handleLogout} className="mt-4 md:mt-0 bg-red-50 text-red-600 border border-red-100 px-6 py-2 rounded-full font-bold hover:bg-red-600 hover:text-white transition-all shadow-sm">
+                        Logout
+                    </button>
                 </div>
-                
-                <div className="p-8">
-                    {message && (
-                        <div className={`mb-6 p-4 rounded ${message.includes('Success') ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                            {message}
-                        </div>
-                    )}
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="md:col-span-2">
-                                <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Student Info</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    {/* Sidebar: Class Students */}
+                    <div className="lg:col-span-1">
+                        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 sticky top-8">
+                            <h3 className="font-black text-gray-800 uppercase text-[10px] mb-4 border-b pb-2 tracking-widest">Students in {teacherClass}</h3>
+                            <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                                {classStudents.length > 0 ? (
+                                    classStudents.map(student => (
+                                        <div 
+                                            key={student.student_id}
+                                            onClick={() => setResultData({ ...resultData, student_id: student.student_id, student_name: student.student_name })}
+                                            className="p-3 bg-gray-50 rounded border border-transparent hover:border-primary hover:bg-primary/5 cursor-pointer transition group"
+                                        >
+                                            <p className="text-sm font-black text-gray-900 group-hover:text-primary transition">{student.student_name}</p>
+                                            <p className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-tighter">{student.student_id}</p>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-xs text-gray-400 italic">No students found in this class.</p>
+                                )}
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Student ID / Reg No</label>
-                                <input type="text" name="student_id" required value={resultData.student_id} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" placeholder="e.g. BLS/2025/001" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Student Name</label>
-                                <input type="text" name="student_name" required value={resultData.student_name} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
-                            </div>
-
-                            <div className="md:col-span-2">
-                                <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4 mt-4">Result Details</h3>
-                            </div>
-                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Term</label>
-                                <select name="term" value={resultData.term} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
-                                    <option>First Term</option>
-                                    <option>Second Term</option>
-                                    <option>Third Term</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Session</label>
-                                <input type="text" name="session" value={resultData.session} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Subject</label>
-                                <input type="text" name="subject" required value={resultData.subject} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" placeholder="e.g. Mathematics" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Score (0-100)</label>
-                                <input type="number" name="score" required value={resultData.score} onChange={handleScoreChange} max="100" min="0" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Grade (Auto-calc)</label>
-                                <input type="text" name="grade" readOnly value={resultData.grade} className="mt-1 block w-full bg-gray-100 border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-500 sm:text-sm" />
+                            <div className="mt-4 pt-4 border-t">
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center leading-tight">Click a student name to load their details</p>
                             </div>
                         </div>
+                    </div>
 
-                        <div className="pt-4 flex space-x-4">
-                            <button type="submit" className="flex-1 inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-primary hover:bg-primary-dark transition duration-300">
-                                {isEditing ? 'Update Result' : 'Upload Result'}
-                            </button>
-                            {isEditing && (
-                                <button type="button" onClick={() => { setIsEditing(false); setResultData({...resultData, subject: '', score: '', grade: ''}); }} className="px-6 py-3 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                                    Cancel
-                                </button>
-                            )}
-                        </div>
-                    </form>
+                    {/* Main Content Area */}
+                    <div className="lg:col-span-3 space-y-8">
+                        {message && (
+                            <div className={`p-4 rounded-lg font-bold text-sm shadow-sm flex items-center ${message.includes('Successfully') ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
+                                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012-0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/></svg>
+                                {message}
+                            </div>
+                        )}
 
-                    {/* Manage Section */}
-                    <div className="mt-12">
-                        <h3 className="text-xl font-bold text-gray-900 border-b-2 border-primary/10 pb-2 mb-6">Manage Recent Uploads</h3>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Student ID</th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Name</th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Subject</th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Score</th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-100">
-                                    {results.map((res) => (
-                                        <tr key={res.id} className="hover:bg-gray-50">
-                                            <td className="px-4 py-4 whitespace-nowrap text-sm font-bold text-primary">{res.student_id}</td>
-                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{res.student_name}</td>
-                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">{res.subject}</td>
-                                            <td className="px-4 py-4 whitespace-nowrap text-sm font-semibold">{res.score} ({res.grade})</td>
-                                            <td className="px-4 py-4 whitespace-nowrap text-right text-sm space-x-3">
-                                                <button onClick={() => handleEdit(res)} className="text-indigo-600 hover:text-indigo-900 font-bold">Edit</button>
-                                                <button onClick={() => handleDelete(res.id)} className="text-red-600 hover:text-red-900 font-bold">Delete</button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {results.length === 0 && (
-                                        <tr><td colSpan="5" className="px-4 py-8 text-center text-gray-500">No results uploaded yet.</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        {/* Print Quick Tool */}
-                        <div className="mt-8 bg-green-50 p-6 rounded-xl border-2 border-dashed border-green-200">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div>
-                                    <h4 className="text-lg font-black text-green-800">Print Comprehensive Report Card</h4>
-                                    <p className="text-sm text-green-700">Type a Student ID below to generate their full term record.</p>
+                        {/* Result Form */}
+                        <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
+                            <h2 className="text-xl font-black text-gray-800 mb-6 border-b-2 border-primary/20 pb-2 uppercase tracking-widest flex items-center">
+                                {isEditing ? 'Update Academic Result' : 'Upload New Result'}
+                            </h2>
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Student ID</label>
+                                        <input type="text" name="student_id" required value={resultData.student_id} onChange={handleChange} className="w-full border-2 border-gray-100 rounded-lg py-2.5 px-4 focus:border-primary outline-none transition font-bold" placeholder="BLS/2026/XXX" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Full Name</label>
+                                        <input type="text" name="student_name" required value={resultData.student_name} onChange={handleChange} className="w-full border-2 border-gray-100 rounded-lg py-2.5 px-4 focus:border-primary outline-none transition font-bold" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Subject</label>
+                                        <input type="text" name="subject" required value={resultData.subject} onChange={handleChange} className="w-full border-2 border-gray-100 rounded-lg py-2.5 px-4 focus:border-primary outline-none transition font-bold" placeholder="e.g. Mathematics" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Score</label>
+                                            <input type="number" name="score" required value={resultData.score} onChange={handleScoreChange} max="100" min="0" className="w-full border-2 border-gray-100 rounded-lg py-2.5 px-4 focus:border-primary outline-none transition font-bold text-center text-xl" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Grade</label>
+                                            <input type="text" readOnly value={resultData.grade} className="w-full bg-gray-50 border-2 border-gray-100 rounded-lg py-2.5 px-4 text-center font-black text-xl text-primary" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Term</label>
+                                        <select name="term" value={resultData.term} onChange={handleChange} className="w-full border-2 border-gray-100 rounded-lg py-2.5 px-4 focus:border-primary outline-none transition font-bold">
+                                            <option>First Term</option>
+                                            <option>Second Term</option>
+                                            <option>Third Term</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Session</label>
+                                        <input type="text" name="session" value={resultData.session} onChange={handleChange} className="w-full border-2 border-gray-100 rounded-lg py-2.5 px-4 focus:border-primary outline-none transition font-bold" />
+                                    </div>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-4">
+                                    <button type="submit" className="flex-1 bg-primary text-white font-black py-4 rounded-lg shadow-lg hover:bg-primary-dark transition-all transform hover:-translate-y-1 active:scale-95 uppercase tracking-widest">
+                                        {isEditing ? 'Save Changes' : 'Upload Result Now'}
+                                    </button>
+                                    {isEditing && (
+                                        <button type="button" onClick={() => { setIsEditing(false); setResultData({...resultData, subject: '', score: '', grade: ''}); }} className="px-8 bg-gray-100 text-gray-600 font-bold rounded-lg hover:bg-gray-200 transition">
+                                            Cancel
+                                        </button>
+                                    )}
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Recent results Table */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                                <h3 className="font-black text-gray-800 uppercase text-xs tracking-widest">Recent Records in {teacherClass}</h3>
+                                <span className="text-[10px] bg-gray-200 px-2 py-1 rounded font-bold text-gray-600 uppercase italic">Showing last 20</span>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-100">
+                                    <thead className="bg-white">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Student</th>
+                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Subject/Score</th>
+                                            <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {results.map((res) => (
+                                            <tr key={res.id} className="hover:bg-gray-50/50 transition">
+                                                <td className="px-6 py-4">
+                                                    <p className="text-sm font-black text-gray-900">{res.student_name}</p>
+                                                    <p className="text-[10px] font-mono text-gray-400 font-bold">{res.student_id}</p>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className="text-sm font-bold text-gray-700">{res.subject}</span>
+                                                    <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-black">{res.score} ({res.grade})</span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right space-x-3">
+                                                    <button onClick={() => handleEdit(res)} className="text-xs font-black text-indigo-600 uppercase hover:underline">Edit</button>
+                                                    <button onClick={() => handleDelete(res.id)} className="text-xs font-black text-red-600 uppercase hover:underline">Delete</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {results.length === 0 && (
+                                            <tr><td colSpan="3" className="px-6 py-12 text-center text-gray-400 italic text-sm">No results recorded for this class yet.</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Print Tool */}
+                        <div className="bg-gradient-to-r from-green-600 to-green-500 p-8 rounded-2xl shadow-xl border-4 border-white">
+                            <div className="flex flex-col md:flex-row items-center gap-6">
+                                <div className="text-white">
+                                    <h4 className="text-2xl font-black italic tracking-tighter uppercase">Report Card Generator</h4>
+                                    <p className="text-green-50 font-medium text-sm leading-snug mt-1 opacity-90">Generate a full session record for any student in your class.</p>
+                                </div>
+                                <div className="flex-1 w-full flex gap-3">
                                     <input 
                                         type="text" 
-                                        placeholder="BLS/2026/001" 
+                                        placeholder="Enter Reg No" 
                                         value={searchId}
                                         onChange={(e) => setSearchId(e.target.value)}
-                                        className="border-2 border-green-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-green-500 outline-none text-sm font-bold w-40"
+                                        className="flex-1 bg-white/20 border-2 border-white/30 rounded-xl px-5 py-3 text-white placeholder-white/60 focus:bg-white focus:text-gray-900 focus:outline-none transition-all font-black text-lg shadow-inner"
                                     />
                                     <button 
                                         onClick={() => handlePrint(searchId || resultData.student_id)} 
-                                        className="bg-green-600 text-white px-6 py-2 rounded-md font-black hover:bg-green-700 transition flex items-center shadow-md"
+                                        className="bg-white text-green-600 px-8 py-3 rounded-xl font-black hover:bg-green-50 transition-all shadow-lg active:scale-95 uppercase tracking-widest"
                                     >
-                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                                        GENERATE REPORT
+                                        Generate
                                     </button>
                                 </div>
                             </div>
-                            {resultData.student_id && !searchId && (
-                                <p className="text-[10px] text-green-600 font-bold mt-2 uppercase tracking-tighter italic">Tip: Currently selected student ({resultData.student_id}) will be used if search is empty.</p>
-                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Printable Report Card (Hidden normally) */}
+            {/* Print Overlay */}
             {printingData && (
-                <div className="fixed inset-0 bg-white z-[9999] p-12 printable-area overflow-auto">
+                <div className="fixed inset-0 bg-white z-[9999] p-4 md:p-12 printable-area overflow-auto">
                     <style>{`
                         @media print {
                             body * { visibility: hidden; }
                             .printable-area, .printable-area * { visibility: visible; }
-                            .printable-area { position: absolute; left: 0; top: 0; width: 100%; }
+                            .printable-area { position: absolute; left: 0; top: 0; width: 100%; border: none; }
                         }
                     `}</style>
-                    <div className="border-8 border-double border-primary p-10 max-w-4xl mx-auto bg-white">
-                        <div className="text-center border-b-4 border-primary pb-6 mb-8">
-                            <h2 className="text-5xl font-black text-primary tracking-tighter italic">BEST LEGACY DIVINE SCHOOL</h2>
-                            <p className="text-lg font-bold text-gray-700 uppercase tracking-widest mt-2">To the Glory of God</p>
-                            <div className="flex justify-center space-x-4 mt-2 text-sm text-gray-500 font-bold uppercase">
+                    <div className="border-[12px] border-double border-primary p-6 md:p-12 max-w-5xl mx-auto bg-white shadow-2xl">
+                        <div className="text-center border-b-4 border-primary pb-8 mb-10">
+                            <h2 className="text-4xl md:text-6xl font-black text-primary tracking-tighter italic leading-none">BEST LEGACY DIVINE SCHOOL</h2>
+                            <p className="text-xl md:text-2xl font-bold text-gray-700 uppercase tracking-[0.3em] mt-3">To the Glory of God</p>
+                            <div className="flex justify-center flex-wrap gap-x-6 gap-y-2 mt-4 text-[10px] md:text-xs text-gray-500 font-black uppercase tracking-widest">
                                 <span>Lagos, Nigeria</span>
-                                <span>•</span>
-                                <span>info@bestlegacy.school</span>
+                                <span className="hidden md:inline">•</span>
+                                <span>Academic Excellence</span>
+                                <span className="hidden md:inline">•</span>
+                                <span>Moral Integrity</span>
                             </div>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-8 mb-10 bg-gray-50 p-6 rounded-xl border border-gray-200">
-                            <div className="space-y-3">
-                                <p><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Student Name</span><br/><span className="text-2xl font-black text-gray-900">{printingData.student_name}</span></p>
-                                <p><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Registration No</span><br/><span className="text-xl font-mono font-bold text-primary">{printingData.student_id}</span></p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
+                            <div className="space-y-4 border-l-4 border-primary/20 pl-6">
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Student Particulars</p>
+                                    <p className="text-3xl font-black text-gray-900 leading-none">{printingData.student_name}</p>
+                                </div>
+                                <div className="flex gap-8">
+                                    <div>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Class</p>
+                                        <p className="text-lg font-black text-gray-800">{teacherClass}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Reg No</p>
+                                        <p className="text-lg font-mono font-bold text-primary">{printingData.student_id}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="text-right space-y-3">
-                                <p><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Academic Session</span><br/><span className="text-lg font-bold text-gray-800">{printingData.session}</span></p>
-                                <p><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Term</span><br/><span className="text-lg font-bold text-gray-800">{printingData.term}</span></p>
-                                <p><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Date Issued</span><br/><span className="text-sm font-bold text-gray-500">{new Date().toLocaleDateString()}</span></p>
+                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 flex flex-col justify-between">
+                                <div className="flex justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Academic Session</p>
+                                        <p className="text-base font-bold text-gray-800">{printingData.session}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Term</p>
+                                        <p className="text-base font-bold text-gray-800">{printingData.term}</p>
+                                    </div>
+                                </div>
+                                <div className="text-right border-t border-gray-200 mt-4 pt-2">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Official Internal Document</p>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="mb-10">
-                            <table className="min-w-full border-2 border-gray-200">
+                        <div className="mb-12">
+                            <table className="min-w-full border-4 border-primary">
                                 <thead className="bg-primary">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider border-b-2 border-primary-dark">Subject Name</th>
-                                        <th className="px-6 py-3 text-center text-xs font-black text-white uppercase tracking-wider border-b-2 border-primary-dark">Score (100)</th>
-                                        <th className="px-6 py-3 text-center text-xs font-black text-white uppercase tracking-wider border-b-2 border-primary-dark">Grade</th>
-                                        <th className="px-6 py-3 text-center text-xs font-black text-white uppercase tracking-wider border-b-2 border-primary-dark">Remarks</th>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-[0.2em]">Subject Title</th>
+                                        <th className="px-6 py-4 text-center text-[10px] font-black text-white uppercase tracking-[0.2em]">Score</th>
+                                        <th className="px-6 py-4 text-center text-[10px] font-black text-white uppercase tracking-[0.2em]">Grade</th>
+                                        <th className="px-6 py-4 text-center text-[10px] font-black text-white uppercase tracking-[0.2em]">Verdict</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y-2 divide-gray-100">
                                     {printingData.results.map((r, idx) => (
-                                        <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
-                                            <td className="px-6 py-4 text-sm font-bold text-gray-700 border-r border-gray-100 uppercase">{r.subject}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center text-lg font-black text-primary border-r border-gray-100">{r.score}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center text-lg font-black text-gray-900 border-r border-gray-100">{r.grade}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center text-xs font-bold text-gray-500">
-                                                {parseInt(r.score) >= 70 ? 'Distinction' : parseInt(r.score) >= 60 ? 'Credit' : parseInt(r.score) >= 40 ? 'Pass' : 'Fail'}
+                                        <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}>
+                                            <td className="px-6 py-4 text-sm font-black text-gray-800 uppercase tracking-tighter">{r.subject}</td>
+                                            <td className="px-6 py-4 text-center text-xl font-black text-primary border-x-2 border-gray-50">{r.score}</td>
+                                            <td className="px-6 py-4 text-center text-xl font-black text-gray-900 border-r-2 border-gray-50">{r.grade}</td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full ${parseInt(r.score) >= 70 ? 'bg-green-100 text-green-700' : parseInt(r.score) >= 40 ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
+                                                    {parseInt(r.score) >= 70 ? 'Excellent' : parseInt(r.score) >= 60 ? 'V.Good' : parseInt(r.score) >= 50 ? 'Good' : parseInt(r.score) >= 40 ? 'Pass' : 'Weak'}
+                                                </span>
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                                 <tfoot className="bg-primary/5">
-                                    <tr className="border-t-4 border-primary/20">
-                                        <td className="px-6 py-4 text-sm font-black text-primary uppercase border-r border-gray-200">Aggregate Total</td>
-                                        <td className="px-6 py-4 text-center text-2xl font-black text-primary border-r border-gray-200">
-                                            {printingData.results.reduce((acc, curr) => acc + parseInt(curr.score), 0)}
-                                            <span className="text-xs text-gray-400 font-bold ml-1">/{printingData.results.length * 100}</span>
+                                    <tr className="border-t-4 border-primary">
+                                        <td className="px-6 py-6 text-sm font-black text-primary uppercase tracking-widest">Aggregate Performance</td>
+                                        <td className="px-6 py-6 text-center">
+                                            <p className="text-3xl font-black text-primary leading-none">{printingData.results.reduce((acc, curr) => acc + parseInt(curr.score), 0)}</p>
+                                            <p className="text-[10px] text-gray-400 font-black mt-1 uppercase">Total Points</p>
                                         </td>
-                                        <td className="px-6 py-4 text-center text-2xl font-black text-primary" colSpan="2">
-                                            {(printingData.results.reduce((acc, curr) => acc + parseInt(curr.score), 0) / printingData.results.length).toFixed(1)}%
-                                            <p className="text-[10px] font-black text-gray-400 uppercase -mt-1">Average Percentage</p>
+                                        <td className="px-6 py-6 text-center bg-primary/10" colSpan="2">
+                                            <p className="text-4xl font-black text-primary leading-none italic">{(printingData.results.reduce((acc, curr) => acc + parseInt(curr.score), 0) / printingData.results.length).toFixed(1)}%</p>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase mt-2 tracking-widest">Weighted Average</p>
                                         </td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-12 mt-16 px-10">
-                            <div className="text-center pt-4 border-t-2 border-gray-400">
-                                <p className="text-sm font-black text-gray-900 uppercase">Class Teacher's Signature</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 mt-20 px-4 md:px-10">
+                            <div className="text-center pt-6 border-t-[3px] border-gray-900">
+                                <p className="text-xs font-black text-gray-900 uppercase tracking-widest">Class Teacher</p>
+                                <p className="text-[10px] text-gray-400 italic mt-1 font-bold italic lowercase">E-Signed via Portal</p>
                             </div>
-                            <div className="text-center pt-4 border-t-2 border-gray-400">
-                                <p className="text-sm font-black text-gray-900 uppercase">Principal's Signature & Stamp</p>
+                            <div className="text-center pt-6 border-t-[3px] border-gray-900">
+                                <p className="text-xs font-black text-gray-900 uppercase tracking-widest">School Principal</p>
+                                <p className="text-[10px] text-gray-400 italic mt-1 font-bold italic uppercase">Stamp Required</p>
                             </div>
                         </div>
                         
-                        <div className="mt-16 pt-6 border-t border-gray-100 text-[10px] text-gray-400 text-center uppercase tracking-widest font-black flex justify-center space-x-4">
-                            <span>Official Academic Record</span>
-                            <span>|</span>
-                            <span>Generated by BLS Digital Portal</span>
+                        <div className="mt-20 pt-8 border-t border-gray-200 text-[9px] text-gray-400 text-center uppercase tracking-[0.4em] font-black flex flex-wrap justify-center gap-x-8 gap-y-2">
+                            <span>Official Academic Transcript</span>
+                            <span className="hidden md:inline">|</span>
+                            <span>Best Legacy Divine School</span>
+                            <span className="hidden md:inline">|</span>
+                            <span>{new Date().getFullYear()} Session</span>
                         </div>
                     </div>
                 </div>
             )}
         </div>
     );
-};
-
 export default TeacherPortal;

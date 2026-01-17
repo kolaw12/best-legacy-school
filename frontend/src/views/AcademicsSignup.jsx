@@ -5,6 +5,7 @@ const AcademicsSignup = () => {
     const [role, setRole] = useState('student');
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
+    const [classAssigned, setClassAssigned] = useState('JSS 1');
     const navigate = useNavigate();
 
     const handleSignup = (e) => {
@@ -21,7 +22,12 @@ const AcademicsSignup = () => {
         }
 
         // Save new user
-        const newUser = { role, identifier, password };
+        const newUser = { 
+            role, 
+            identifier, 
+            password, 
+            classAssigned: role === 'teacher' ? classAssigned : null 
+        };
         existingUsers.push(newUser);
         localStorage.setItem('academics_users', JSON.stringify(existingUsers));
 
@@ -95,6 +101,32 @@ const AcademicsSignup = () => {
                                 />
                             </div>
                         </div>
+
+                        {role === 'teacher' && (
+                            <div className="mt-4">
+                                <label htmlFor="classAssigned" className="block text-sm font-medium text-gray-700">
+                                    Class Assigned
+                                </label>
+                                <div className="mt-1">
+                                    <select
+                                        id="classAssigned"
+                                        name="classAssigned"
+                                        required
+                                        value={classAssigned}
+                                        onChange={(e) => setClassAssigned(e.target.value)}
+                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                                    >
+                                        <option value="JSS 1">JSS 1</option>
+                                        <option value="JSS 2">JSS 2</option>
+                                        <option value="JSS 3">JSS 3</option>
+                                        <option value="SS 1">SS 1</option>
+                                        <option value="SS 2">SS 2</option>
+                                        <option value="SS 3">SS 3</option>
+                                    </select>
+                                </div>
+                                <p className="mt-1 text-[10px] text-gray-400 italic">As a teacher, you will only have access to students and results for this class.</p>
+                            </div>
+                        )}
 
                         <div>
                             <button
