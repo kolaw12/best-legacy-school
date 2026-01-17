@@ -23,6 +23,7 @@ const TeacherPortal = () => {
     const [classStudents, setClassStudents] = useState([]);
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [studentRecords, setStudentRecords] = useState([]);
+    const [activeTerm, setActiveTerm] = useState('First Term');
 
     useEffect(() => {
         const storedClass = localStorage.getItem('teacherClass');
@@ -31,9 +32,9 @@ const TeacherPortal = () => {
         } else {
             setTeacherClass(storedClass);
         }
-        fetchResults(storedClass || 'Nursery 1');
+        fetchResults(storedClass || 'Nursery 1', activeTerm);
         fetchClassStudents(storedClass || 'Nursery 1');
-    }, [navigate]);
+    }, [navigate, activeTerm]);
 
     const fetchClassStudents = async (className) => {
         try {
@@ -44,18 +45,18 @@ const TeacherPortal = () => {
         }
     };
 
-    const fetchResults = async (className) => {
+    const fetchResults = async (className, term) => {
         try {
-            const response = await axios.get(`${API_URL}/api/results/${className ? `?student_class=${className}` : ''}`);
-            setResults(response.data.slice(0, 20)); // Last 20 for this class
+            const response = await axios.get(`${API_URL}/api/results/?student_class=${className}&term=${term}`);
+            setResults(response.data.slice(0, 20)); // Last 20 for this class/term
         } catch (error) {
             console.error('Error fetching results:', error);
         }
     };
 
-    const fetchStudentRecords = async (studentId) => {
+    const fetchStudentRecords = async (studentId, term) => {
         try {
-            const response = await axios.get(`${API_URL}/api/results/?student_id=${studentId}`);
+            const response = await axios.get(`${API_URL}/api/results/?student_id=${studentId}${term ? `&term=${term}` : ''}`);
             setStudentRecords(response.data);
         } catch (error) {
             console.error('Error fetching student records:', error);
@@ -72,7 +73,7 @@ const TeacherPortal = () => {
             score: '',
             grade: ''
         });
-        fetchStudentRecords(student.student_id);
+        fetchStudentRecords(student.student_id, activeTerm);
         setIsEditing(false);
     };
 
@@ -110,9 +111,9 @@ const TeacherPortal = () => {
                 setMessage('Result Uploaded Successfully!');
             }
             setResultData({ ...resultData, subject: '', score: '', grade: '' });
-            fetchResults(teacherClass);
+            fetchResults(teacherClass, activeTerm);
             if (selectedStudent) {
-                fetchStudentRecords(selectedStudent.student_id);
+                fetchStudentRecords(selectedStudent.student_id, activeTerm);
             }
         } catch (error) {
             console.error('Error saving result to:', `${API_URL}/api/results/`);
@@ -134,9 +135,9 @@ const TeacherPortal = () => {
         if (window.confirm('Are you sure you want to delete this result?')) {
             try {
                 await axios.delete(`${API_URL}/api/results/${id}/`);
-                fetchResults(teacherClass);
+                fetchResults(teacherClass, activeTerm);
                 if (selectedStudent) {
-                    fetchStudentRecords(selectedStudent.student_id);
+                    fetchStudentRecords(selectedStudent.student_id, activeTerm);
                 }
                 setMessage('Result Deleted Successfully');
             } catch (error) {
@@ -234,7 +235,7 @@ const TeacherPortal = () => {
                                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-primary/5">
                                     <div>
                                         <h3 className="font-black text-gray-800 uppercase text-xs tracking-widest">Record History for {selectedStudent.student_name}</h3>
-                                        <p className="text-[10px] text-primary font-bold">{selectedStudent.student_id} • All Subjects</p>
+                                        <p className="text-[10px] text-primary font-bold">{selectedStudent.student_id} • {activeTerm}</p>
                                     </div>
                                     <button 
                                         onClick={() => handlePrint(selectedStudent.student_id)}
@@ -338,8 +339,23 @@ const TeacherPortal = () => {
 
                         {/* Recent results Table */}
                         <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                            <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center bg-gray-50/50 gap-4">
                                 <h3 className="font-black text-gray-800 uppercase text-xs tracking-widest">Recent Records in {teacherClass}</h3>
+                                <div className="flex bg-gray-200 p-1 rounded-lg">
+                                    {['First Term', 'Second Term', 'Third Term'].map((term) => (
+                                        <button
+                                            key={term}
+                                            onClick={() => setActiveTerm(term)}
+                                            className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${
+                                                activeTerm === term 
+                                                ? 'bg-white text-primary shadow-sm' 
+                                                : 'text-gray-500 hover:text-gray-700'
+                                            }`}
+                                        >
+                                            {term.split(' ')[0]}
+                                        </button>
+                                    ))}
+                                </div>
                                 <span className="text-[10px] bg-gray-200 px-2 py-1 rounded font-bold text-gray-600 uppercase italic">Showing last 20</span>
                             </div>
                             <div className="overflow-x-auto">

@@ -8,6 +8,7 @@ const StudentPortal = () => {
     const [studentId, setStudentId] = useState('');
     const [results, setResults] = useState([]);
     const [studentData, setStudentData] = useState(null);
+    const [selectedTerm, setSelectedTerm] = useState('First Term');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -17,9 +18,9 @@ const StudentPortal = () => {
             return;
         }
         setStudentId(storedId);
-        fetchResults(storedId);
+        fetchResults(storedId, selectedTerm);
         fetchStudentData(storedId);
-    }, [navigate]);
+    }, [navigate, selectedTerm]);
 
     const fetchStudentData = async (id) => {
         try {
@@ -32,9 +33,10 @@ const StudentPortal = () => {
         }
     };
 
-    const fetchResults = async (id) => {
+    const fetchResults = async (id, term) => {
+        setLoading(true);
         try {
-            const response = await axios.get(`${API_URL}/api/results/?student_id=${id}`);
+            const response = await axios.get(`${API_URL}/api/results/?student_id=${id}&term=${term}`);
             setResults(response.data);
             setLoading(false);
         } catch (error) {
@@ -81,8 +83,23 @@ const StudentPortal = () => {
                 </div>
 
                 <div className="bg-white shadow rounded-lg overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200">
-                        <h2 className="text-lg font-medium text-gray-900">Academic Results</h2>
+                    <div className="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center bg-gray-50/50 gap-4">
+                        <h2 className="text-lg font-bold text-gray-900 uppercase tracking-tight">Academic Results</h2>
+                        <div className="flex bg-gray-200 p-1 rounded-lg shadow-inner">
+                            {['First Term', 'Second Term', 'Third Term'].map((term) => (
+                                <button
+                                    key={term}
+                                    onClick={() => setSelectedTerm(term)}
+                                    className={`px-4 py-1.5 rounded-md text-xs font-black uppercase tracking-widest transition-all ${
+                                        selectedTerm === term 
+                                        ? 'bg-white text-primary shadow-sm' 
+                                        : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                    {term.split(' ')[0]}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                     
                     {loading ? (
