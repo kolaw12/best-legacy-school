@@ -1,5 +1,7 @@
 # Best Legacy Divine School Website
 
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black)](https://best-legacy-school.vercel.app)
+
 A comprehensive school management website built with Django (backend) and React (frontend).
 
 ## Features
