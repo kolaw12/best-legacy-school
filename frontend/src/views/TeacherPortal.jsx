@@ -16,6 +16,7 @@ const TeacherPortal = () => {
     });
     const [printingData, setPrintingData] = useState(null);
     const [results, setResults] = useState([]);
+    const [searchId, setSearchId] = useState('');
     const [message, setMessage] = useState('');
     const [isEditing, setIsEditing] = useState(false);
 
@@ -223,10 +224,6 @@ const TeacherPortal = () => {
                                             <td className="px-4 py-4 whitespace-nowrap text-right text-sm space-x-3">
                                                 <button onClick={() => handleEdit(res)} className="text-indigo-600 hover:text-indigo-900 font-bold">Edit</button>
                                                 <button onClick={() => handleDelete(res.id)} className="text-red-600 hover:text-red-900 font-bold">Delete</button>
-                                                <button onClick={() => handlePrint(res.student_id)} className="text-green-600 hover:text-green-900 font-bold ml-3 flex inline-flex items-center">
-                                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                                                    Print Report
-                                                </button>
                                             </td>
                                         </tr>
                                     ))}
@@ -235,6 +232,35 @@ const TeacherPortal = () => {
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                        
+                        {/* Print Quick Tool */}
+                        <div className="mt-8 bg-green-50 p-6 rounded-xl border-2 border-dashed border-green-200">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div>
+                                    <h4 className="text-lg font-black text-green-800">Print Comprehensive Report Card</h4>
+                                    <p className="text-sm text-green-700">Type a Student ID below to generate their full term record.</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        placeholder="BLS/2026/001" 
+                                        value={searchId}
+                                        onChange={(e) => setSearchId(e.target.value)}
+                                        className="border-2 border-green-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-green-500 outline-none text-sm font-bold w-40"
+                                    />
+                                    <button 
+                                        onClick={() => handlePrint(searchId || resultData.student_id)} 
+                                        className="bg-green-600 text-white px-6 py-2 rounded-md font-black hover:bg-green-700 transition flex items-center shadow-md"
+                                    >
+                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                                        GENERATE REPORT
+                                    </button>
+                                </div>
+                            </div>
+                            {resultData.student_id && !searchId && (
+                                <p className="text-[10px] text-green-600 font-bold mt-2 uppercase tracking-tighter italic">Tip: Currently selected student ({resultData.student_id}) will be used if search is empty.</p>
+                            )}
                         </div>
                     </div>
                 </div>
