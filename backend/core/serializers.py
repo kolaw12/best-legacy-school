@@ -20,6 +20,7 @@ class AdmissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Admission
         fields = '__all__'
+        read_only_fields = ['student_id', 'created_at']
 
 class StudentResultSerializer(serializers.ModelSerializer):
     class Meta:

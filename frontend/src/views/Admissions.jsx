@@ -102,7 +102,10 @@ const Admissions = () => {
                         <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
                             <strong className="font-bold">Submission Failed!</strong>
                             <span className="block sm:inline"> {status.replace('error: ', '')}</span>
-                            <p className="text-xs mt-2 font-bold">Please check your internet connection or ensure the backend server is running.</p>
+                            <div className="text-xs mt-2 font-bold space-y-1">
+                                <p>Target API: <code className="bg-red-200 px-1 rounded">{API_URL}</code></p>
+                                <p>Please check your internet connection or ensure the backend server is running.</p>
+                            </div>
                         </div>
                     )}
 
