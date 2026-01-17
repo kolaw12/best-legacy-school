@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../config/api';
@@ -27,7 +27,11 @@ const TeacherPortal = () => {
             const response = await axios.get(`${API_URL}/api/results/`);
             setResults(response.data.slice(0, 10)); // Just the last 10 for management
         } catch (error) {
-            console.error('Error fetching results:', error);
+            console.error('Error fetching results from:', `${API_URL}/api/results/`);
+            if (error.response) {
+                console.error('Status Code:', error.response.status);
+                console.error('Response Data:', error.response.data);
+            }
         }
     };
 
@@ -66,7 +70,11 @@ const TeacherPortal = () => {
             setResultData({ ...resultData, subject: '', score: '', grade: '' });
             fetchResults();
         } catch (error) {
-            console.error('Error saving result:', error);
+            console.error('Error saving result to:', `${API_URL}/api/results/`);
+            if (error.response) {
+                console.error('Status Code:', error.response.status);
+                console.error('Response Data:', error.response.data);
+            }
             setMessage('Error saving result.');
         }
     };
