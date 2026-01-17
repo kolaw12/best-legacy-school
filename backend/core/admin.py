@@ -9,7 +9,13 @@ class AdmissionAdmin(admin.ModelAdmin):
     list_display = ('student_id', 'student_name', 'class_applying_for', 'parent_name', 'email', 'created_at')
     search_fields = ('student_name', 'parent_name', 'email', 'student_id')
     list_filter = ('class_applying_for', 'gender')
-    readonly_fields = ('created_at',)
+    readonly_fields = ('created_at', 'passport_photo_preview')
+
+    def passport_photo_preview(self, obj):
+        if obj.passport_photo:
+            from django.utils.html import format_html
+            return format_html('<img src="{}" style="max-height: 200px;"/>', obj.passport_photo.url)
+        return "No photo"
     
     actions = ['send_email_response']
 

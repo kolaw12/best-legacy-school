@@ -38,6 +38,7 @@ class Inquiry(models.Model):
 class Admission(models.Model):
     # Student Details
     student_id = models.CharField(max_length=20, blank=True, unique=True, null=True)
+    passport_photo = models.ImageField(upload_to='passports/', null=True, blank=True)
     student_name = models.CharField(max_length=200)
     date_of_birth = models.DateField()
     gender = models.CharField(max_length=10, choices=[('M', 'Male'), ('F', 'Female')])

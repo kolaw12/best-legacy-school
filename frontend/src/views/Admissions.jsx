@@ -15,22 +15,44 @@ const Admissions = () => {
         email: '',
         address: ''
     });
+    const [passport_photo, setPassportPhoto] = useState(null);
     const [status, setStatus] = useState('');
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        if (e.target.name === 'passport_photo') {
+            setPassportPhoto(e.target.files[0]);
+        } else {
+            setFormData({ ...formData, [e.target.name]: e.target.value });
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setStatus('sending');
+        
+        const data = new FormData();
+        // Append all form data
+        Object.keys(formData).forEach(key => {
+            data.append(key, formData[key]);
+        });
+        
+        // Append photo if it exists
+        if (passport_photo) {
+            data.append('passport_photo', passport_photo);
+        }
+
         try {
-            await axios.post(`${API_URL}/api/admissions/`, formData);
+            await axios.post(`${API_URL}/api/admissions/`, data, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
             setStatus('success');
             setFormData({
                 student_name: '', date_of_birth: '', gender: 'M', class_applying_for: '',
                 previous_school: '', parent_name: '', phone_number: '', email: '', address: ''
             });
+            setPassportPhoto(null);
         } catch (error) {
             console.error('Error submitting application to:', `${API_URL}/api/admissions/`);
             console.error('Detailed Error:', error.message);
@@ -88,6 +110,11 @@ const Admissions = () => {
                                     <option value="M">Male</option>
                                     <option value="F">Female</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Passport Photograph</label>
+                                <input type="file" name="passport_photo" accept="image/*" onChange={handleChange} required
+                                    className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary-dark" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Class Applying For</label>

@@ -208,6 +208,18 @@ const AdminDashboard = () => {
                                                 <p className="text-sm text-gray-600 mb-1">Application Date</p>
                                                 <p className="text-lg font-semibold">{new Date(viewingAdmission.created_at).toLocaleDateString()}</p>
                                             </div>
+                                            {viewingAdmission.passport_photo && (
+                                                <div className="md:col-span-2 flex justify-center py-4">
+                                                    <div className="bg-white p-2 border rounded shadow-sm">
+                                                        <img 
+                                                            src={viewingAdmission.passport_photo.startsWith('http') ? viewingAdmission.passport_photo : `${API_URL}${viewingAdmission.passport_photo}`} 
+                                                            alt="Passport Photograph" 
+                                                            className="h-40 w-40 object-cover rounded"
+                                                        />
+                                                        <p className="text-center text-xs text-gray-500 mt-2 font-medium uppercase tracking-wider">Passport Photograph</p>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="border-t pt-6">
@@ -323,6 +335,7 @@ const AdminDashboard = () => {
                                         <table className="min-w-full divide-y divide-gray-200">
                                             <thead className="bg-gray-50">
                                                 <tr>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
                                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
                                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
                                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
@@ -334,6 +347,19 @@ const AdminDashboard = () => {
                                             <tbody className="bg-white divide-y divide-gray-200">
                                                 {admissions.map((admission) => (
                                                     <tr key={admission.id} className="hover:bg-gray-50">
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            {admission.passport_photo ? (
+                                                                <img 
+                                                                    src={admission.passport_photo.startsWith('http') ? admission.passport_photo : `${API_URL}${admission.passport_photo}`} 
+                                                                    alt="" 
+                                                                    className="h-10 w-10 rounded-full object-cover border"
+                                                                />
+                                                            ) : (
+                                                                <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
+                                                                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                                                                </div>
+                                                            )}
+                                                        </td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-primary">{admission.student_id}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{admission.student_name}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{admission.class_applying_for}</td>
