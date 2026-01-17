@@ -7,3 +7,5 @@ psycopg2-binary==2.9.10
 whitenoise==6.8.2
 dj-database-url==2.3.0
 python-decouple==3.8
+django-cloudinary-storage==0.3.0
+cloudinary==1.41.0
