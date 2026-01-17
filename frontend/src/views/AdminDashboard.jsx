@@ -27,7 +27,12 @@ const AdminDashboard = () => {
             const response = await axios.get(`${API_URL}/api/inquiries/`);
             setInquiries(response.data);
         } catch (error) {
-            console.error('Error fetching inquiries:', error);
+            console.error('Error fetching inquiries from:', `${API_URL}/api/inquiries/`);
+            console.error('Detailed Error:', error.message);
+            if (error.response) {
+                console.error('Status Code:', error.response.status);
+                console.error('Response Data:', error.response.data);
+            }
         }
     };
 
@@ -36,7 +41,11 @@ const AdminDashboard = () => {
             const response = await axios.get(`${API_URL}/api/admissions/`);
             setAdmissions(response.data);
         } catch (error) {
-            console.error('Error fetching admissions:', error);
+            console.error('Error fetching admissions from:', `${API_URL}/api/admissions/`);
+            console.error('Detailed Error:', error.message);
+            if (error.response) {
+                console.error('Status Code:', error.response.status);
+            }
         }
     };
 
