@@ -14,7 +14,7 @@ const TeacherPortal = () => {
         term: 'First Term',
         session: '2025/2026'
     });
-    const [printingResult, setPrintingResult] = useState(null);
+    const [printingData, setPrintingData] = useState(null);
     const [results, setResults] = useState([]);
     const [message, setMessage] = useState('');
     const [isEditing, setIsEditing] = useState(false);
@@ -98,12 +98,30 @@ const TeacherPortal = () => {
         }
     };
 
-    const handlePrint = (result) => {
-        setPrintingResult(result);
-        setTimeout(() => {
-            window.print();
-            setPrintingResult(null);
-        }, 500);
+    const handlePrint = async (studentId) => {
+        setMessage('Generating Report Card...');
+        try {
+            const response = await axios.get(`${API_URL}/api/results/?student_id=${studentId}`);
+            if (response.data.length > 0) {
+                setPrintingData({
+                    student_id: studentId,
+                    student_name: response.data[0].student_name,
+                    session: response.data[0].session,
+                    term: response.data[0].term,
+                    results: response.data
+                });
+                setMessage('');
+                setTimeout(() => {
+                    window.print();
+                    setPrintingData(null);
+                }, 500);
+            } else {
+                setMessage('No results found for this student.');
+            }
+        } catch (error) {
+            console.error('Error fetching student results for print:', error);
+            setMessage('Error generating report card.');
+        }
     };
 
     const handleLogout = () => {
@@ -205,9 +223,9 @@ const TeacherPortal = () => {
                                             <td className="px-4 py-4 whitespace-nowrap text-right text-sm space-x-3">
                                                 <button onClick={() => handleEdit(res)} className="text-indigo-600 hover:text-indigo-900 font-bold">Edit</button>
                                                 <button onClick={() => handleDelete(res.id)} className="text-red-600 hover:text-red-900 font-bold">Delete</button>
-                                                <button onClick={() => handlePrint(res)} className="text-green-600 hover:text-green-900 font-bold ml-3 flex inline-flex items-center">
+                                                <button onClick={() => handlePrint(res.student_id)} className="text-green-600 hover:text-green-900 font-bold ml-3 flex inline-flex items-center">
                                                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                                                    Print
+                                                    Print Report
                                                 </button>
                                             </td>
                                         </tr>
@@ -222,9 +240,9 @@ const TeacherPortal = () => {
                 </div>
             </div>
 
-            {/* Printable Result Slip (Hidden normally) */}
-            {printingResult && (
-                <div className="fixed inset-0 bg-white z-[9999] p-12 printable-area">
+            {/* Printable Report Card (Hidden normally) */}
+            {printingData && (
+                <div className="fixed inset-0 bg-white z-[9999] p-12 printable-area overflow-auto">
                     <style>{`
                         @media print {
                             body * { visibility: hidden; }
@@ -232,54 +250,80 @@ const TeacherPortal = () => {
                             .printable-area { position: absolute; left: 0; top: 0; width: 100%; }
                         }
                     `}</style>
-                    <div className="border-4 border-double border-primary p-8 max-w-2xl mx-auto">
-                        <div className="text-center border-b-2 border-primary pb-4 mb-6">
-                            <h2 className="text-4xl font-black text-primary tracking-tighter">BEST LEGACY DIVINE SCHOOL</h2>
-                            <p className="text-sm font-bold text-gray-600 uppercase">Excellence in Learning, Wisdom in Character</p>
-                            <p className="text-xs text-gray-500 mt-1">Lagos, Nigeria | info@bestlegacy.school</p>
-                        </div>
-                        
-                        <div className="flex justify-between items-start mb-8">
-                            <div>
-                                <h3 className="text-xl font-bold text-gray-900 underline">STUDENT RESULT SLIP</h3>
-                                <p className="mt-4"><span className="font-bold text-gray-600 uppercase text-xs">Student Name:</span> <br/><span className="text-lg font-black">{printingResult.student_name}</span></p>
-                                <p className="mt-2"><span className="font-bold text-gray-600 uppercase text-xs">Registration No:</span> <br/><span className="text-lg font-mono font-bold text-primary">{printingResult.student_id}</span></p>
-                            </div>
-                            <div className="text-right">
-                                <p><span className="font-bold text-gray-600 uppercase text-xs">Session:</span> <br/><span className="font-bold">{printingResult.session}</span></p>
-                                <p className="mt-2"><span className="font-bold text-gray-600 uppercase text-xs">Term:</span> <br/><span className="font-bold">{printingResult.term}</span></p>
-                                <p className="mt-2"><span className="font-bold text-gray-600 uppercase text-xs">Date Printed:</span> <br/><span className="font-medium text-sm">{new Date().toLocaleDateString()}</span></p>
-                            </div>
-                        </div>
-
-                        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-8">
-                            <div className="grid grid-cols-3 gap-4 text-center">
-                                <div className="border-r border-gray-300">
-                                    <p className="text-xs font-bold text-gray-500 uppercase">Subject</p>
-                                    <p className="text-xl font-black text-gray-900">{printingResult.subject}</p>
-                                </div>
-                                <div className="border-r border-gray-300">
-                                    <p className="text-xs font-bold text-gray-500 uppercase">Score</p>
-                                    <p className="text-3xl font-black text-primary">{printingResult.score}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-500 uppercase">Grade</p>
-                                    <p className="text-3xl font-black text-primary">{printingResult.grade}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-12 flex justify-between items-end">
-                            <div className="text-center w-40">
-                                <div className="border-t border-gray-400 pt-1 text-xs font-bold uppercase text-gray-500">Class Teacher</div>
-                            </div>
-                            <div className="text-center w-40">
-                                <div className="border-t border-gray-400 pt-1 text-xs font-bold uppercase text-gray-500">Principal</div>
+                    <div className="border-8 border-double border-primary p-10 max-w-4xl mx-auto bg-white">
+                        <div className="text-center border-b-4 border-primary pb-6 mb-8">
+                            <h2 className="text-5xl font-black text-primary tracking-tighter italic">BEST LEGACY DIVINE SCHOOL</h2>
+                            <p className="text-lg font-bold text-gray-700 uppercase tracking-widest mt-2">Comprehensive Academic Report Card</p>
+                            <div className="flex justify-center space-x-4 mt-2 text-sm text-gray-500 font-bold uppercase">
+                                <span>Lagos, Nigeria</span>
+                                <span>•</span>
+                                <span>info@bestlegacy.school</span>
                             </div>
                         </div>
                         
-                        <div className="mt-12 pt-4 border-t border-gray-100 text-[10px] text-gray-400 text-center uppercase tracking-widest font-bold">
-                            Official Academic Record - Generated Digitally
+                        <div className="grid grid-cols-2 gap-8 mb-10 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                            <div className="space-y-3">
+                                <p><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Student Name</span><br/><span className="text-2xl font-black text-gray-900">{printingData.student_name}</span></p>
+                                <p><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Registration No</span><br/><span className="text-xl font-mono font-bold text-primary">{printingData.student_id}</span></p>
+                            </div>
+                            <div className="text-right space-y-3">
+                                <p><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Academic Session</span><br/><span className="text-lg font-bold text-gray-800">{printingData.session}</span></p>
+                                <p><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Term</span><br/><span className="text-lg font-bold text-gray-800">{printingData.term}</span></p>
+                                <p><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Date Issued</span><br/><span className="text-sm font-bold text-gray-500">{new Date().toLocaleDateString()}</span></p>
+                            </div>
+                        </div>
+
+                        <div className="mb-10">
+                            <table className="min-w-full border-2 border-gray-200">
+                                <thead className="bg-primary">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider border-b-2 border-primary-dark">Subject Name</th>
+                                        <th className="px-6 py-3 text-center text-xs font-black text-white uppercase tracking-wider border-b-2 border-primary-dark">Score (100)</th>
+                                        <th className="px-6 py-3 text-center text-xs font-black text-white uppercase tracking-wider border-b-2 border-primary-dark">Grade</th>
+                                        <th className="px-6 py-3 text-center text-xs font-black text-white uppercase tracking-wider border-b-2 border-primary-dark">Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y-2 divide-gray-100">
+                                    {printingData.results.map((r, idx) => (
+                                        <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-700 border-r border-gray-100 uppercase">{r.subject}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-lg font-black text-primary border-r border-gray-100">{r.score}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-lg font-black text-gray-900 border-r border-gray-100">{r.grade}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-xs font-bold text-gray-500">
+                                                {parseInt(r.score) >= 70 ? 'Distinction' : parseInt(r.score) >= 60 ? 'Credit' : parseInt(r.score) >= 40 ? 'Pass' : 'Fail'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot className="bg-primary/5">
+                                    <tr className="border-t-4 border-primary/20">
+                                        <td className="px-6 py-4 text-sm font-black text-primary uppercase border-r border-gray-200">Aggregate Total</td>
+                                        <td className="px-6 py-4 text-center text-2xl font-black text-primary border-r border-gray-200">
+                                            {printingData.results.reduce((acc, curr) => acc + parseInt(curr.score), 0)}
+                                            <span className="text-xs text-gray-400 font-bold ml-1">/{printingData.results.length * 100}</span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center text-2xl font-black text-primary" colSpan="2">
+                                            {(printingData.results.reduce((acc, curr) => acc + parseInt(curr.score), 0) / printingData.results.length).toFixed(1)}%
+                                            <p className="text-[10px] font-black text-gray-400 uppercase -mt-1">Average Percentage</p>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-12 mt-16 px-10">
+                            <div className="text-center pt-4 border-t-2 border-gray-400">
+                                <p className="text-sm font-black text-gray-900 uppercase">Class Teacher's Signature</p>
+                            </div>
+                            <div className="text-center pt-4 border-t-2 border-gray-400">
+                                <p className="text-sm font-black text-gray-900 uppercase">Principal's Signature & Stamp</p>
+                            </div>
+                        </div>
+                        
+                        <div className="mt-16 pt-6 border-t border-gray-100 text-[10px] text-gray-400 text-center uppercase tracking-widest font-black flex justify-center space-x-4">
+                            <span>Official Academic Record</span>
+                            <span>|</span>
+                            <span>Generated by BLS Digital Portal</span>
                         </div>
                     </div>
                 </div>
