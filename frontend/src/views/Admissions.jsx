@@ -32,7 +32,12 @@ const Admissions = () => {
                 previous_school: '', parent_name: '', phone_number: '', email: '', address: ''
             });
         } catch (error) {
-            console.error('Error submitting application:', error);
+            console.error('Error submitting application to:', `${API_URL}/api/admissions/`);
+            console.error('Detailed Error:', error.message);
+            if (error.response) {
+                console.error('Status Code:', error.response.status);
+                console.error('Response Data:', error.response.data);
+            }
             setStatus('error');
         }
     };
