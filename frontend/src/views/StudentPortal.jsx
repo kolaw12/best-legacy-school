@@ -115,6 +115,22 @@ const StudentPortal = () => {
                                             </td>
                                         </tr>
                                     ))}
+                                    {results.length > 0 && (
+                                        <tr className="bg-primary/5 font-black text-gray-900 border-t-2 border-primary/20">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-black uppercase text-primary">AGGREGATE TOTAL</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-lg text-primary">
+                                                {results.reduce((acc, curr) => acc + parseInt(curr.score || 0), 0)}
+                                                <span className="text-[10px] text-gray-400 font-bold ml-1">/ {results.length * 100}</span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-2xl" colSpan="2">
+                                                {(results.reduce((acc, curr) => acc + parseInt(curr.score || 0), 0) / results.length).toFixed(1)}%
+                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter -mt-1">Average Score</p>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 uppercase font-bold" colSpan="2 text-right">
+                                                {results.length} Subjects Recorded
+                                            </td>
+                                        </tr>
+                                    )}
                                     {results.length === 0 && (
                                         <tr>
                                             <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
