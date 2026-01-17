@@ -7,6 +7,7 @@ const StudentPortal = () => {
     const navigate = useNavigate();
     const [studentId, setStudentId] = useState('');
     const [results, setResults] = useState([]);
+    const [studentData, setStudentData] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -17,7 +18,19 @@ const StudentPortal = () => {
         }
         setStudentId(storedId);
         fetchResults(storedId);
+        fetchStudentData(storedId);
     }, [navigate]);
+
+    const fetchStudentData = async (id) => {
+        try {
+            const response = await axios.get(`${API_URL}/api/admissions/?student_id=${id}`);
+            if (response.data && response.data.length > 0) {
+                setStudentData(response.data[0]);
+            }
+        } catch (error) {
+            console.error('Error fetching student data:', error);
+        }
+    };
 
     const fetchResults = async (id) => {
         try {
@@ -39,12 +52,32 @@ const StudentPortal = () => {
     return (
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-5xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Student Portal</h1>
-                        <p className="text-gray-600 mt-1">Reg No: <span className="font-mono font-bold">{studentId}</span></p>
+                <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-lg shadow-sm">
+                    <div className="flex items-center space-x-6">
+                        {studentData?.passport_photo ? (
+                            <img 
+                                src={studentData.passport_photo.startsWith('http') ? studentData.passport_photo : `${API_URL}${studentData.passport_photo}`} 
+                                alt="Student" 
+                                className="h-24 w-24 rounded-full object-cover border-4 border-primary/20"
+                            />
+                        ) : (
+                            <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 border-4 border-gray-100">
+                                <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                            </div>
+                        )}
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900">{studentData?.student_name || 'Student Portal'}</h1>
+                            <p className="text-gray-600 mt-1 uppercase tracking-wider text-sm">
+                                Reg No: <span className="font-mono font-bold text-primary">{studentId}</span>
+                            </p>
+                            {studentData?.class_applying_for && (
+                                <p className="text-gray-500 text-sm">Class: {studentData.class_applying_for}</p>
+                            )}
+                        </div>
                     </div>
-                    <button onClick={handleLogout} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Logout</button>
+                    <button onClick={handleLogout} className="mt-4 md:mt-0 bg-red-50 text-red-600 border border-red-100 px-6 py-2 rounded-full font-medium hover:bg-red-600 hover:text-white transition-all shadow-sm">
+                        Logout
+                    </button>
                 </div>
 
                 <div className="bg-white shadow rounded-lg overflow-hidden">

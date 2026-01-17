@@ -14,7 +14,22 @@ const TeacherPortal = () => {
         term: 'First Term',
         session: '2025/2026'
     });
+    const [results, setResults] = useState([]);
     const [message, setMessage] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
+
+    useEffect(() => {
+        fetchResults();
+    }, []);
+
+    const fetchResults = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/api/results/`);
+            setResults(response.data.slice(0, 10)); // Just the last 10 for management
+        } catch (error) {
+            console.error('Error fetching results:', error);
+        }
+    };
 
     const handleChange = (e) => {
         setResultData({ ...resultData, [e.target.name]: e.target.value });
@@ -38,14 +53,39 @@ const TeacherPortal = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setMessage('Uploading...');
+        setMessage('Processing...');
         try {
-            await axios.post(`${API_URL}/api/results/`, resultData);
-            setMessage('Result Uploaded Successfully!');
-            setResultData({ ...resultData, subject: '', score: '', grade: '' }); // Reset fields but keep student info for faster entry
+            if (isEditing) {
+                await axios.put(`${API_URL}/api/results/${resultData.id}/`, resultData);
+                setMessage('Result Updated Successfully!');
+                setIsEditing(false);
+            } else {
+                await axios.post(`${API_URL}/api/results/`, resultData);
+                setMessage('Result Uploaded Successfully!');
+            }
+            setResultData({ ...resultData, subject: '', score: '', grade: '' });
+            fetchResults();
         } catch (error) {
-            console.error('Error uploading result:', error);
-            setMessage('Error uploading result.');
+            console.error('Error saving result:', error);
+            setMessage('Error saving result.');
+        }
+    };
+
+    const handleEdit = (result) => {
+        setResultData(result);
+        setIsEditing(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this result?')) {
+            try {
+                await axios.delete(`${API_URL}/api/results/${id}/`);
+                fetchResults();
+                setMessage('Result Deleted Successfully');
+            } catch (error) {
+                console.error('Error deleting result:', error);
+            }
         }
     };
 
@@ -112,12 +152,52 @@ const TeacherPortal = () => {
                             </div>
                         </div>
 
-                        <div className="pt-4">
-                            <button type="submit" className="w-full inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-300">
-                                Upload Result
+                        <div className="pt-4 flex space-x-4">
+                            <button type="submit" className="flex-1 inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-primary hover:bg-primary-dark transition duration-300">
+                                {isEditing ? 'Update Result' : 'Upload Result'}
                             </button>
+                            {isEditing && (
+                                <button type="button" onClick={() => { setIsEditing(false); setResultData({...resultData, subject: '', score: '', grade: ''}); }} className="px-6 py-3 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                                    Cancel
+                                </button>
+                            )}
                         </div>
                     </form>
+
+                    {/* Manage Section */}
+                    <div className="mt-12">
+                        <h3 className="text-xl font-bold text-gray-900 border-b-2 border-primary/10 pb-2 mb-6">Manage Recent Uploads</h3>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Student ID</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Name</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Subject</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Score</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-100">
+                                    {results.map((res) => (
+                                        <tr key={res.id} className="hover:bg-gray-50">
+                                            <td className="px-4 py-4 whitespace-nowrap text-sm font-bold text-primary">{res.student_id}</td>
+                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{res.student_name}</td>
+                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">{res.subject}</td>
+                                            <td className="px-4 py-4 whitespace-nowrap text-sm font-semibold">{res.score} ({res.grade})</td>
+                                            <td className="px-4 py-4 whitespace-nowrap text-right text-sm space-x-3">
+                                                <button onClick={() => handleEdit(res)} className="text-indigo-600 hover:text-indigo-900 font-bold">Edit</button>
+                                                <button onClick={() => handleDelete(res.id)} className="text-red-600 hover:text-red-900 font-bold">Delete</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {results.length === 0 && (
+                                        <tr><td colSpan="5" className="px-4 py-8 text-center text-gray-500">No results uploaded yet.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

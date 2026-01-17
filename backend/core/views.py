@@ -19,6 +19,13 @@ class AdmissionViewSet(viewsets.ModelViewSet):
     queryset = Admission.objects.all()
     serializer_class = AdmissionSerializer
 
+    def get_queryset(self):
+        queryset = Admission.objects.all()
+        student_id = self.request.query_params.get('student_id')
+        if student_id:
+            queryset = queryset.filter(student_id=student_id)
+        return queryset
+
     def perform_create(self, serializer):
         # Generate Student ID
         import datetime
