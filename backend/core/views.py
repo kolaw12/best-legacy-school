@@ -33,8 +33,28 @@ class AdmissionViewSet(viewsets.ModelViewSet):
         # Generate Student ID
         import datetime
         year = datetime.date.today().year
-        count = Admission.objects.filter(created_at__year=year).count() + 1
-        generated_id = f"BLS/{year}/{count:03d}"
+        prefix = f"BLS/{year}/"
+        
+        # Find the highest sequence number for this year to avoid collisions
+        latest_admission = Admission.objects.filter(student_id__startswith=prefix).order_by('-student_id').first()
+        
+        if latest_admission and latest_admission.student_id:
+            try:
+                # Extract numbers from the current format (e.g., "BLS/2026/003")
+                parts = latest_admission.student_id.split('/')
+                last_num = int(parts[-1])
+                next_num = last_num + 1
+            except (ValueError, IndexError):
+                next_num = Admission.objects.filter(created_at__year=year).count() + 1
+        else:
+            next_num = 1
+
+        generated_id = f"{prefix}{next_num:03d}"
+        
+        # Double safety: check for collision in case of race conditions
+        while Admission.objects.filter(student_id=generated_id).exists():
+            next_num += 1
+            generated_id = f"{prefix}{next_num:03d}"
         
         instance = serializer.save(student_id=generated_id)
         
