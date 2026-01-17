@@ -21,11 +21,12 @@ const TeacherPortal = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [teacherClass, setTeacherClass] = useState('');
     const [classStudents, setClassStudents] = useState([]);
+    const [selectedStudent, setSelectedStudent] = useState(null);
+    const [studentRecords, setStudentRecords] = useState([]);
 
     useEffect(() => {
         const storedClass = localStorage.getItem('teacherClass');
         if (!storedClass) {
-            // navigate('/academics'); // For now let's not force it if they use hardcoded login
             setTeacherClass('JSS 1'); // Fallback
         } else {
             setTeacherClass(storedClass);
@@ -50,6 +51,29 @@ const TeacherPortal = () => {
         } catch (error) {
             console.error('Error fetching results:', error);
         }
+    };
+
+    const fetchStudentRecords = async (studentId) => {
+        try {
+            const response = await axios.get(`${API_URL}/api/results/?student_id=${studentId}`);
+            setStudentRecords(response.data);
+        } catch (error) {
+            console.error('Error fetching student records:', error);
+        }
+    };
+
+    const handleStudentSelect = (student) => {
+        setSelectedStudent(student);
+        setResultData({ 
+            ...resultData, 
+            student_id: student.student_id, 
+            student_name: student.student_name,
+            subject: '',
+            score: '',
+            grade: ''
+        });
+        fetchStudentRecords(student.student_id);
+        setIsEditing(false);
     };
 
     const handleChange = (e) => {
@@ -87,6 +111,9 @@ const TeacherPortal = () => {
             }
             setResultData({ ...resultData, subject: '', score: '', grade: '' });
             fetchResults(teacherClass);
+            if (selectedStudent) {
+                fetchStudentRecords(selectedStudent.student_id);
+            }
         } catch (error) {
             console.error('Error saving result to:', `${API_URL}/api/results/`);
             if (error.response) {
@@ -107,7 +134,10 @@ const TeacherPortal = () => {
         if (window.confirm('Are you sure you want to delete this result?')) {
             try {
                 await axios.delete(`${API_URL}/api/results/${id}/`);
-                fetchResults();
+                fetchResults(teacherClass);
+                if (selectedStudent) {
+                    fetchStudentRecords(selectedStudent.student_id);
+                }
                 setMessage('Result Deleted Successfully');
             } catch (error) {
                 console.error('Error deleting result:', error);
@@ -172,8 +202,8 @@ const TeacherPortal = () => {
                                     classStudents.map(student => (
                                         <div 
                                             key={student.student_id}
-                                            onClick={() => setResultData({ ...resultData, student_id: student.student_id, student_name: student.student_name })}
-                                            className="p-3 bg-gray-50 rounded border border-transparent hover:border-primary hover:bg-primary/5 cursor-pointer transition group"
+                                            onClick={() => handleStudentSelect(student)}
+                                            className={`p-3 rounded border transition group cursor-pointer ${selectedStudent?.student_id === student.student_id ? 'bg-primary/10 border-primary' : 'bg-gray-50 border-transparent hover:border-primary hover:bg-primary/5'}`}
                                         >
                                             <p className="text-sm font-black text-gray-900 group-hover:text-primary transition">{student.student_name}</p>
                                             <p className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-tighter">{student.student_id}</p>
@@ -195,6 +225,59 @@ const TeacherPortal = () => {
                             <div className={`p-4 rounded-lg font-bold text-sm shadow-sm flex items-center ${message.includes('Successfully') ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
                                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012-0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/></svg>
                                 {message}
+                            </div>
+                        )}
+
+                        {/* Student Records History (appears when student selected) */}
+                        {selectedStudent && (
+                            <div className="bg-white rounded-lg shadow-sm border-2 border-primary/20 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
+                                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-primary/5">
+                                    <div>
+                                        <h3 className="font-black text-gray-800 uppercase text-xs tracking-widest">Record History for {selectedStudent.student_name}</h3>
+                                        <p className="text-[10px] text-primary font-bold">{selectedStudent.student_id} • All Subjects</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => handlePrint(selectedStudent.student_id)}
+                                        className="text-[10px] bg-primary text-white px-4 py-1.5 rounded font-black uppercase tracking-widest hover:bg-primary-dark transition"
+                                    >
+                                        Print Slip
+                                    </button>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-100">
+                                        <thead className="bg-gray-50/50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-[9px] font-black text-gray-400 uppercase tracking-widest">Term/Session</th>
+                                                <th className="px-6 py-3 text-left text-[9px] font-black text-gray-400 uppercase tracking-widest">Subject</th>
+                                                <th className="px-6 py-3 text-center text-[9px] font-black text-gray-400 uppercase tracking-widest">Score</th>
+                                                <th className="px-6 py-3 text-right text-[9px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {studentRecords.length > 0 ? studentRecords.map((res) => (
+                                                <tr key={res.id} className="hover:bg-primary/5 transition">
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-xs font-bold text-gray-700">{res.term}</p>
+                                                        <p className="text-[9px] text-gray-400 font-bold">{res.session}</p>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-sm font-black text-gray-900 uppercase tracking-tighter">{res.subject}</p>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        <span className="px-3 py-1 bg-white border border-gray-200 rounded font-black text-primary text-sm shadow-sm">{res.score}</span>
+                                                        <span className="ml-1 text-[10px] font-black text-gray-400">{res.grade}</span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right space-x-2">
+                                                        <button onClick={() => handleEdit(res)} className="text-[10px] font-black text-indigo-600 uppercase hover:underline">Edit</button>
+                                                        <button onClick={() => handleDelete(res.id)} className="text-[10px] font-black text-red-600 uppercase hover:underline">Delete</button>
+                                                    </td>
+                                                </tr>
+                                            )) : (
+                                                <tr><td colSpan="4" className="px-6 py-8 text-center text-gray-400 italic text-xs">No records found for this student.</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
 
@@ -441,4 +524,6 @@ const TeacherPortal = () => {
             )}
         </div>
     );
+};
+
 export default TeacherPortal;
