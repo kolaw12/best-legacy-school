@@ -51,15 +51,26 @@ const StudentPortal = () => {
         navigate('/academics');
     };
 
+    const [imgError, setImgError] = useState(false);
+
+    const getImageUrl = (path) => {
+        if (!path) return null;
+        if (path.startsWith('http')) return path;
+        // Handle cases where path might or might not have leading slash
+        const cleanPath = path.startsWith('/') ? path : `/${path}`;
+        return `${API_URL}${cleanPath}`;
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-5xl mx-auto">
                 <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-lg shadow-sm">
                     <div className="flex items-center space-x-6">
-                        {studentData?.passport_photo ? (
+                        {studentData?.passport_photo && !imgError ? (
                             <img 
-                                src={studentData.passport_photo.startsWith('http') ? studentData.passport_photo : `${API_URL}${studentData.passport_photo}`} 
+                                src={getImageUrl(studentData.passport_photo)} 
                                 alt="Student" 
+                                onError={() => setImgError(true)}
                                 className="h-24 w-24 rounded-full object-cover border-4 border-primary/20"
                             />
                         ) : (

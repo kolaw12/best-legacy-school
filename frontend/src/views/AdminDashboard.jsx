@@ -3,6 +3,37 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../config/api';
 
+const ImageWithFallback = ({ src, apiUrl, alt = "Image", className = "h-48 w-48 object-cover rounded-md" }) => {
+    const [error, setError] = useState(false);
+    
+    const getFullUrl = (path) => {
+        if (!path) return null;
+        if (path.startsWith('http')) return path;
+        const cleanPath = path.startsWith('/') ? path : `/${path}`;
+        return `${apiUrl}${cleanPath}`;
+    };
+
+    if (error || !src) {
+        return (
+            <div className={`${className} bg-gray-200 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300`}>
+                <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-white p-2 border rounded-lg shadow-md ring-4 ring-primary/5">
+            <img 
+                src={getFullUrl(src)} 
+                alt={alt}
+                onError={() => setError(true)}
+                className={className}
+            />
+            <p className="text-center text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-widest">{alt}</p>
+        </div>
+    );
+};
+
 const AdminDashboard = () => {
     const [inquiries, setInquiries] = useState([]);
     const [admissions, setAdmissions] = useState([]);
@@ -195,14 +226,10 @@ const AdminDashboard = () => {
                                         <div className="flex flex-col md:flex-row gap-8 items-start bg-gray-50 p-6 rounded-xl border border-gray-100">
                                             <div className="flex-shrink-0 mx-auto md:mx-0">
                                                 {viewingAdmission.passport_photo ? (
-                                                    <div className="bg-white p-2 border rounded-lg shadow-md ring-4 ring-primary/5">
-                                                        <img 
-                                                            src={viewingAdmission.passport_photo.startsWith('http') ? viewingAdmission.passport_photo : `${API_URL}${viewingAdmission.passport_photo}`} 
-                                                            alt="Passport Photograph" 
-                                                            className="h-48 w-48 object-cover rounded-md"
-                                                        />
-                                                        <p className="text-center text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-widest">Passport Photo</p>
-                                                    </div>
+                                                    <ImageWithFallback 
+                                                        src={viewingAdmission.passport_photo} 
+                                                        apiUrl={API_URL}
+                                                    />
                                                 ) : (
                                                     <div className="h-48 w-48 rounded-lg bg-gray-200 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300">
                                                         <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
@@ -290,17 +317,14 @@ const AdminDashboard = () => {
                                     <form onSubmit={handleUpdateAdmission} className="space-y-6">
                                         <div className="flex justify-between items-center border-b pb-4">
                                             <div className="flex items-center space-x-4">
-                                                {editingAdmission.passport_photo ? (
-                                                    <img 
-                                                        src={editingAdmission.passport_photo.startsWith('http') ? editingAdmission.passport_photo : `${API_URL}${editingAdmission.passport_photo}`} 
-                                                        alt="" 
-                                                        className="h-12 w-12 rounded-full object-cover border-2 border-primary"
+                                                <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-primary">
+                                                    <ImageWithFallback 
+                                                        src={editingAdmission.passport_photo} 
+                                                        apiUrl={API_URL}
+                                                        alt="Edit"
+                                                        className="h-full w-full object-cover"
                                                     />
-                                                ) : (
-                                                    <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
-                                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                                                    </div>
-                                                )}
+                                                </div>
                                                 <h3 className="text-xl font-bold text-gray-900">Edit Applicant: {editingAdmission.student_name}</h3>
                                             </div>
                                         </div>
@@ -368,17 +392,14 @@ const AdminDashboard = () => {
                                                 {admissions.map((admission) => (
                                                     <tr key={admission.id} className="hover:bg-gray-50">
                                                         <td className="px-6 py-4 whitespace-nowrap">
-                                                            {admission.passport_photo ? (
-                                                                <img 
-                                                                    src={admission.passport_photo.startsWith('http') ? admission.passport_photo : `${API_URL}${admission.passport_photo}`} 
-                                                                    alt="" 
-                                                                    className="h-10 w-10 rounded-full object-cover border"
+                                                            <div className="h-10 w-10 rounded-full overflow-hidden border border-gray-100 flex items-center justify-center bg-gray-50">
+                                                                <ImageWithFallback 
+                                                                    src={admission.passport_photo} 
+                                                                    apiUrl={API_URL}
+                                                                    alt="Passport Photo"
+                                                                    className="h-full w-full object-cover"
                                                                 />
-                                                            ) : (
-                                                                <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
-                                                                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                                                                </div>
-                                                            )}
+                                                            </div>
                                                         </td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-primary">{admission.student_id}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{admission.student_name}</td>
