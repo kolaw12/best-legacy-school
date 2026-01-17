@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import API_URL from '../config/api';
 
 const TeacherPortal = () => {
     const navigate = useNavigate();
@@ -39,7 +40,7 @@ const TeacherPortal = () => {
         e.preventDefault();
         setMessage('Uploading...');
         try {
-            await axios.post('http://127.0.0.1:8000/api/results/', resultData);
+            await axios.post(`${API_URL}/api/results/`, resultData);
             setMessage('Result Uploaded Successfully!');
             setResultData({ ...resultData, subject: '', score: '', grade: '' }); // Reset fields but keep student info for faster entry
         } catch (error) {

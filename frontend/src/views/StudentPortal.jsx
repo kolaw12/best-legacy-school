@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import API_URL from '../config/api';
 
 const StudentPortal = () => {
     const navigate = useNavigate();
@@ -20,7 +21,7 @@ const StudentPortal = () => {
 
     const fetchResults = async (id) => {
         try {
-            const response = await axios.get(`http://127.0.0.1:8000/api/results/?student_id=${id}`);
+            const response = await axios.get(`${API_URL}/api/results/?student_id=${id}`);
             setResults(response.data);
             setLoading(false);
         } catch (error) {

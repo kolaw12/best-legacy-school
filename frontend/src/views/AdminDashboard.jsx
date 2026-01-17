@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import API_URL from '../config/api';
 
 const AdminDashboard = () => {
     const [inquiries, setInquiries] = useState([]);
@@ -23,7 +24,7 @@ const AdminDashboard = () => {
 
     const fetchInquiries = async () => {
         try {
-            const response = await axios.get('http://127.0.0.1:8000/api/inquiries/');
+            const response = await axios.get(`${API_URL}/api/inquiries/`);
             setInquiries(response.data);
         } catch (error) {
             console.error('Error fetching inquiries:', error);
@@ -32,7 +33,7 @@ const AdminDashboard = () => {
 
     const fetchAdmissions = async () => {
         try {
-            const response = await axios.get('http://127.0.0.1:8000/api/admissions/');
+            const response = await axios.get(`${API_URL}/api/admissions/`);
             setAdmissions(response.data);
         } catch (error) {
             console.error('Error fetching admissions:', error);
@@ -41,7 +42,7 @@ const AdminDashboard = () => {
 
     const updateStatus = async (id, newStatus) => {
         try {
-            await axios.patch(`http://127.0.0.1:8000/api/inquiries/${id}/`, { status: newStatus });
+            await axios.patch(`${API_URL}/api/inquiries/${id}/`, { status: newStatus });
             fetchInquiries();
         } catch (error) {
             console.error('Error updating status:', error);
@@ -61,7 +62,7 @@ const AdminDashboard = () => {
     const handleDeleteAdmission = async (id) => {
         if (window.confirm('Are you sure you want to delete this student record? This action cannot be undone.')) {
             try {
-                await axios.delete(`http://127.0.0.1:8000/api/admissions/${id}/`);
+                await axios.delete(`${API_URL}/api/admissions/${id}/`);
                 fetchAdmissions();
                 setViewingAdmission(null);
                 setEditingAdmission(null);
@@ -75,7 +76,7 @@ const AdminDashboard = () => {
     const handleUpdateAdmission = async (e) => {
         e.preventDefault();
         try {
-            await axios.put(`http://127.0.0.1:8000/api/admissions/${editingAdmission.id}/`, editingAdmission);
+            await axios.put(`${API_URL}/api/admissions/${editingAdmission.id}/`, editingAdmission);
             setEditingAdmission(null);
             fetchAdmissions();
         } catch (error) {

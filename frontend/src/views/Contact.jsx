@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import PageHero from '../components/PageHero';
+import API_URL from '../config/api';
 
 const Contact = () => {
     const [formData, setFormData] = useState({
@@ -19,7 +20,7 @@ const Contact = () => {
         e.preventDefault();
         setStatus('sending');
         try {
-            await axios.post('http://127.0.0.1:8000/api/inquiries/', formData);
+            await axios.post(`${API_URL}/api/inquiries/`, formData);
             setStatus('success');
             setFormData({ name: '', email: '', subject: '', message: '' });
         } catch (error) {

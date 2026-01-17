@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import PageHero from '../components/PageHero';
+import API_URL from '../config/api';
 
 const Admissions = () => {
     const [formData, setFormData] = useState({
@@ -24,7 +25,7 @@ const Admissions = () => {
         e.preventDefault();
         setStatus('sending');
         try {
-            await axios.post('http://127.0.0.1:8000/api/admissions/', formData);
+            await axios.post(`${API_URL}/api/admissions/`, formData);
             setStatus('success');
             setFormData({
                 student_name: '', date_of_birth: '', gender: 'M', class_applying_for: '',
