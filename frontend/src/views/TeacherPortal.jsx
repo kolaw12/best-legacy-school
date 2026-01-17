@@ -279,7 +279,7 @@ const TeacherPortal = () => {
                     <div className="border-8 border-double border-primary p-10 max-w-4xl mx-auto bg-white">
                         <div className="text-center border-b-4 border-primary pb-6 mb-8">
                             <h2 className="text-5xl font-black text-primary tracking-tighter italic">BEST LEGACY DIVINE SCHOOL</h2>
-                            <p className="text-lg font-bold text-gray-700 uppercase tracking-widest mt-2">Comprehensive Academic Report Card</p>
+                            <p className="text-lg font-bold text-gray-700 uppercase tracking-widest mt-2">To the Glory of God</p>
                             <div className="flex justify-center space-x-4 mt-2 text-sm text-gray-500 font-bold uppercase">
                                 <span>Lagos, Nigeria</span>
                                 <span>•</span>
@@ -312,7 +312,7 @@ const TeacherPortal = () => {
                                 <tbody className="bg-white divide-y-2 divide-gray-100">
                                     {printingData.results.map((r, idx) => (
                                         <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-700 border-r border-gray-100 uppercase">{r.subject}</td>
+                                            <td className="px-6 py-4 text-sm font-bold text-gray-700 border-r border-gray-100 uppercase">{r.subject}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center text-lg font-black text-primary border-r border-gray-100">{r.score}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center text-lg font-black text-gray-900 border-r border-gray-100">{r.grade}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center text-xs font-bold text-gray-500">
