@@ -47,7 +47,7 @@ Admissions Team
 Best Legacy Divine School""",
             from_email="admissions@bestlegacyschool.com",
             recipient_list=[instance.email],
-            fail_silently=True,
+            fail_silently=False,
         )
 
 class StudentResultViewSet(viewsets.ModelViewSet):
