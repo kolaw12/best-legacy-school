@@ -42,11 +42,13 @@ const Admissions = () => {
         }
 
         try {
-            await axios.post(`${API_URL}/api/admissions/`, data, {
+            console.log('Attempting to submit to:', `${API_URL}/api/admissions/`);
+            const response = await axios.post(`${API_URL}/api/admissions/`, data, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
+            console.log('Submission successful:', response.data);
             setStatus('success');
             setFormData({
                 student_name: '', date_of_birth: '', gender: 'M', class_applying_for: '',
@@ -54,13 +56,23 @@ const Admissions = () => {
             });
             setPassportPhoto(null);
         } catch (error) {
-            console.error('Error submitting application to:', `${API_URL}/api/admissions/`);
-            console.error('Detailed Error:', error.message);
+            console.error('Submission FAILED!');
+            console.error('URL:', `${API_URL}/api/admissions/`);
+            
             if (error.response) {
-                console.error('Status Code:', error.response.status);
-                console.error('Response Data:', error.response.data);
+                // Server responded with a status code outside the 2xx range
+                console.error('Backend Error Data:', error.response.data);
+                console.error('Status:', error.response.status);
+                setStatus(`error: ${JSON.stringify(error.response.data)}`);
+            } else if (error.request) {
+                // Request was made but no response was received
+                console.error('No response received from server. Check if backend is running and CORS is allowed.');
+                setStatus('error: Network error - No response from server');
+            } else {
+                // Something happened in setting up the request
+                console.error('Request setup error:', error.message);
+                setStatus(`error: ${error.message}`);
             }
-            setStatus('error');
         }
     };
 
@@ -83,6 +95,14 @@ const Admissions = () => {
                         <div className="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
                             <strong className="font-bold">Application Submitted!</strong>
                             <span className="block sm:inline"> We will review your application and contact you shortly.</span>
+                        </div>
+                    )}
+
+                     {status.startsWith('error') && (
+                        <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                            <strong className="font-bold">Submission Failed!</strong>
+                            <span className="block sm:inline"> {status.replace('error: ', '')}</span>
+                            <p className="text-xs mt-2 font-bold">Please check your internet connection or ensure the backend server is running.</p>
                         </div>
                     )}
 
