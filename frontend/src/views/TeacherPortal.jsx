@@ -14,6 +14,7 @@ const TeacherPortal = () => {
         term: 'First Term',
         session: '2025/2026'
     });
+    const [printingResult, setPrintingResult] = useState(null);
     const [results, setResults] = useState([]);
     const [message, setMessage] = useState('');
     const [isEditing, setIsEditing] = useState(false);
@@ -95,6 +96,14 @@ const TeacherPortal = () => {
                 console.error('Error deleting result:', error);
             }
         }
+    };
+
+    const handlePrint = (result) => {
+        setPrintingResult(result);
+        setTimeout(() => {
+            window.print();
+            setPrintingResult(null);
+        }, 500);
     };
 
     const handleLogout = () => {
@@ -196,6 +205,10 @@ const TeacherPortal = () => {
                                             <td className="px-4 py-4 whitespace-nowrap text-right text-sm space-x-3">
                                                 <button onClick={() => handleEdit(res)} className="text-indigo-600 hover:text-indigo-900 font-bold">Edit</button>
                                                 <button onClick={() => handleDelete(res.id)} className="text-red-600 hover:text-red-900 font-bold">Delete</button>
+                                                <button onClick={() => handlePrint(res)} className="text-green-600 hover:text-green-900 font-bold ml-3 flex inline-flex items-center">
+                                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                                                    Print
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
@@ -208,6 +221,69 @@ const TeacherPortal = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Printable Result Slip (Hidden normally) */}
+            {printingResult && (
+                <div className="fixed inset-0 bg-white z-[9999] p-12 printable-area">
+                    <style>{`
+                        @media print {
+                            body * { visibility: hidden; }
+                            .printable-area, .printable-area * { visibility: visible; }
+                            .printable-area { position: absolute; left: 0; top: 0; width: 100%; }
+                        }
+                    `}</style>
+                    <div className="border-4 border-double border-primary p-8 max-w-2xl mx-auto">
+                        <div className="text-center border-b-2 border-primary pb-4 mb-6">
+                            <h2 className="text-4xl font-black text-primary tracking-tighter">BEST LEGACY DIVINE SCHOOL</h2>
+                            <p className="text-sm font-bold text-gray-600 uppercase">Excellence in Learning, Wisdom in Character</p>
+                            <p className="text-xs text-gray-500 mt-1">Lagos, Nigeria | info@bestlegacy.school</p>
+                        </div>
+                        
+                        <div className="flex justify-between items-start mb-8">
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900 underline">STUDENT RESULT SLIP</h3>
+                                <p className="mt-4"><span className="font-bold text-gray-600 uppercase text-xs">Student Name:</span> <br/><span className="text-lg font-black">{printingResult.student_name}</span></p>
+                                <p className="mt-2"><span className="font-bold text-gray-600 uppercase text-xs">Registration No:</span> <br/><span className="text-lg font-mono font-bold text-primary">{printingResult.student_id}</span></p>
+                            </div>
+                            <div className="text-right">
+                                <p><span className="font-bold text-gray-600 uppercase text-xs">Session:</span> <br/><span className="font-bold">{printingResult.session}</span></p>
+                                <p className="mt-2"><span className="font-bold text-gray-600 uppercase text-xs">Term:</span> <br/><span className="font-bold">{printingResult.term}</span></p>
+                                <p className="mt-2"><span className="font-bold text-gray-600 uppercase text-xs">Date Printed:</span> <br/><span className="font-medium text-sm">{new Date().toLocaleDateString()}</span></p>
+                            </div>
+                        </div>
+
+                        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-8">
+                            <div className="grid grid-cols-3 gap-4 text-center">
+                                <div className="border-r border-gray-300">
+                                    <p className="text-xs font-bold text-gray-500 uppercase">Subject</p>
+                                    <p className="text-xl font-black text-gray-900">{printingResult.subject}</p>
+                                </div>
+                                <div className="border-r border-gray-300">
+                                    <p className="text-xs font-bold text-gray-500 uppercase">Score</p>
+                                    <p className="text-3xl font-black text-primary">{printingResult.score}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-500 uppercase">Grade</p>
+                                    <p className="text-3xl font-black text-primary">{printingResult.grade}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-12 flex justify-between items-end">
+                            <div className="text-center w-40">
+                                <div className="border-t border-gray-400 pt-1 text-xs font-bold uppercase text-gray-500">Class Teacher</div>
+                            </div>
+                            <div className="text-center w-40">
+                                <div className="border-t border-gray-400 pt-1 text-xs font-bold uppercase text-gray-500">Principal</div>
+                            </div>
+                        </div>
+                        
+                        <div className="mt-12 pt-4 border-t border-gray-100 text-[10px] text-gray-400 text-center uppercase tracking-widest font-bold">
+                            Official Academic Record - Generated Digitally
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
