@@ -192,34 +192,41 @@ const AdminDashboard = () => {
                             <div className="bg-white shadow rounded-lg p-6">
                                 {viewingAdmission ? (
                                     <div className="space-y-6">
-                                        <div className="flex justify-between items-center border-b pb-4">
-                                            <h3 className="text-2xl font-bold text-gray-900">Application Details</h3>
-                                            <button onClick={() => setViewingAdmission(null)} className="text-gray-400 hover:text-gray-600">
-                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                            </button>
-                                        </div>
-                                        
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="bg-blue-50 p-4 rounded-lg">
-                                                <p className="text-sm text-gray-600 mb-1">Student ID</p>
-                                                <p className="text-lg font-bold text-primary">{viewingAdmission.student_id}</p>
-                                            </div>
-                                            <div className="bg-gray-50 p-4 rounded-lg">
-                                                <p className="text-sm text-gray-600 mb-1">Application Date</p>
-                                                <p className="text-lg font-semibold">{new Date(viewingAdmission.created_at).toLocaleDateString()}</p>
-                                            </div>
-                                            {viewingAdmission.passport_photo && (
-                                                <div className="md:col-span-2 flex justify-center py-4">
-                                                    <div className="bg-white p-2 border rounded shadow-sm">
+                                        <div className="flex flex-col md:flex-row gap-8 items-start bg-gray-50 p-6 rounded-xl border border-gray-100">
+                                            <div className="flex-shrink-0 mx-auto md:mx-0">
+                                                {viewingAdmission.passport_photo ? (
+                                                    <div className="bg-white p-2 border rounded-lg shadow-md ring-4 ring-primary/5">
                                                         <img 
                                                             src={viewingAdmission.passport_photo.startsWith('http') ? viewingAdmission.passport_photo : `${API_URL}${viewingAdmission.passport_photo}`} 
                                                             alt="Passport Photograph" 
-                                                            className="h-40 w-40 object-cover rounded"
+                                                            className="h-48 w-48 object-cover rounded-md"
                                                         />
-                                                        <p className="text-center text-xs text-gray-500 mt-2 font-medium uppercase tracking-wider">Passport Photograph</p>
+                                                        <p className="text-center text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-widest">Passport Photo</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="h-48 w-48 rounded-lg bg-gray-200 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300">
+                                                        <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="flex-1 w-full space-y-4">
+                                                <div className="flex flex-wrap gap-4">
+                                                    <div className="bg-primary/10 px-4 py-2 rounded-lg border border-primary/20">
+                                                        <p className="text-[10px] uppercase font-bold text-primary tracking-wider mb-1">Student ID</p>
+                                                        <p className="text-xl font-black text-gray-900 leading-none">{viewingAdmission.student_id}</p>
+                                                    </div>
+                                                    <div className="bg-white px-4 py-2 rounded-lg border border-gray-200">
+                                                        <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Application Date</p>
+                                                        <p className="text-xl font-bold text-gray-700 leading-none">{new Date(viewingAdmission.created_at).toLocaleDateString()}</p>
                                                     </div>
                                                 </div>
-                                            )}
+                                                <div>
+                                                    <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Full Identity</p>
+                                                    <p className="text-3xl font-black text-gray-900">{viewingAdmission.student_name}</p>
+                                                    <p className="text-lg text-primary font-bold">Applying for {viewingAdmission.class_applying_for}</p>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div className="border-t pt-6">
@@ -282,7 +289,20 @@ const AdminDashboard = () => {
                                 ) : editingAdmission ? (
                                     <form onSubmit={handleUpdateAdmission} className="space-y-6">
                                         <div className="flex justify-between items-center border-b pb-4">
-                                            <h3 className="text-xl font-bold text-gray-900">Edit Applicant: {editingAdmission.student_name}</h3>
+                                            <div className="flex items-center space-x-4">
+                                                {editingAdmission.passport_photo ? (
+                                                    <img 
+                                                        src={editingAdmission.passport_photo.startsWith('http') ? editingAdmission.passport_photo : `${API_URL}${editingAdmission.passport_photo}`} 
+                                                        alt="" 
+                                                        className="h-12 w-12 rounded-full object-cover border-2 border-primary"
+                                                    />
+                                                ) : (
+                                                    <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
+                                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                                                    </div>
+                                                )}
+                                                <h3 className="text-xl font-bold text-gray-900">Edit Applicant: {editingAdmission.student_name}</h3>
+                                            </div>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div>
