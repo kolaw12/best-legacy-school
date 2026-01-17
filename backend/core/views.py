@@ -29,9 +29,11 @@ class AdmissionViewSet(viewsets.ModelViewSet):
         instance = serializer.save(student_id=generated_id)
         
         # Send confirmation email
-        send_mail(
-            subject=f"Admission Application Received - {instance.student_name}",
-            message=f"""Dear {instance.parent_name},
+        from django.conf import settings
+        try:
+            send_mail(
+                subject=f"Admission Application Received - {instance.student_name}",
+                message=f"""Dear {instance.parent_name},
 
 Thank you for applying to Best Legacy Divine School.
 
@@ -45,10 +47,12 @@ Our admissions team will review the details and contact you shortly at this emai
 Best regards,
 Admissions Team
 Best Legacy Divine School""",
-            from_email="admissions@bestlegacyschool.com",
-            recipient_list=[instance.email],
-            fail_silently=False,
-        )
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[instance.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            print(f"Error sending email: {e}")
 
 class StudentResultViewSet(viewsets.ModelViewSet):
     queryset = StudentResult.objects.all()

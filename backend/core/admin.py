@@ -16,10 +16,11 @@ class AdmissionAdmin(admin.ModelAdmin):
     @admin.action(description='Send email response to selected applicants')
     def send_email_response(self, request, queryset):
         for admission in queryset:
+            from django.conf import settings
             send_mail(
                 subject=f"Regarding your admission application: {admission.student_name}",
                 message="Thank you for your admission application. We have received your submission and will review it shortly.",
-                from_email="admin@bestlegacyschool.com",
+                from_email=settings.EMAIL_HOST_USER,
                 recipient_list=[admission.email],
                 fail_silently=False,
             )
@@ -47,10 +48,11 @@ class InquiryAdmin(admin.ModelAdmin):
         for inquiry in queryset:
             # In a real app, you might want a form to input the message
             # For now, we'll send a generic acknowledgment or could extend this later
+            from django.conf import settings
             send_mail(
                 subject=f"Re: {inquiry.subject}",
                 message="Thank you for your inquiry. We have received your message and will get back to you shortly.",
-                from_email="admin@bestlegacyschool.com",
+                from_email=settings.EMAIL_HOST_USER,
                 recipient_list=[inquiry.email],
                 fail_silently=False,
             )
