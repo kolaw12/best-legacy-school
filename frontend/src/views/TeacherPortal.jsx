@@ -27,12 +27,12 @@ const TeacherPortal = () => {
     useEffect(() => {
         const storedClass = localStorage.getItem('teacherClass');
         if (!storedClass) {
-            setTeacherClass('JSS 1'); // Fallback
+            setTeacherClass('Nursery 1'); // Fallback
         } else {
             setTeacherClass(storedClass);
         }
-        fetchResults(storedClass || 'JSS 1');
-        fetchClassStudents(storedClass || 'JSS 1');
+        fetchResults(storedClass || 'Nursery 1');
+        fetchClassStudents(storedClass || 'Nursery 1');
     }, [navigate]);
 
     const fetchClassStudents = async (className) => {

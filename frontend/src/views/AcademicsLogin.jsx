@@ -28,7 +28,7 @@ const AcademicsLogin = () => {
                     localStorage.setItem('studentId', identifier);
                     navigate('/academics/student');
                 } else {
-                    localStorage.setItem('teacherClass', user.classAssigned || 'JSS 1');
+                    localStorage.setItem('teacherClass', user.classAssigned || 'Nursery 1');
                     navigate('/academics/teacher');
                 }
             } else {

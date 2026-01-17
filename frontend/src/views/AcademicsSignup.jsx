@@ -5,7 +5,7 @@ const AcademicsSignup = () => {
     const [role, setRole] = useState('student');
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
-    const [classAssigned, setClassAssigned] = useState('JSS 1');
+    const [classAssigned, setClassAssigned] = useState('Nursery 1');
     const navigate = useNavigate();
 
     const handleSignup = (e) => {
@@ -116,12 +116,13 @@ const AcademicsSignup = () => {
                                         onChange={(e) => setClassAssigned(e.target.value)}
                                         className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                                     >
-                                        <option value="JSS 1">JSS 1</option>
-                                        <option value="JSS 2">JSS 2</option>
-                                        <option value="JSS 3">JSS 3</option>
-                                        <option value="SS 1">SS 1</option>
-                                        <option value="SS 2">SS 2</option>
-                                        <option value="SS 3">SS 3</option>
+                                        <option value="Nursery 1">Nursery 1</option>
+                                        <option value="Nursery 2">Nursery 2</option>
+                                        <option value="Primary 1">Primary 1</option>
+                                        <option value="Primary 2">Primary 2</option>
+                                        <option value="Primary 3">Primary 3</option>
+                                        <option value="Primary 4">Primary 4</option>
+                                        <option value="Primary 5">Primary 5</option>
                                     </select>
                                 </div>
                                 <p className="mt-1 text-[10px] text-gray-400 italic">As a teacher, you will only have access to students and results for this class.</p>
