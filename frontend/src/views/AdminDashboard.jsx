@@ -119,6 +119,19 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleSendTestEmail = async () => {
+        const email = window.prompt("Enter an email address to send a test message to:");
+        if (!email) return;
+
+        try {
+            const response = await axios.post(`${API_URL}/api/admissions/test_email/`, { email });
+            alert(response.data.message || "Test email triggered! If you don't see it in 1 minute, check your Spam folder or Render logs for errors.");
+        } catch (error) {
+            console.error('Test email failed:', error);
+            alert("Test failed: " + (error.response?.data?.error || error.message));
+        }
+    };
+
     const fetchInquiries = async () => {
         try {
             const response = await axios.get(`${API_URL}/api/inquiries/`);
@@ -203,8 +216,11 @@ const AdminDashboard = () => {
 
     const Sidebar = () => (
         <div className={`fixed inset-y-0 left-0 bg-gray-900 w-64 text-white transition-transform transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static md:inset-auto z-20 flex flex-col`}>
-            <div className="flex items-center justify-center h-20 border-b border-gray-800">
+            <div className="flex items-center justify-between h-20 px-6 border-b border-gray-800">
                 <h1 className="text-2xl font-bold">Admin Panel</h1>
+                <button onClick={handleSendTestEmail} title="Email Troubleshooter" className="text-gray-400 hover:text-white focus:outline-none">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </button>
             </div>
             <nav className="flex-1 px-4 py-8 space-y-4">
                 <button 

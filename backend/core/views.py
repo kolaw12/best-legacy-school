@@ -1,4 +1,6 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from django.core.mail import send_mail
 from .models import Event, GalleryImage, Inquiry, Admission, StudentResult
 from .serializers import EventSerializer, GalleryImageSerializer, InquirySerializer, AdmissionSerializer, StudentResultSerializer
@@ -18,6 +20,27 @@ class InquiryViewSet(viewsets.ModelViewSet):
 class AdmissionViewSet(viewsets.ModelViewSet):
     queryset = Admission.objects.all()
     serializer_class = AdmissionSerializer
+
+    def _send_email_async(self, subject, message, recipient_list):
+        from django.conf import settings
+        import threading
+        
+        def send():
+            try:
+                print(f"DEBUG: Attempting to send email to {recipient_list}")
+                send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=recipient_list,
+                    fail_silently=False,
+                )
+                print(f"DEBUG: Email sent successfully to {recipient_list}")
+            except Exception as e:
+                print(f"ERROR: Failed to send email to {recipient_list}: {str(e)}")
+        
+        thread = threading.Thread(target=send)
+        thread.start()
 
     def get_queryset(self):
         queryset = Admission.objects.all()
@@ -61,69 +84,54 @@ class AdmissionViewSet(viewsets.ModelViewSet):
         
         instance = serializer.save(student_id=generated_id)
         
-        # Send confirmation email in background thread to avoid blocking the request
-        def send_async_email(inst, gen_id):
-            try:
-                send_mail(
-                    subject=f"Admission Application Received - {inst.student_name}",
-                    message=f"""Dear {inst.parent_name},
+        subject = f"Admission Application Received - {instance.student_name}"
+        message = f"""Dear {instance.parent_name},
 
 Thank you for applying to Best Legacy Divine School.
 
-We have received the admission application for {inst.student_name}.
-Your Student Registration Number (Student ID) is: {gen_id}
+We have received the admission application for {instance.student_name}.
+Your Student Registration Number (Student ID) is: {generated_id}
 
 Please keep this ID safe as it may be required for checking results later.
 
-Our admissions team will review the details and contact you shortly at this email address or via phone ({inst.phone_number}).
+Our admissions team will review the details and contact you shortly.
 
 Best regards,
 Admissions Team
-Best Legacy Divine School""",
-                    from_email=settings.EMAIL_HOST_USER,
-                    recipient_list=[inst.email],
-                    fail_silently=False,
-                )
-            except Exception as email_err:
-                print(f"Error sending email: {email_err}")
-
-        email_thread = threading.Thread(target=send_async_email, args=(instance, generated_id))
-        email_thread.start()
+Best Legacy Divine School"""
+        
+        self._send_email_async(subject, message, [instance.email])
 
     def perform_update(self, serializer):
-        old_instance = self.get_object()
-        new_instance = serializer.save()
+        # Fetch status BEFORE saving to check for changes
+        old_status = self.get_object().status
+        instance = serializer.save()
         
-        # Check if status has changed
-        if old_instance.status != new_instance.status:
-            import threading
-            from django.conf import settings
+        if old_status != instance.status:
+            subject = ""
+            message = ""
             
-            def send_status_email(inst):
-                subject = ""
-                message = ""
-                
-                if inst.status == 'accepted':
-                    subject = f"Admission Accepted - {inst.student_name}"
-                    message = f"""Dear {inst.parent_name},
+            if instance.status == 'accepted':
+                subject = f"Admission Accepted - {instance.student_name}"
+                message = f"""Dear {instance.parent_name},
 
-Congratulations! We are pleased to inform you that {inst.student_name} has been accepted to Best Legacy Divine School.
+Congratulations! We are pleased to inform you that {instance.student_name} has been accepted to Best Legacy Divine School.
 
-Student ID: {inst.student_id}
-Class: {inst.class_applying_for}
+Student ID: {instance.student_id}
+Class: {instance.class_applying_for}
 
 Please visit the school office to complete the registration process.
 
 Best regards,
 Admissions Team
 Best Legacy Divine School"""
-                elif inst.status == 'rejected':
-                    subject = f"Admission Update - {inst.student_name}"
-                    message = f"""Dear {inst.parent_name},
+            elif instance.status == 'rejected':
+                subject = f"Admission Update - {instance.student_name}"
+                message = f"""Dear {instance.parent_name},
 
 Thank you for your interest in Best Legacy Divine School.
 
-After careful review, we regret to inform you that we are unable to offer admission to {inst.student_name} at this time.
+After careful review, we regret to inform you that we are unable to offer admission to {instance.student_name} at this time.
 
 We wish you the best in finding the right placement for your child.
 
@@ -131,20 +139,20 @@ Best regards,
 Admissions Team
 Best Legacy Divine School"""
 
-                if subject and message:
-                    try:
-                        send_mail(
-                            subject=subject,
-                            message=message,
-                            from_email=settings.EMAIL_HOST_USER,
-                            recipient_list=[inst.email],
-                            fail_silently=False,
-                        )
-                    except Exception as e:
-                        print(f"Error sending status email: {e}")
+            if subject and message:
+                self._send_email_async(subject, message, [instance.email])
 
-            email_thread = threading.Thread(target=send_status_email, args=(new_instance,))
-            email_thread.start()
+    @action(detail=False, methods=['post'])
+    def test_email(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Email is required'}, status=400)
+            
+        subject = "Test Email - Best Legacy Divine School"
+        message = "This is a test email to verify that your school website's email system is working correctly."
+        
+        self._send_email_async(subject, message, [email])
+        return Response({'message': f'Test email triggered for {email}. Please check your inbox (and spam folder) in a few seconds.'})
 
 class StudentResultViewSet(viewsets.ModelViewSet):
     queryset = StudentResult.objects.all()
