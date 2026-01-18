@@ -12,11 +12,11 @@ const Gallery = () => {
     }, []);
 
     const staticImages = [
-        { id: 's1', image: 'gallery/fun_in_the_pool.jpg', alt: 'Fun in the pool' },
-        { id: 's2', image: 'gallery/staff_members.jpg', alt: 'Our dedicated staff' },
-        { id: 's3', image: 'gallery/school_ceremony.jpg', alt: 'Students at a school ceremony' },
-        { id: 's4', image: 'gallery/group_celebration.jpg', alt: 'Group celebration' },
-        { id: 's5', image: 'gallery/cultural_day.jpg', alt: 'Cultural day performance' },
+        { id: 's1', image: '/fun_in_the_pool.jpg', alt: 'Fun in the pool' },
+        { id: 's2', image: '/staff_members.jpg', alt: 'Our dedicated staff' },
+        { id: 's3', image: '/school_ceremony.jpg', alt: 'Students at a school ceremony' },
+        { id: 's4', image: '/group_celebration.jpg', alt: 'Group celebration' },
+        { id: 's5', image: '/cultural_day.jpg', alt: 'Cultural day performance' },
     ];
 
     const fetchImages = async () => {
@@ -35,10 +35,9 @@ const Gallery = () => {
         if (!path) return null;
         if (path.startsWith('http')) return path;
         
-        // Handle static images in the public folder
-        if (path.startsWith('gallery/')) {
-            // Use the absolute path from the site root
-            return `${window.location.origin}/${path}`;
+        // Handle images in the public folder (starting with /)
+        if (path.startsWith('/')) {
+            return path;
         }
         
         const cleanPath = path.startsWith('/') ? path : `/${path}`;
