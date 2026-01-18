@@ -12,30 +12,35 @@ const Gallery = () => {
     }, []);
 
     const staticImages = [
-        { id: 's1', image: '/gallery/fun_in_the_pool.jpg', alt: 'Fun in the pool' },
-        { id: 's2', image: '/gallery/staff_members.jpg', alt: 'Our dedicated staff' },
-        { id: 's3', image: '/gallery/school_ceremony.jpg', alt: 'Students at a school ceremony' },
-        { id: 's4', image: '/gallery/group_celebration.jpg', alt: 'Group celebration' },
-        { id: 's5', image: '/gallery/cultural_day.jpg', alt: 'Cultural day performance' },
+        { id: 's1', image: 'gallery/fun_in_the_pool.jpg', alt: 'Fun in the pool' },
+        { id: 's2', image: 'gallery/staff_members.jpg', alt: 'Our dedicated staff' },
+        { id: 's3', image: 'gallery/school_ceremony.jpg', alt: 'Students at a school ceremony' },
+        { id: 's4', image: 'gallery/group_celebration.jpg', alt: 'Group celebration' },
+        { id: 's5', image: 'gallery/cultural_day.jpg', alt: 'Cultural day performance' },
     ];
 
     const fetchImages = async () => {
         try {
             const response = await axios.get(`${API_URL}/api/gallery/`);
-            // Combine static images with API images
             setImages([...staticImages, ...response.data]);
             setLoading(false);
         } catch (error) {
             console.error('Error fetching gallery images:', error);
-            setImages(staticImages); // Fallback to only static images
+            setImages(staticImages);
             setLoading(false);
         }
     };
 
     const getImageUrl = (path) => {
         if (!path) return null;
-        // If it's a full URL or a static path (starts with /gallery or /school), return as is
-        if (path.startsWith('http') || path.startsWith('/gallery') || path.startsWith('/school')) return path;
+        if (path.startsWith('http')) return path;
+        
+        // Handle static images in the public folder
+        if (path.startsWith('gallery/')) {
+            // Use the absolute path from the site root
+            return `${window.location.origin}/${path}`;
+        }
+        
         const cleanPath = path.startsWith('/') ? path : `/${path}`;
         return `${API_URL}${cleanPath}`;
     };
