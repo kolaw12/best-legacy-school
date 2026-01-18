@@ -34,7 +34,8 @@ const Gallery = () => {
 
     const getImageUrl = (path) => {
         if (!path) return null;
-        if (path.startsWith('http')) return path;
+        // If it's a full URL or a static path (starts with /gallery or /school), return as is
+        if (path.startsWith('http') || path.startsWith('/gallery') || path.startsWith('/school')) return path;
         const cleanPath = path.startsWith('/') ? path : `/${path}`;
         return `${API_URL}${cleanPath}`;
     };
