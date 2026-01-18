@@ -11,13 +11,23 @@ const Gallery = () => {
         fetchImages();
     }, []);
 
+    const staticImages = [
+        { id: 's1', image: '/gallery/fun_in_the_pool.jpg', alt: 'Fun in the pool' },
+        { id: 's2', image: '/gallery/staff_members.jpg', alt: 'Our dedicated staff' },
+        { id: 's3', image: '/gallery/school_ceremony.jpg', alt: 'Students at a school ceremony' },
+        { id: 's4', image: '/gallery/group_celebration.jpg', alt: 'Group celebration' },
+        { id: 's5', image: '/gallery/cultural_day.jpg', alt: 'Cultural day performance' },
+    ];
+
     const fetchImages = async () => {
         try {
             const response = await axios.get(`${API_URL}/api/gallery/`);
-            setImages(response.data);
+            // Combine static images with API images
+            setImages([...staticImages, ...response.data]);
             setLoading(false);
         } catch (error) {
             console.error('Error fetching gallery images:', error);
+            setImages(staticImages); // Fallback to only static images
             setLoading(false);
         }
     };
