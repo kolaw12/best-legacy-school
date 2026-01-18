@@ -28,26 +28,35 @@ const Gallery = () => {
     const fetchImages = async () => {
         try {
             const response = await axios.get(`${API_URL}/api/gallery/`);
-            setImages([...staticImages, ...response.data]);
-            setLoading(false);
+            // Dynamic images from DB
+            const dbImages = response.data.map(img => ({
+                ...img,
+                isDynamic: true
+            }));
+            setImages([...staticImages, ...dbImages]);
         } catch (error) {
             console.error('Error fetching gallery images:', error);
             setImages(staticImages);
+        } finally {
             setLoading(false);
         }
     };
 
-    const getImageUrl = (path) => {
-        if (!path) return null;
-        if (path.startsWith('http')) return path;
-        
-        // Handle images in the public folder (starting with /)
-        if (path.startsWith('/')) {
-            return path;
+    const getImageUrl = (img) => {
+        if (!img) return null;
+        // If it's one of our bundled assets, it's already a processed URL
+        if (typeof img.image === 'string' && (img.image.startsWith('http') || img.image.startsWith('data:') || img.image.startsWith('/static/') || img.image.startsWith('/assets/'))) {
+            return img.image;
         }
-        
-        const cleanPath = path.startsWith('/') ? path : `/${path}`;
-        return `${API_URL}${cleanPath}`;
+        // If it's a dynamic image from backend
+        if (img.isDynamic) {
+            const path = img.image;
+            if (path.startsWith('http')) return path;
+            const cleanPath = path.startsWith('/') ? path : `/${path}`;
+            return `${API_URL}${cleanPath}`;
+        }
+        // Fallback for static assets that might just be the imported object
+        return img.image;
     };
 
     return (
@@ -73,24 +82,23 @@ const Gallery = () => {
                             <div key={img.id} className="group relative shadow-lg rounded-lg overflow-hidden cursor-pointer hover:shadow-xl transition duration-300">
                                 <div className="w-full h-64 bg-gray-200 overflow-hidden">
                                     <img 
-                                        src={getImageUrl(img.image)} 
-                                        alt={img.alt || 'Gallery Image'} 
+                                        src={getImageUrl(img)} 
+                                        alt={img.alt || img.caption || 'Gallery Image'} 
                                         className="w-full h-full object-center object-cover group-hover:scale-110 transition duration-500" 
                                         onError={(e) => {
-                                            e.target.src = 'https://via.placeholder.com/400x300?text=Image+Not+Found';
+                                            if (!e.target.src.includes('placeholder')) {
+                                                e.target.src = 'https://via.placeholder.com/400x300?text=Image+Not+Found';
+                                            }
                                         }}
                                     />
                                 </div>
-                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition duration-300 flex items-center justify-center">
-                                    <span className="text-white opacity-0 group-hover:opacity-100 font-bold text-lg">{img.alt || 'Best Legacy School'}</span>
+                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition duration-300 flex items-center justify-center text-center px-4">
+                                    <span className="text-white opacity-0 group-hover:opacity-100 font-bold text-lg">
+                                        {img.alt || img.caption || 'Best Legacy School'}
+                                    </span>
                                 </div>
                             </div>
                         ))}
-                        {images.length === 0 && (
-                            <div className="col-span-full text-center py-20 text-gray-400 italic">
-                                No memories shared yet. Check back soon!
-                            </div>
-                        )}
                     </div>
                 )}
             </div>

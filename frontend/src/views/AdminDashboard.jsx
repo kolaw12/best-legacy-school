@@ -37,7 +37,11 @@ const ImageWithFallback = ({ src, apiUrl, alt = "Image", className = "h-48 w-48 
 const AdminDashboard = () => {
     const [inquiries, setInquiries] = useState([]);
     const [admissions, setAdmissions] = useState([]);
-    const [activeTab, setActiveTab] = useState('inquiries'); // 'inquiries' | 'admissions'
+    const [activeTab, setActiveTab] = useState('inquiries'); // 'inquiries' | 'admissions' | 'gallery'
+    const [gallery, setGallery] = useState([]);
+    const [newPhoto, setNewPhoto] = useState(null);
+    const [caption, setCaption] = useState('');
+    const [galleryLoading, setGalleryLoading] = useState(false);
     const [editingAdmission, setEditingAdmission] = useState(null);
     const [viewingAdmission, setViewingAdmission] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile toggle
@@ -51,7 +55,52 @@ const AdminDashboard = () => {
         }
         fetchInquiries();
         fetchAdmissions();
+        fetchGallery();
     }, [navigate]);
+
+    const fetchGallery = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/api/gallery/`);
+            setGallery(response.data);
+        } catch (error) {
+            console.error('Error fetching gallery:', error);
+        }
+    };
+
+    const handlePhotoUpload = async (e) => {
+        e.preventDefault();
+        if (!newPhoto) return;
+        
+        setGalleryLoading(true);
+        const data = new FormData();
+        data.append('image', newPhoto);
+        data.append('caption', caption);
+
+        try {
+            await axios.post(`${API_URL}/api/gallery/`, data, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setCaption('');
+            setNewPhoto(null);
+            e.target.reset();
+            fetchGallery();
+        } catch (error) {
+            console.error('Error uploading photo:', error);
+            alert('Failed to upload photo');
+        } finally {
+            setGalleryLoading(false);
+        }
+    };
+
+    const handleDeletePhoto = async (id) => {
+        if (!window.confirm('Delete this photo?')) return;
+        try {
+            await axios.delete(`${API_URL}/api/gallery/${id}/`);
+            fetchGallery();
+        } catch (error) {
+            console.error('Error deleting photo:', error);
+        }
+    };
 
     const fetchInquiries = async () => {
         try {
@@ -154,6 +203,13 @@ const AdminDashboard = () => {
                 >
                     <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     Admissions
+                </button>
+                <button 
+                    onClick={() => { setActiveTab('gallery'); setSidebarOpen(false); }}
+                    className={`flex items-center w-full px-4 py-3 rounded transition-colors ${activeTab === 'gallery' ? 'bg-primary text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
+                >
+                    <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Gallery
                 </button>
             </nav>
             <div className="p-4 border-t border-gray-800">
@@ -420,6 +476,73 @@ const AdminDashboard = () => {
                                         </table>
                                     </div>
                                 )}
+                            </div>
+                        )}
+
+                        {activeTab === 'gallery' && (
+                            <div className="space-y-6">
+                                <div className="bg-white shadow rounded-lg p-6">
+                                    <h3 className="text-lg font-bold mb-4">Add New Photo</h3>
+                                    <form onSubmit={handlePhotoUpload} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700">Caption</label>
+                                            <input 
+                                                type="text" 
+                                                value={caption}
+                                                onChange={(e) => setCaption(e.target.value)}
+                                                placeholder="e.g. Science Laboratory"
+                                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-primary focus:border-primary sm:text-sm"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Photo</label>
+                                            <input 
+                                                type="file" 
+                                                accept="image/*"
+                                                onChange={(e) => setNewPhoto(e.target.files[0])}
+                                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary-dark"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="md:col-span-3">
+                                            <button 
+                                                type="submit" 
+                                                disabled={galleryLoading}
+                                                className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition"
+                                            >
+                                                {galleryLoading ? 'Uploading...' : 'Upload Photo to Gallery'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {gallery.map((photo) => (
+                                        <div key={photo.id} className="bg-white rounded-lg shadow overflow-hidden relative group">
+                                            <ImageWithFallback 
+                                                src={photo.image}
+                                                apiUrl={API_URL}
+                                                alt={photo.caption}
+                                                className="w-full h-48 object-cover"
+                                            />
+                                            <div className="p-3">
+                                                <p className="text-sm font-medium truncate">{photo.caption}</p>
+                                                <button 
+                                                    onClick={() => handleDeletePhoto(photo.id)}
+                                                    className="mt-2 text-red-600 hover:text-red-900 text-xs font-bold uppercase tracking-wider"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {gallery.length === 0 && (
+                                        <div className="col-span-full text-center py-12 bg-white rounded-lg text-gray-500 italic">
+                                            No photos in gallery yet.
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
