@@ -32,6 +32,9 @@ class AdmissionViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Generate Student ID
         import datetime
+        import threading
+        from django.conf import settings
+
         year = datetime.date.today().year
         prefix = f"BLS/{year}/"
         
@@ -58,31 +61,34 @@ class AdmissionViewSet(viewsets.ModelViewSet):
         
         instance = serializer.save(student_id=generated_id)
         
-        # Send confirmation email
-        from django.conf import settings
-        try:
-            send_mail(
-                subject=f"Admission Application Received - {instance.student_name}",
-                message=f"""Dear {instance.parent_name},
+        # Send confirmation email in background thread to avoid blocking the request
+        def send_async_email(inst, gen_id):
+            try:
+                send_mail(
+                    subject=f"Admission Application Received - {inst.student_name}",
+                    message=f"""Dear {inst.parent_name},
 
 Thank you for applying to Best Legacy Divine School.
 
-We have received the admission application for {instance.student_name}.
-Your Student Registration Number (Student ID) is: {generated_id}
+We have received the admission application for {inst.student_name}.
+Your Student Registration Number (Student ID) is: {gen_id}
 
 Please keep this ID safe as it may be required for checking results later.
 
-Our admissions team will review the details and contact you shortly at this email address or via phone ({instance.phone_number}).
+Our admissions team will review the details and contact you shortly at this email address or via phone ({inst.phone_number}).
 
 Best regards,
 Admissions Team
 Best Legacy Divine School""",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[instance.email],
-                fail_silently=False,
-            )
-        except Exception as e:
-            print(f"Error sending email: {e}")
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[inst.email],
+                    fail_silently=False,
+                )
+            except Exception as email_err:
+                print(f"Error sending email: {email_err}")
+
+        email_thread = threading.Thread(target=send_async_email, args=(instance, generated_id))
+        email_thread.start()
 
 class StudentResultViewSet(viewsets.ModelViewSet):
     queryset = StudentResult.objects.all()

@@ -16,7 +16,7 @@ const Admissions = () => {
         address: ''
     });
     const [passport_photo, setPassportPhoto] = useState(null);
-    const [status, setStatus] = useState('');
+    const [status, setStatus] = useState({ type: '', message: '' });
 
     const handleChange = (e) => {
         if (e.target.name === 'passport_photo') {
@@ -28,51 +28,57 @@ const Admissions = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setStatus('sending');
+        setStatus({ type: 'sending', message: 'Submitting application...' });
         
         const data = new FormData();
-        // Append all form data
         Object.keys(formData).forEach(key => {
             data.append(key, formData[key]);
         });
         
-        // Append photo if it exists
         if (passport_photo) {
             data.append('passport_photo', passport_photo);
         }
 
         try {
-            console.log('Attempting to submit to:', `${API_URL}/api/admissions/`);
             const response = await axios.post(`${API_URL}/api/admissions/`, data, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
             console.log('Submission successful:', response.data);
-            setStatus('success');
+            setStatus({ type: 'success', message: 'Application submitted successfully! Your ID is: ' + response.data.student_id });
+            
+            // Reset form
             setFormData({
                 student_name: '', date_of_birth: '', gender: 'M', class_applying_for: '',
                 previous_school: '', parent_name: '', phone_number: '', email: '', address: ''
             });
             setPassportPhoto(null);
-        } catch (error) {
-            console.error('Submission FAILED!');
-            console.error('URL:', `${API_URL}/api/admissions/`);
+            // Reset file input
+            e.target.reset();
             
-            if (error.response) {
-                // Server responded with a status code outside the 2xx range
-                console.error('Backend Error Data:', error.response.data);
-                console.error('Status:', error.response.status);
-                setStatus(`error: ${JSON.stringify(error.response.data)}`);
+            // Scroll to top to see success message
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+        } catch (error) {
+            console.error('Submission FAILED!', error);
+            let errorMessage = 'Failed to submit application. Please try again.';
+            
+            if (error.response && error.response.data) {
+                const data = error.response.data;
+                if (typeof data === 'object') {
+                    errorMessage = Object.entries(data)
+                        .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(', ') : val}`)
+                        .join('\n');
+                } else if (typeof data === 'string') {
+                    errorMessage = data;
+                }
             } else if (error.request) {
-                // Request was made but no response was received
-                console.error('No response received from server. Check if backend is running and CORS is allowed.');
-                setStatus('error: Network error - No response from server');
-            } else {
-                // Something happened in setting up the request
-                console.error('Request setup error:', error.message);
-                setStatus(`error: ${error.message}`);
+                errorMessage = 'No response from server. Please check your internet connection.';
             }
+
+            setStatus({ type: 'error', message: errorMessage });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
 
@@ -91,20 +97,19 @@ const Admissions = () => {
                     </div>
 
                     <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md">
-                     {status === 'success' && (
+                     {status.type === 'success' && (
                         <div className="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
                             <strong className="font-bold">Application Submitted!</strong>
-                            <span className="block sm:inline"> We will review your application and contact you shortly.</span>
+                            <span className="block sm:inline"> {status.message}</span>
                         </div>
                     )}
 
-                     {status.startsWith('error') && (
+                     {status.type === 'error' && (
                         <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
                             <strong className="font-bold">Submission Failed!</strong>
-                            <span className="block sm:inline"> {status.replace('error: ', '')}</span>
-                            <div className="text-xs mt-2 font-bold space-y-1">
-                                <p>Target API: <code className="bg-red-200 px-1 rounded">{API_URL}</code></p>
-                                <p>Please check your internet connection or ensure the backend server is running.</p>
+                            <pre className="mt-2 text-sm whitespace-pre-wrap">{status.message}</pre>
+                            <div className="text-xs mt-3 opacity-75">
+                                <p>If this persists, please contact support or try again later.</p>
                             </div>
                         </div>
                     )}
@@ -178,9 +183,9 @@ const Admissions = () => {
                         </div>
 
                         <div className="pt-4">
-                            <button type="submit" disabled={status === 'sending'}
+                            <button type="submit" disabled={status.type === 'sending'}
                                 className="w-full inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-300">
-                                {status === 'sending' ? 'Submitting...' : 'Submit Application'}
+                                {status.type === 'sending' ? 'Submitting...' : 'Submit Application'}
                             </button>
                         </div>
                     </form>
