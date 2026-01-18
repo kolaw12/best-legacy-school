@@ -37,7 +37,7 @@ const ImageWithFallback = ({ src, apiUrl, alt = "Image", className = "h-48 w-48 
 const AdminDashboard = () => {
     const [inquiries, setInquiries] = useState([]);
     const [admissions, setAdmissions] = useState([]);
-    const [activeTab, setActiveTab] = useState('inquiries'); // 'inquiries' | 'admissions' | 'gallery'
+    const [activeTab, setActiveTab] = useState('inquiries'); // 'inquiries' | 'admissions' | 'students' | 'gallery'
     const [gallery, setGallery] = useState([]);
     const [newPhoto, setNewPhoto] = useState(null);
     const [caption, setCaption] = useState('');
@@ -99,6 +99,23 @@ const AdminDashboard = () => {
             fetchGallery();
         } catch (error) {
             console.error('Error deleting photo:', error);
+        }
+    };
+
+    const updateAdmissionStatus = async (id, newStatus) => {
+        const confirmMsg = newStatus === 'accepted' ? 'Accept this student?' : 
+                         newStatus === 'rejected' ? 'Reject this application? They will receive an email notification.' :
+                         'Revoke this student admission?';
+        
+        if (!window.confirm(confirmMsg)) return;
+
+        try {
+            await axios.patch(`${API_URL}/api/admissions/${id}/`, { status: newStatus });
+            fetchAdmissions();
+            if (viewingAdmission) setViewingAdmission(null);
+        } catch (error) {
+            console.error('Error updating status:', error);
+            alert('Failed to update status');
         }
     };
 
@@ -201,8 +218,15 @@ const AdminDashboard = () => {
                     onClick={() => { setActiveTab('admissions'); setSidebarOpen(false); }}
                     className={`flex items-center w-full px-4 py-3 rounded transition-colors ${activeTab === 'admissions' ? 'bg-primary text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
                 >
-                    <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
                     Admissions
+                </button>
+                <button 
+                    onClick={() => { setActiveTab('students'); setSidebarOpen(false); }}
+                    className={`flex items-center w-full px-4 py-3 rounded transition-colors ${activeTab === 'students' ? 'bg-primary text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
+                >
+                    <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Students
                 </button>
                 <button 
                     onClick={() => { setActiveTab('gallery'); setSidebarOpen(false); }}
@@ -364,8 +388,23 @@ const AdminDashboard = () => {
                                             <button onClick={() => handleDeleteAdmission(viewingAdmission.id)} className="bg-red-500 text-white py-2 px-6 rounded-md shadow-sm hover:bg-red-600 font-medium">
                                                 Delete Record
                                             </button>
+                                            {viewingAdmission.status === 'pending' && (
+                                                <>
+                                                    <button onClick={() => updateAdmissionStatus(viewingAdmission.id, 'rejected')} className="bg-gray-500 text-white py-2 px-6 rounded-md shadow-sm hover:bg-gray-600 font-medium">
+                                                        Reject
+                                                    </button>
+                                                    <button onClick={() => updateAdmissionStatus(viewingAdmission.id, 'accepted')} className="bg-green-600 text-white py-2 px-6 rounded-md shadow-sm hover:bg-green-700 font-medium">
+                                                        Accept 
+                                                    </button>
+                                                </>
+                                            )}
+                                            {viewingAdmission.status === 'accepted' && (
+                                                <button onClick={() => updateAdmissionStatus(viewingAdmission.id, 'pending')} className="bg-yellow-500 text-white py-2 px-6 rounded-md shadow-sm hover:bg-yellow-600 font-medium">
+                                                    Revoke Admission
+                                                </button>
+                                            )}
                                             <button onClick={() => handleEditAdmission(viewingAdmission)} className="bg-primary text-white py-2 px-6 rounded-md shadow-sm hover:bg-primary-dark font-medium">
-                                                Edit Information
+                                                Edit Info
                                             </button>
                                         </div>
                                     </div>
@@ -464,6 +503,12 @@ const AdminDashboard = () => {
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{admission.phone_number}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                                                             <button onClick={() => handleViewAdmission(admission)} className="text-blue-600 hover:text-blue-900 font-bold">View</button>
+                                                            {admission.status === 'pending' && (
+                                                                <>
+                                                                    <button onClick={() => updateAdmissionStatus(admission.id, 'accepted')} className="text-green-600 hover:text-green-900 font-bold">Accept</button>
+                                                                    <button onClick={() => updateAdmissionStatus(admission.id, 'rejected')} className="text-gray-600 hover:text-gray-900 font-bold">Reject</button>
+                                                                </>
+                                                            )}
                                                             <button onClick={() => handleEditAdmission(admission)} className="text-indigo-600 hover:text-indigo-900 font-bold">Edit</button>
                                                             <button onClick={() => handleDeleteAdmission(admission.id)} className="text-red-600 hover:text-red-900 font-bold">Delete</button>
                                                         </td>
@@ -476,6 +521,58 @@ const AdminDashboard = () => {
                                         </table>
                                     </div>
                                 )}
+                            </div>
+                        )}
+
+                        {activeTab === 'students' && (
+                            <div className="bg-white shadow rounded-lg p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-bold text-gray-900">Registered Students</h3>
+                                    <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-bold">
+                                        Total: {admissions.filter(a => a.status === 'accepted').length}
+                                    </span>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parent</th>
+                                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {admissions.filter(a => a.status === 'accepted').map((student) => (
+                                                <tr key={student.id} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="h-10 w-10 rounded-full overflow-hidden border border-gray-100 flex items-center justify-center bg-gray-50">
+                                                            <ImageWithFallback 
+                                                                src={student.passport_photo} 
+                                                                apiUrl={API_URL}
+                                                                alt="Student"
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-primary">{student.student_id}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{student.student_name}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{student.class_applying_for}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{student.parent_name}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <button onClick={() => handleViewAdmission(student)} className="text-blue-600 hover:text-blue-900 font-bold mr-4">Details</button>
+                                                        <button onClick={() => updateAdmissionStatus(student.id, 'pending')} className="text-red-600 hover:text-red-900 font-bold">Revoke</button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {admissions.filter(a => a.status === 'accepted').length === 0 && (
+                                                <tr><td colSpan="6" className="px-6 py-4 text-center text-gray-500">No students registered yet.</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
 

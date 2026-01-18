@@ -90,6 +90,62 @@ Best Legacy Divine School""",
         email_thread = threading.Thread(target=send_async_email, args=(instance, generated_id))
         email_thread.start()
 
+    def perform_update(self, serializer):
+        old_instance = self.get_object()
+        new_instance = serializer.save()
+        
+        # Check if status has changed
+        if old_instance.status != new_instance.status:
+            import threading
+            from django.conf import settings
+            
+            def send_status_email(inst):
+                subject = ""
+                message = ""
+                
+                if inst.status == 'accepted':
+                    subject = f"Admission Accepted - {inst.student_name}"
+                    message = f"""Dear {inst.parent_name},
+
+Congratulations! We are pleased to inform you that {inst.student_name} has been accepted to Best Legacy Divine School.
+
+Student ID: {inst.student_id}
+Class: {inst.class_applying_for}
+
+Please visit the school office to complete the registration process.
+
+Best regards,
+Admissions Team
+Best Legacy Divine School"""
+                elif inst.status == 'rejected':
+                    subject = f"Admission Update - {inst.student_name}"
+                    message = f"""Dear {inst.parent_name},
+
+Thank you for your interest in Best Legacy Divine School.
+
+After careful review, we regret to inform you that we are unable to offer admission to {inst.student_name} at this time.
+
+We wish you the best in finding the right placement for your child.
+
+Best regards,
+Admissions Team
+Best Legacy Divine School"""
+
+                if subject and message:
+                    try:
+                        send_mail(
+                            subject=subject,
+                            message=message,
+                            from_email=settings.EMAIL_HOST_USER,
+                            recipient_list=[inst.email],
+                            fail_silently=False,
+                        )
+                    except Exception as e:
+                        print(f"Error sending status email: {e}")
+
+            email_thread = threading.Thread(target=send_status_email, args=(new_instance,))
+            email_thread.start()
+
 class StudentResultViewSet(viewsets.ModelViewSet):
     queryset = StudentResult.objects.all()
     serializer_class = StudentResultSerializer
