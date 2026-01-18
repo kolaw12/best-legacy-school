@@ -3,6 +3,12 @@ import axios from 'axios';
 import PageHero from '../components/PageHero';
 import API_URL from '../config/api';
 
+import funPool from '../assets/fun_in_the_pool.jpg';
+import staffImg from '../assets/staff_members.jpg';
+import ceremonyImg from '../assets/school_ceremony.jpg';
+import groupImg from '../assets/group_celebration.jpg';
+import culturalImg from '../assets/cultural_day.jpg';
+
 const Gallery = () => {
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -12,11 +18,11 @@ const Gallery = () => {
     }, []);
 
     const staticImages = [
-        { id: 's1', image: '/fun_in_the_pool.jpg', alt: 'Fun in the pool' },
-        { id: 's2', image: '/staff_members.jpg', alt: 'Our dedicated staff' },
-        { id: 's3', image: '/school_ceremony.jpg', alt: 'Students at a school ceremony' },
-        { id: 's4', image: '/group_celebration.jpg', alt: 'Group celebration' },
-        { id: 's5', image: '/cultural_day.jpg', alt: 'Cultural day performance' },
+        { id: 's1', image: funPool, alt: 'Fun in the pool' },
+        { id: 's2', image: staffImg, alt: 'Our dedicated staff' },
+        { id: 's3', image: ceremonyImg, alt: 'Students at a school ceremony' },
+        { id: 's4', image: groupImg, alt: 'Group celebration' },
+        { id: 's5', image: culturalImg, alt: 'Cultural day performance' },
     ];
 
     const fetchImages = async () => {
