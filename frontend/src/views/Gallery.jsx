@@ -92,8 +92,8 @@ const Gallery = () => {
                                         }}
                                     />
                                 </div>
-                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition duration-300 flex items-center justify-center text-center px-4">
-                                    <span className="text-white opacity-0 group-hover:opacity-100 font-bold text-lg">
+                                <div className="absolute inset-0 bg-transparent group-hover:bg-black/40 transition-colors duration-300 flex items-center justify-center text-center px-4">
+                                    <span className="text-white opacity-0 group-hover:opacity-100 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                                         {img.alt || img.caption || 'Best Legacy School'}
                                     </span>
                                 </div>
