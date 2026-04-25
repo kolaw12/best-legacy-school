@@ -287,30 +287,34 @@ const AdminDashboard = () => {
                             <div className="bg-white shadow rounded-lg overflow-hidden">
                                 <ul className="divide-y divide-gray-200">
                                     {inquiries.map((inquiry) => (
-                                        <li key={inquiry.id} className="p-6 hover:bg-gray-50 transition">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h3 className="text-lg font-medium text-primary">{inquiry.subject}</h3>
-                                                <span className={`px-2 py-1 text-xs font-semibold rounded-full 
+                                        <li key={inquiry.id} className="p-4 md:p-6 hover:bg-gray-50 transition">
+                                            <div className="flex flex-col sm:flex-row justify-between items-start mb-2 gap-2">
+                                                <h3 className="text-lg font-bold text-primary leading-tight">{inquiry.subject}</h3>
+                                                <span className={`px-2 py-1 text-[10px] font-black uppercase tracking-widest rounded-full 
                                                     ${inquiry.status === 'new' ? 'bg-green-100 text-green-800' : 
                                                       inquiry.status === 'read' ? 'bg-yellow-100 text-yellow-800' : 
                                                       'bg-gray-100 text-gray-800'}`}>
-                                                    {inquiry.status.toUpperCase()}
+                                                    {inquiry.status}
                                                 </span>
                                             </div>
-                                            <p className="text-sm text-gray-500 mb-4">{inquiry.name} • {inquiry.email}</p>
-                                            <p className="text-gray-700 bg-gray-50 p-3 rounded mb-4">{inquiry.message}</p>
-                                             <div className="flex space-x-3">
+                                            <div className="flex flex-col sm:flex-row sm:items-center text-xs text-gray-500 mb-4 gap-1 sm:gap-2">
+                                                <span className="font-bold">{inquiry.name}</span>
+                                                <span className="hidden sm:inline">•</span>
+                                                <span>{inquiry.email}</span>
+                                            </div>
+                                            <div className="text-sm text-gray-700 bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100 leading-relaxed">{inquiry.message}</div>
+                                             <div className="flex flex-wrap items-center gap-3">
                                                  {inquiry.status === 'new' && (
-                                                    <button onClick={() => updateStatus(inquiry.id, 'read')} className="text-indigo-600 hover:text-indigo-900 font-medium">Mark as Read</button>
+                                                    <button onClick={() => updateStatus(inquiry.id, 'read')} className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg text-xs font-black uppercase hover:bg-indigo-600 hover:text-white transition">Mark as Read</button>
                                                 )}
                                                 {inquiry.status !== 'responded' && (
-                                                    <button onClick={() => updateStatus(inquiry.id, 'responded')} className="text-green-600 hover:text-green-900 font-medium">Mark as Responded</button>
+                                                    <button onClick={() => updateStatus(inquiry.id, 'responded')} className="bg-green-50 text-green-700 px-4 py-2 rounded-lg text-xs font-black uppercase hover:bg-green-600 hover:text-white transition">Mark as Responded</button>
                                                 )}
-                                                <p className="text-xs text-gray-400 ml-auto pt-2">{new Date(inquiry.created_at).toLocaleString()}</p>
+                                                <p className="text-[10px] text-gray-400 ml-auto font-bold uppercase tracking-tighter">{new Date(inquiry.created_at).toLocaleString()}</p>
                                             </div>
                                         </li>
                                     ))}
-                                    {inquiries.length === 0 && <li className="p-6 text-center text-gray-500">No inquiries found.</li>}
+                                    {inquiries.length === 0 && <li className="p-10 text-center text-gray-400 italic">No inquiries found.</li>}
                                 </ul>
                             </div>
                         )}
@@ -487,7 +491,8 @@ const AdminDashboard = () => {
                                     </form>
                                 ) : (
                                     <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200">
+                                        {/* Desktop Table View */}
+                                        <table className="hidden md:table min-w-full divide-y divide-gray-200">
                                             <thead className="bg-gray-50">
                                                 <tr>
                                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
@@ -530,11 +535,56 @@ const AdminDashboard = () => {
                                                         </td>
                                                     </tr>
                                                 ))}
-                                                {admissions.length === 0 && (
-                                                    <tr><td colSpan="6" className="px-6 py-4 text-center text-gray-500">No applications found.</td></tr>
-                                                )}
                                             </tbody>
                                         </table>
+
+                                        {/* Mobile Card View */}
+                                        <div className="md:hidden space-y-4">
+                                            {admissions.map((admission) => (
+                                                <div key={admission.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                                                    <div className="flex items-center gap-4 mb-4">
+                                                        <div className="h-14 w-14 rounded-2xl overflow-hidden border border-gray-100">
+                                                            <ImageWithFallback 
+                                                                src={admission.passport_photo} 
+                                                                apiUrl={API_URL}
+                                                                alt="Student"
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-gray-900 leading-tight">{admission.student_name}</h4>
+                                                            <p className="text-[10px] font-black text-primary uppercase tracking-widest">{admission.student_id}</p>
+                                                            <p className="text-xs text-gray-500 mt-0.5">For {admission.class_applying_for}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-4 py-3 border-y border-gray-50 mb-4">
+                                                        <div>
+                                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Parent</p>
+                                                            <p className="text-xs font-bold text-gray-700">{admission.parent_name}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Phone</p>
+                                                            <p className="text-xs font-bold text-gray-700">{admission.phone_number}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        <button onClick={() => handleViewAdmission(admission)} className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">View</button>
+                                                        {admission.status === 'pending' && (
+                                                            <>
+                                                                <button onClick={() => updateAdmissionStatus(admission.id, 'accepted')} className="bg-green-50 text-green-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">Accept</button>
+                                                                <button onClick={() => updateAdmissionStatus(admission.id, 'rejected')} className="bg-red-50 text-red-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">Reject</button>
+                                                            </>
+                                                        )}
+                                                        <button onClick={() => handleEditAdmission(admission)} className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">Edit</button>
+                                                        <button onClick={() => handleDeleteAdmission(admission.id)} className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase ml-auto">Delete</button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {admissions.length === 0 && (
+                                            <div className="py-20 text-center text-gray-400 italic">No applications found.</div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -549,7 +599,8 @@ const AdminDashboard = () => {
                                     </span>
                                 </div>
                                 <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200">
+                                    {/* Desktop Table */}
+                                    <table className="hidden md:table min-w-full divide-y divide-gray-200">
                                         <thead className="bg-gray-50">
                                             <tr>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
@@ -583,11 +634,37 @@ const AdminDashboard = () => {
                                                     </td>
                                                 </tr>
                                             ))}
-                                            {admissions.filter(a => a.status === 'accepted').length === 0 && (
-                                                <tr><td colSpan="6" className="px-6 py-4 text-center text-gray-500">No students registered yet.</td></tr>
-                                            )}
                                         </tbody>
                                     </table>
+
+                                    {/* Mobile Cards */}
+                                    <div className="md:hidden grid grid-cols-1 gap-4">
+                                        {admissions.filter(a => a.status === 'accepted').map((student) => (
+                                            <div key={student.id} className="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-center gap-4">
+                                                <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
+                                                    <ImageWithFallback 
+                                                        src={student.passport_photo} 
+                                                        apiUrl={API_URL}
+                                                        alt="Student"
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-bold text-gray-900 truncate">{student.student_name}</h4>
+                                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">{student.student_id}</p>
+                                                    <p className="text-xs text-gray-500">{student.class_applying_for}</p>
+                                                    <div className="mt-2 flex gap-3">
+                                                        <button onClick={() => handleViewAdmission(student)} className="text-xs font-black text-blue-600 uppercase">Details</button>
+                                                        <button onClick={() => updateAdmissionStatus(student.id, 'pending')} className="text-xs font-black text-red-600 uppercase">Revoke</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {admissions.filter(a => a.status === 'accepted').length === 0 && (
+                                        <div className="py-20 text-center text-gray-400 italic">No students registered yet.</div>
+                                    )}
                                 </div>
                             </div>
                         )}

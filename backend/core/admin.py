@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.core.mail import send_mail
-from .models import Event, GalleryImage, Inquiry, Admission
+from .models import Event, GalleryImage, Inquiry, Admission, TourBooking, ApplicationStage
 
 admin.site.register(Event)
 admin.site.register(GalleryImage)
@@ -66,3 +66,19 @@ class InquiryAdmin(admin.ModelAdmin):
             inquiry.status = 'responded'
             inquiry.save()
         self.message_user(request, f"{queryset.count()} emails have been sent and inquiries marked as Responded.")
+
+
+@admin.register(TourBooking)
+class TourBookingAdmin(admin.ModelAdmin):
+    list_display = ("parent_name", "parent_phone", "requested_date", "requested_slot",
+                    "interest_class", "status", "created_at")
+    list_filter = ("status", "requested_date", "interest_class")
+    search_fields = ("parent_name", "parent_phone", "parent_email")
+    date_hierarchy = "requested_date"
+
+
+@admin.register(ApplicationStage)
+class ApplicationStageAdmin(admin.ModelAdmin):
+    list_display = ("admission", "stage", "happened_at")
+    list_filter = ("stage",)
+    autocomplete_fields = ("admission",)

@@ -63,6 +63,60 @@ class Admission(models.Model):
     def __str__(self):
         return f"{self.student_name} - {self.class_applying_for}"
 
+class TourBooking(models.Model):
+    """Self-service tour booking from the public Admissions page."""
+    STATUS = [
+        ("requested", "Requested"),
+        ("confirmed", "Confirmed"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+        ("no_show",   "No-show"),
+    ]
+    parent_name = models.CharField(max_length=200)
+    parent_phone = models.CharField(max_length=20)
+    parent_email = models.EmailField(blank=True)
+    children_count = models.PositiveIntegerField(default=1)
+    interest_class = models.CharField(max_length=50, blank=True,
+                                      help_text='e.g. "Nursery 1", "Basic 3"')
+    requested_date = models.DateField()
+    requested_slot = models.CharField(max_length=20, default="10:00",
+                                      help_text='e.g. "10:00" or "14:30"')
+    status = models.CharField(max_length=20, choices=STATUS, default="requested")
+    note   = models.TextField(blank=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-requested_date"]
+
+    def __str__(self):
+        return f"{self.parent_name} · {self.requested_date} · {self.status}"
+
+
+class ApplicationStage(models.Model):
+    """Tracks where an Admission application is in the funnel.
+    Stages: applied → assessed → offered → accepted → enrolled (or rejected/withdrawn)."""
+    STAGE = [
+        ("applied",   "Applied"),
+        ("assessed",  "Assessment scheduled"),
+        ("offered",   "Offered place"),
+        ("accepted",  "Place accepted"),
+        ("rejected",  "Rejected"),
+        ("withdrawn", "Withdrawn by family"),
+        ("enrolled",  "Enrolled (now a student)"),
+    ]
+    admission = models.ForeignKey(Admission, on_delete=models.CASCADE, related_name="stages")
+    stage     = models.CharField(max_length=20, choices=STAGE, default="applied")
+    note      = models.CharField(max_length=200, blank=True)
+    happened_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["happened_at"]
+
+    def __str__(self):
+        return f"{self.admission.student_name} · {self.stage}"
+
+
 class StudentResult(models.Model):
     student_id = models.CharField(max_length=50, help_text="Unique Student ID or Reg Number")
     student_name = models.CharField(max_length=200)

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import Logo from '../components/ui/Logo';
 
 const AcademicsSignup = () => {
     const [role, setRole] = useState('student');

@@ -24,6 +24,12 @@ from django.urls import re_path
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('core.urls')),
+    path('api/academics/', include('academics.urls')),
+    path('api/auth/', include('accounts.urls')),
+    path('api/finance/', include('finance.urls')),
+    path('api/wellbeing/', include('wellbeing.urls')),
+    path('api/operations/', include('operations.urls')),
+    path('api/', include('assignments.urls')),
 ]
 
 # Serve media files in both development and production (for small scale)

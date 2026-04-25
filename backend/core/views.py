@@ -1,9 +1,17 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.core.mail import send_mail
-from .models import Event, GalleryImage, Inquiry, Admission, StudentResult
-from .serializers import EventSerializer, GalleryImageSerializer, InquirySerializer, AdmissionSerializer, StudentResultSerializer
+from .models import (
+    Event, GalleryImage, Inquiry, Admission, StudentResult,
+    TourBooking, ApplicationStage,
+)
+from .serializers import (
+    EventSerializer, GalleryImageSerializer, InquirySerializer,
+    AdmissionSerializer, StudentResultSerializer,
+    TourBookingSerializer, ApplicationStageSerializer,
+)
 
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
@@ -142,6 +150,85 @@ Best Legacy Divine School"""
             if subject and message:
                 self._send_email_async(subject, message, [instance.email])
 
+    @action(detail=True, methods=['post'])
+    def enroll(self, request, pk=None):
+        """
+        Convert an accepted Admission into a real Student + Guardian record.
+        Idempotent: if a Student already exists for this admission, returns it.
+        """
+        from academics.models import Student, Guardian, ClassLevel, Session, Enrollment
+        from academics.serializers import StudentSerializer
+
+        admission = self.get_object()
+        if admission.status != 'accepted':
+            return Response(
+                {"error": "Only accepted admissions can be enrolled."},
+                status=400,
+            )
+
+        # Already enrolled? Return the existing student.
+        existing = Student.objects.filter(source_admission=admission).first()
+        if existing:
+            return Response(
+                {"detail": "already enrolled", "student": StudentSerializer(existing).data},
+                status=200,
+            )
+
+        # Resolve class level (must be one of the 8)
+        try:
+            class_level = ClassLevel.objects.get(name=admission.class_applying_for)
+        except ClassLevel.DoesNotExist:
+            return Response(
+                {"error": f"'{admission.class_applying_for}' is not a recognised class level."},
+                status=400,
+            )
+
+        # Split parent name → guardian first/last (best effort)
+        parts = (admission.parent_name or "").strip().split(" ", 1)
+        g_first = parts[0] or "Parent"
+        g_last = parts[1] if len(parts) > 1 else ""
+
+        guardian, _ = Guardian.objects.get_or_create(
+            phone=admission.phone_number,
+            defaults={
+                "first_name": g_first,
+                "last_name": g_last,
+                "email": admission.email,
+                "address": admission.address,
+                "relationship": "guardian",
+            },
+        )
+
+        # Split child name
+        cparts = (admission.student_name or "").strip().split(" ", 1)
+        s_first = cparts[0]
+        s_last = cparts[1] if len(cparts) > 1 else ""
+
+        current_session = Session.objects.filter(is_current=True).first()
+
+        student = Student.objects.create(
+            first_name=s_first,
+            last_name=s_last,
+            date_of_birth=admission.date_of_birth,
+            gender=admission.gender,
+            photo=admission.passport_photo,
+            class_level=class_level,
+            current_session=current_session,
+            guardian=guardian,
+            status="active",
+            source_admission=admission,
+        )
+        if current_session:
+            Enrollment.objects.get_or_create(
+                student=student, session=current_session,
+                defaults={"class_level": class_level, "status": "active"},
+            )
+
+        return Response(
+            {"detail": "enrolled", "student": StudentSerializer(student).data},
+            status=201,
+        )
+
     @action(detail=False, methods=['post'])
     def test_email(self, request):
         email = request.data.get('email')
@@ -173,5 +260,62 @@ class StudentResultViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(session=session)
         if student_class:
             queryset = queryset.filter(student_class=student_class)
-            
+
         return queryset
+
+
+class TourBookingViewSet(viewsets.ModelViewSet):
+    """Public can POST a request; staff (any authenticated user) can list/manage."""
+    queryset = TourBooking.objects.all()
+    serializer_class = TourBookingSerializer
+
+    def get_permissions(self):
+        from rest_framework.permissions import IsAuthenticated
+        if self.action == "create":
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    @action(detail=True, methods=["post"], url_path="confirm")
+    def confirm(self, request, pk=None):
+        from django.utils import timezone
+        booking = self.get_object()
+        booking.status = "confirmed"
+        booking.confirmed_at = timezone.now()
+        booking.save(update_fields=["status", "confirmed_at"])
+        return Response(self.get_serializer(booking).data)
+
+
+class ApplicationStageViewSet(viewsets.ModelViewSet):
+    queryset = ApplicationStage.objects.all()
+    serializer_class = ApplicationStageSerializer
+    # Staff-only writes; the public tracker uses a separate read-only endpoint below.
+    from rest_framework.permissions import IsAuthenticated as _IsAuthenticated
+    permission_classes = [_IsAuthenticated]
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def application_status(request):
+    """Public application tracker. Look up by ?ref=<student_id> + ?phone=<last4>.
+    Returns the stage history without exposing PII to URL-scrapers."""
+    ref = request.query_params.get("ref", "").strip()
+    phone_last4 = request.query_params.get("phone", "").strip()[-4:]
+    if not ref or not phone_last4:
+        return Response({"error": "ref and phone (last 4 digits) required."}, status=400)
+
+    try:
+        adm = Admission.objects.prefetch_related("stages").get(student_id=ref)
+    except Admission.DoesNotExist:
+        return Response({"error": "Application not found."}, status=404)
+
+    if not adm.phone_number.endswith(phone_last4):
+        return Response({"error": "Phone number does not match application on file."}, status=403)
+
+    stages = list(adm.stages.order_by("happened_at").values("stage", "note", "happened_at"))
+    return Response({
+        "ref": adm.student_id,
+        "student_name": adm.student_name,
+        "class_applying_for": adm.class_applying_for,
+        "current_status": adm.status,
+        "stages": stages,
+    })

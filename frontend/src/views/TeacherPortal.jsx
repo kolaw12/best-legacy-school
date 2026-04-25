@@ -194,11 +194,30 @@ const TeacherPortal = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    {/* Sidebar: Class Students */}
+                    {/* Sidebar / Student Selection */}
                     <div className="lg:col-span-1">
-                        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 sticky top-8">
+                        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 lg:sticky lg:top-8 overflow-hidden">
                             <h3 className="font-black text-gray-800 uppercase text-[10px] mb-4 border-b pb-2 tracking-widest">Students in {teacherClass}</h3>
-                            <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                            
+                            {/* Mobile: Horizontal Pill List */}
+                            <div className="flex lg:hidden overflow-x-auto gap-2 pb-4 no-scrollbar">
+                                {classStudents.length > 0 ? (
+                                    classStudents.map(student => (
+                                        <button 
+                                            key={student.student_id}
+                                            onClick={() => handleStudentSelect(student)}
+                                            className={`shrink-0 px-4 py-2 rounded-full border text-xs font-bold transition-all ${selectedStudent?.student_id === student.student_id ? 'bg-primary text-white border-primary shadow-md' : 'bg-white text-gray-600 border-gray-200'}`}
+                                        >
+                                            {student.student_name.split(' ')[0]}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <p className="text-[10px] text-gray-400 italic">No students found.</p>
+                                )}
+                            </div>
+
+                            {/* Desktop: Vertical List */}
+                            <div className="hidden lg:block space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                                 {classStudents.length > 0 ? (
                                     classStudents.map(student => (
                                         <div 
@@ -211,10 +230,10 @@ const TeacherPortal = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-xs text-gray-400 italic">No students found in this class.</p>
+                                    <p className="text-xs text-gray-400 italic">No students found.</p>
                                 )}
                             </div>
-                            <div className="mt-4 pt-4 border-t">
+                            <div className="mt-4 pt-4 border-t hidden lg:block">
                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center leading-tight">Click a student name to load their details</p>
                             </div>
                         </div>
@@ -245,7 +264,8 @@ const TeacherPortal = () => {
                                     </button>
                                 </div>
                                 <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-100">
+                                    {/* Desktop Table */}
+                                    <table className="hidden md:table min-w-full divide-y divide-gray-100">
                                         <thead className="bg-gray-50/50">
                                             <tr>
                                                 <th className="px-6 py-3 text-left text-[9px] font-black text-gray-400 uppercase tracking-widest">Term/Session</th>
@@ -278,6 +298,30 @@ const TeacherPortal = () => {
                                             )}
                                         </tbody>
                                     </table>
+
+                                    {/* Mobile Cards */}
+                                    <div className="md:hidden divide-y divide-gray-100">
+                                        {studentRecords.length > 0 ? studentRecords.map((res) => (
+                                            <div key={res.id} className="p-4 flex justify-between items-center bg-white">
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-xs font-black text-gray-900 uppercase truncate">{res.subject}</p>
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{res.term}</p>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="text-right">
+                                                        <span className="text-lg font-black text-primary leading-none">{res.score}</span>
+                                                        <span className="block text-[8px] font-black text-gray-400 uppercase tracking-tighter leading-none">{res.grade} GRADE</span>
+                                                    </div>
+                                                    <div className="flex flex-col gap-2">
+                                                        <button onClick={() => handleEdit(res)} className="text-[9px] font-black text-indigo-600 uppercase bg-indigo-50 px-2 py-1 rounded">Edit</button>
+                                                        <button onClick={() => handleDelete(res.id)} className="text-[9px] font-black text-red-600 uppercase bg-red-50 px-2 py-1 rounded">Del</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )) : (
+                                            <div className="p-8 text-center text-gray-400 italic text-xs">No records found.</div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -359,7 +403,8 @@ const TeacherPortal = () => {
                                 <span className="text-[10px] bg-gray-200 px-2 py-1 rounded font-bold text-gray-600 uppercase italic">Showing last 20</span>
                             </div>
                             <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-100">
+                                {/* Desktop Table View */}
+                                <table className="hidden md:table min-w-full divide-y divide-gray-100">
                                     <thead className="bg-white">
                                         <tr>
                                             <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Student</th>
@@ -384,11 +429,37 @@ const TeacherPortal = () => {
                                                 </td>
                                             </tr>
                                         ))}
-                                        {results.length === 0 && (
-                                            <tr><td colSpan="3" className="px-6 py-12 text-center text-gray-400 italic text-sm">No results recorded for this class yet.</td></tr>
-                                        )}
                                     </tbody>
                                 </table>
+
+                                {/* Mobile List View */}
+                                <div className="md:hidden divide-y divide-gray-100">
+                                    {results.map((res) => (
+                                        <div key={res.id} className="p-4 bg-white hover:bg-gray-50 transition">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h4 className="text-sm font-black text-gray-900 leading-tight">{res.student_name}</h4>
+                                                    <p className="text-[9px] font-black text-primary uppercase">{res.student_id}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-black">{res.score}</span>
+                                                    <span className="block text-[8px] font-bold text-gray-400 mt-0.5">{res.grade} GRADE</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{res.subject}</span>
+                                                <div className="flex gap-3">
+                                                    <button onClick={() => handleEdit(res)} className="text-[10px] font-black text-indigo-600 uppercase">Edit</button>
+                                                    <button onClick={() => handleDelete(res.id)} className="text-[10px] font-black text-red-600 uppercase">Delete</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {results.length === 0 && (
+                                    <div className="px-6 py-12 text-center text-gray-400 italic text-sm">No results recorded yet.</div>
+                                )}
                             </div>
                         </div>
 

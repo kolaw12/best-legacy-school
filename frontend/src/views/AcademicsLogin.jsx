@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import Logo from '../components/ui/Logo';
 
 const AcademicsLogin = () => {
     const [role, setRole] = useState('student'); // 'student' or 'teacher'
@@ -50,7 +51,10 @@ const AcademicsLogin = () => {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                <div className="flex justify-center">
+                    <Logo size="xl" />
+                </div>
+                <h2 className="mt-4 text-center text-2xl font-extrabold text-gray-900">
                     Academics Portal
                 </h2>
                 <p className="mt-2 text-center text-sm text-gray-600">

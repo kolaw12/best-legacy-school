@@ -1,14 +1,398 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #1a365d;
-  --color-secondary: #fbbf24;
-  --color-accent: #10b981;
-  --font-sans: "Inter", sans-serif;
+  /* Core brand — Friendly Periwinkle (primary) + Soft Violet (secondary)
+     60% neutral · 30% periwinkle · 10% violet — WCAG AA verified. */
+  --color-primary: #5B6CF5;        /* friendly periwinkle — trustworthy & warm */
+  --color-primary-dark: #4351D0;   /* deeper periwinkle — stability */
+  --color-primary-soft: #EEF1FF;   /* pale periwinkle — surface accents */
+
+  /* Soft Violet — creative and approachable pop */
+  --color-secondary: #8B5CF6;      /* soft violet — creative accent */
+  --color-secondary-dark: #7C3AED; /* deep violet — hover states */
+  --color-secondary-soft: #F5F3FF; /* pale violet — badge bg */
+
+  /* Surfaces & text */
+  --color-bg: #F9FAFF;             /* clean white with a very soft periwinkle tint */
+  --color-surface: #FFFFFF;
+  --color-ink: #1B1F3B;            /* deep indigo-charcoal — softer than black */
+  --color-muted: #64748B;          /* muted slate text */
+  --color-line: #E2E8F0;           /* borders */
+
+  /* Legacy aliases — mapped to the new Blue/Purple palette */
+  --color-brand-green: #2D5CF7;
+  --color-brand-green-dark: #1E40AF;
+  --color-mint: #EEF2FF;
+  --color-mint-soft: #F0F4FF;
+  --color-warm: #9333EA;
+  --color-warm-soft: #F5F3FF;
+
+  /* Supporting hues — adjusted for the new palette coherence */
+  --color-sage: #94A3B8;
+  --color-gold: #F59E0B;           /* kept as a small warning/success pop */
+  --color-rose: #EF4444;
+
+  /* Typography — Adding Fraunces for "Legacy" prestige */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Fraunces", serif;
+
+  /* Champagne Gold Accent — subtle luxury pop */
+  --color-gold: #D4AF37;
+  --color-gold-soft: #F9F4E5;
+
+  /* Radius scale */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-2xl: 28px;
 }
 
 @layer base {
+  html { scroll-behavior: smooth; }
   body {
-    @apply antialiased text-gray-800 bg-gray-50;
+    @apply antialiased text-gray-800;
+    background: var(--color-bg);
+    font-family: var(--font-sans);
+  }
+  h1, h2, h3, h4, h5 {
+    font-family: var(--font-display);
+    @apply tracking-tight;
+    color: var(--color-ink);
+  }
+  .font-serif { font-family: var(--font-serif); }
+  
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .font-display { font-family: var(--font-display); }
+  .font-serif { font-family: var(--font-serif); }
+
+  /* Premium Geometric Pattern (inspired by modern African design) */
+  .pattern-geometric {
+    background-image: radial-gradient(var(--color-primary) 0.5px, transparent 0.5px), radial-gradient(var(--color-primary) 0.5px, var(--color-bg) 0.5px);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    opacity: 0.03;
+  }
+
+  .grain-dot {
+    background-image: radial-gradient(rgba(15, 42, 68, 0.08) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+  /* Shadow tints derived from new ink (#1B1F3B → 27 31 59) — keeps the
+     drop-shadow on the same tonal family as text, never pure-grey. */
+  .shadow-card {
+    box-shadow: 0 1px 2px rgba(27, 31, 59, 0.05), 0 8px 24px -12px rgba(27, 31, 59, 0.12);
+  }
+  .shadow-card-lg {
+    box-shadow: 0 4px 8px rgba(27, 31, 59, 0.05), 0 20px 40px -16px rgba(27, 31, 59, 0.16);
+  }
+
+  /* Kid-friendly decorative blobs used as hero/section backgrounds.
+     Class names retained for compatibility; "mint" now means periwinkle,
+     "warm" now means marigold. */
+  .blob-mint {
+    background: radial-gradient(circle, rgba(91,108,245,0.12) 0%, rgba(91,108,245,0) 70%);
+  }
+  .blob-warm {
+    background: radial-gradient(circle, rgba(139,92,246,0.14) 0%, rgba(139,92,246,0) 70%);
+  }
+
+  /* Friendly 2026 Mesh Gradient */
+  .mesh-gradient-premium {
+    background-color: var(--color-bg);
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(91,108,245,0.1) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, rgba(139,92,246,0.08) 0, transparent 50%), 
+      radial-gradient(at 100% 0%, rgba(91,108,245,0.1) 0, transparent 50%);
+  }
+
+  /* High-end 2026 Glassmorphism */
+  .glass-premium {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  /* Bento Grid Utility */
+  .bento-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  @media (min-width: 1024px) {
+    .bento-grid {
+      grid-template-columns: repeat(12, 1fr);
+    }
+  }
+
+  /* Hyper-Premium 2026 Tactile Noise — Reduced for clarity */
+  .noise-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.012;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
+  /* Fluid Section Masks */
+  .mask-fluid-top {
+    mask-image: radial-gradient(ellipse at top, black 0%, transparent 80%);
+  }
+  .mask-fluid-bottom {
+    mask-image: radial-gradient(ellipse at bottom, black 0%, transparent 80%);
+  }
+
+  /* 2026 Depth of Field (DOF) Utilities */
+  .dof-blur-sm { filter: blur(4px); pointer-events: none; }
+  .dof-blur-md { filter: blur(12px); pointer-events: none; }
+  .dof-blur-lg { filter: blur(24px); pointer-events: none; }
+
+  /* Foreground Parallax Layer */
+  .foreground-parallax {
+    position: absolute;
+    z-index: 40;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  /* Glassmorphism 2.0 — More Transparent & Refined */
+  .glass-2-0 {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.04);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  /* Floating Island Navbar (2026 Trend) */
+  .nav-island {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 95%;
+  }
+
+  .nav-link-pill {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: rgba(91, 108, 245, 0.08);
+    z-index: -1;
+  }
+
+  /* Glow Shadow Utility (Image-based glow) */
+  .glow-shadow {
+    position: relative;
+  }
+  .glow-shadow::after {
+    content: "";
+    position: absolute;
+    inset: 1rem;
+    background: inherit;
+    background-size: cover;
+    background-position: center;
+    filter: blur(32px) saturate(150%);
+    opacity: 0.45;
+    z-index: -1;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .glow-shadow:hover::after {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+
+  /* Linear-style Gradient Border Card */
+  .card-gradient-border {
+    position: relative;
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    z-index: 1;
+  }
+  .card-gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary), transparent 60%);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0.2;
+    transition: opacity 0.3s ease;
+  }
+  .card-gradient-border:hover::before {
+    opacity: 0.45;
+  }
+
+  /* Gentle float — used on hero accent shapes & emoji cards */
+  @keyframes bls-float {
+    0%, 100% { transform: translateY(0px); }
+    50%      { transform: translateY(-12px); }
+  }
+  .float-slow { animation: bls-float 6s ease-in-out infinite; }
+  .float-med  { animation: bls-float 4.5s ease-in-out infinite; }
+
+  /* Soft squishy press for CTAs (works with hover too) */
+  @keyframes bls-bounce-in {
+    0%   { transform: scale(0.95); opacity: 0; }
+    60%  { transform: scale(1.04); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+  .bounce-in { animation: bls-bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+  /* Wavy underline for emphasis — purple wash */
+  .wavy-underline {
+    background-image: linear-gradient(transparent 60%, rgba(139,92,246,0.25) 60%);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+  }
+
+  /* ---- Continuous ambient motion patterns ------------------------------ */
+
+  /* Marquee — used on the trust band and tagline strips */
+  @keyframes bls-marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  .animate-marquee {
+    animation: bls-marquee 38s linear infinite;
+    will-change: transform;
+  }
+  .animate-marquee:hover { animation-play-state: paused; }
+
+  /* Hero image + badges breathing — gentle scale loop */
+  @keyframes bls-breathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.025); }
+  }
+  .animate-breathe { animation: bls-breathe 7s ease-in-out infinite; }
+
+  /* Pulse-ring around CTAs — a soft expanding glow */
+  @keyframes bls-pulse-ring {
+    0%   { transform: scale(0.95); opacity: 0.7; }
+    80%  { transform: scale(1.4);  opacity: 0; }
+    100% { transform: scale(1.4);  opacity: 0; }
+  }
+  .pulse-ring {
+    position: relative;
+  }
+  .pulse-ring::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: var(--color-secondary);
+    opacity: 0.18;
+    animation: bls-pulse-ring 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    z-index: -1;
+  }
+
+  /* Sparkle dots that twinkle in/out */
+  @keyframes bls-sparkle {
+    0%, 100% { opacity: 0; transform: scale(0.4); }
+    50%      { opacity: 1; transform: scale(1); }
+  }
+  .animate-sparkle { animation: bls-sparkle 2.6s ease-in-out infinite; }
+
+  /* Drawing SVG path on view */
+  @keyframes bls-draw {
+    to { stroke-dashoffset: 0; }
+  }
+  .draw-on {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: bls-draw 1.4s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  }
+
+  /* Shimmer for loading skeletons */
+  @keyframes bls-shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .animate-shimmer {
+    background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 40%, #f3f4f6 80%);
+    background-size: 200% 100%;
+    animation: bls-shimmer 1.6s ease-in-out infinite;
+  }
+
+  /* Slow rotating ring (for the journey avatar circle) */
+  @keyframes bls-spin-slow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  .animate-spin-slow { animation: bls-spin-slow 30s linear infinite; }
+
+  /* Gradient drift — used on the giant footer watermark */
+  @keyframes bls-grad-drift {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+  }
+  .animate-grad-drift {
+    background-size: 200% 200%;
+    animation: bls-grad-drift 12s ease-in-out infinite;
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .float-slow, .float-med, .bounce-in,
+    .animate-marquee, .animate-breathe, .animate-sparkle,
+    .animate-spin-slow, .animate-grad-drift, .draw-on { animation: none !important; }
+    .pulse-ring::before { display: none; }
+    html { scroll-behavior: auto; }
+  }
+
+  /* ---- Print stylesheet ----------------------------------------------
+     Anything tagged .no-print is hidden when the user prints / saves PDF.
+     Useful for the report card route which sets [data-printable] on the
+     article it wants kept.
+  ----------------------------------------------------------------- */
+  @media print {
+    @page { margin: 14mm; }
+    body { background: white !important; }
+    .no-print,
+    nav, footer,
+    .pulse-ring::before,
+    [aria-hidden="true"] { display: none !important; }
+    .float-slow, .float-med, .animate-breathe, .animate-marquee,
+    .animate-sparkle, .animate-spin-slow, .animate-grad-drift,
+    .bounce-in, .blob-mint, .blob-warm { animation: none !important; background: none !important; box-shadow: none !important; }
+    .shadow-card, .shadow-card-lg, .shadow-xl, .shadow-2xl, .shadow-md, .shadow-lg, .shadow-sm { box-shadow: none !important; }
+    /* Avoid splitting tables / cards across pages where possible */
+    table, figure, article { break-inside: avoid; page-break-inside: avoid; }
+    a[href]:after { content: ''; }   /* don't print clutter URLs after links */
   }
 }

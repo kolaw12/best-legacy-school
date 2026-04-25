@@ -1,0 +1,205 @@
+{% load humanize %}<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Report Card — {{ student.full_name }} — {{ term.name }} Term {{ term.session }}</title>
+<style>
+    @page {
+        size: A4;
+        margin: 18mm 16mm;
+        @frame footer {
+            -pdf-frame-content: footerContent;
+            bottom: 8mm; left: 16mm; right: 16mm; height: 12mm;
+        }
+    }
+    body { font-family: Helvetica, Arial, sans-serif; color: #1B1F3B; font-size: 10pt; }
+    h1, h2, h3 { color: #5B6CF5; margin: 0; }
+    .head { border-bottom: 2px solid #5B6CF5; padding-bottom: 8mm; margin-bottom: 8mm; }
+    .head .school { font-size: 14pt; font-weight: bold; color: #1B1F3B; }
+    .head .addr { font-size: 8pt; color: #6B7280; }
+    .head .tag { float: right; background: #EEF0FF; color: #3D3B8E; padding: 2pt 8pt; border-radius: 999px; font-size: 8pt; font-weight: bold; }
+    h1 { font-size: 22pt; margin-top: 4mm; }
+    .sub { color: #6B7280; font-size: 9pt; }
+
+    .info-grid { width: 100%; margin: 8mm 0; }
+    .info-grid td { padding: 3mm 4mm; vertical-align: top; }
+    .info-grid .lbl { font-size: 7pt; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5pt; font-weight: bold; }
+    .info-grid .val { font-size: 11pt; color: #1B1F3B; font-weight: bold; }
+
+    .att-band { background: #F8F8FC; padding: 5mm; margin-bottom: 8mm; border-radius: 4pt; }
+    .att-band table { width: 100%; }
+    .att-band td { width: 33%; text-align: center; }
+
+    table.results { width: 100%; border-collapse: collapse; margin-top: 4mm; }
+    table.results th { background: #EEF0FF; color: #3D3B8E; font-size: 8pt; font-weight: bold; padding: 3mm; border: 1px solid #ddd; text-align: left; text-transform: uppercase; }
+    table.results td { padding: 3mm; border: 1px solid #eee; font-size: 10pt; }
+    table.results td.num { text-align: center; font-variant-numeric: tabular-nums; }
+    table.results td.grade { text-align: center; font-weight: bold; }
+    .grade-A, .grade-B { color: #3D3B8E; }
+    .grade-C, .grade-D { color: #6B7280; }
+    .grade-E, .grade-F { color: #C1432B; }
+
+    .summary { margin-top: 6mm; }
+    .summary table { width: 100%; }
+    .summary td { width: 33%; padding: 4mm; background: #F8F8FC; border-radius: 4pt; text-align: center; }
+    .summary .lbl { font-size: 7pt; color: #6B7280; text-transform: uppercase; }
+    .summary .val { font-size: 14pt; font-weight: bold; color: #1B1F3B; }
+
+    .signatures { margin-top: 18mm; }
+    .signatures table { width: 100%; }
+    .signatures td { width: 50%; padding: 0 8mm; }
+    .signatures .line { border-bottom: 1px dashed #999; height: 12mm; }
+    .signatures .label { font-size: 8pt; color: #6B7280; margin-top: 2mm; }
+
+    #footerContent { font-size: 7pt; color: #9CA3AF; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="head">
+    <span class="tag">{% if is_nursery %}Nursery report{% else %}Basic report{% endif %}</span>
+    <div class="school">Best Legacy Divine School</div>
+    <div class="addr">8, Kolawole Street · Mowe, Ogun State · Nigeria</div>
+</div>
+
+<h1>Report Card</h1>
+<div class="sub">{{ term.name }} Term, {{ term.session }} session.</div>
+
+<table class="info-grid">
+    <tr>
+        <td>
+            <div class="lbl">Pupil</div>
+            <div class="val">{{ student.full_name }}</div>
+        </td>
+        <td>
+            <div class="lbl">Admission no.</div>
+            <div class="val">{{ student.admission_no }}</div>
+        </td>
+        <td>
+            <div class="lbl">Class</div>
+            <div class="val">{{ student.class_name }}</div>
+        </td>
+        <td>
+            <div class="lbl">Gender</div>
+            <div class="val">{{ student.gender }}</div>
+        </td>
+    </tr>
+</table>
+
+<div class="att-band">
+    <table>
+        <tr>
+            <td>
+                <div class="lbl">Days Marked</div>
+                <div class="val">{{ attendance.total }}</div>
+            </td>
+            <td>
+                <div class="lbl">Days Present</div>
+                <div class="val">{{ attendance.present }}</div>
+            </td>
+            <td>
+                <div class="lbl">Attendance %</div>
+                <div class="val">{% if attendance.rate %}{{ attendance.rate }}%{% else %}—{% endif %}</div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+{% if is_nursery %}
+    <h3>Developmental Assessment</h3>
+    {% if assessments %}
+    <table class="results">
+        <thead>
+            <tr>
+                <th>Domain</th>
+                <th style="width:80pt">Rating</th>
+                <th>Teacher's note</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in assessments %}
+            <tr>
+                <td>{{ a.domain }}</td>
+                <td class="grade">{{ a.rating_display }}</td>
+                <td>{{ a.remark|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p style="color:#9CA3AF; text-align:center; padding: 12mm 0;">No assessments entered for this term yet.</p>
+    {% endif %}
+{% else %}
+    <h3>Academic Results</h3>
+    {% if grades %}
+    <table class="results">
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th style="width:35pt">CA1</th>
+                <th style="width:35pt">CA2</th>
+                <th style="width:35pt">Exam</th>
+                <th style="width:40pt">Total</th>
+                <th style="width:40pt">Grade</th>
+                <th>Remark</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for g in grades %}
+            <tr>
+                <td>{{ g.subject }}</td>
+                <td class="num">{{ g.ca1 }}</td>
+                <td class="num">{{ g.ca2 }}</td>
+                <td class="num">{{ g.exam }}</td>
+                <td class="num">{{ g.total }}</td>
+                <td class="grade grade-{{ g.grade }}">{{ g.grade }}</td>
+                <td>{{ g.remark|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if summary %}
+    <div class="summary">
+        <table>
+            <tr>
+                <td>
+                    <div class="lbl">Subjects</div>
+                    <div class="val">{{ summary.subjects }}</div>
+                </td>
+                <td>
+                    <div class="lbl">Overall total</div>
+                    <div class="val">{{ summary.overall_total }}</div>
+                </td>
+                <td>
+                    <div class="lbl">Average</div>
+                    <div class="val">{% if summary.average %}{{ summary.average }}/100{% else %}—{% endif %}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    {% endif %}
+    {% else %}
+        <p style="color:#9CA3AF; text-align:center; padding: 12mm 0;">No grades entered for this term yet.</p>
+    {% endif %}
+{% endif %}
+
+<div class="signatures">
+    <table>
+        <tr>
+            <td>
+                <div class="line"></div>
+                <div class="label">Class Teacher's signature</div>
+            </td>
+            <td>
+                <div class="line"></div>
+                <div class="label">Head Teacher's signature</div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="footerContent">Best Legacy Divine School · Generated {{ generated_at }}</div>
+
+</body>
+</html>

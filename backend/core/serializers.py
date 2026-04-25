@@ -1,5 +1,8 @@
 from rest_framework import serializers
-from .models import Event, GalleryImage, Inquiry, Admission, StudentResult
+from .models import (
+    Event, GalleryImage, Inquiry, Admission, StudentResult,
+    TourBooking, ApplicationStage,
+)
 
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,3 +29,24 @@ class StudentResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentResult
         fields = '__all__'
+
+
+class TourBookingSerializer(serializers.ModelSerializer):
+    status_label = serializers.CharField(source="get_status_display", read_only=True)
+
+    class Meta:
+        model = TourBooking
+        fields = ["id", "parent_name", "parent_phone", "parent_email",
+                  "children_count", "interest_class",
+                  "requested_date", "requested_slot",
+                  "status", "status_label", "note",
+                  "confirmed_at", "created_at"]
+        read_only_fields = ("status", "confirmed_at")
+
+
+class ApplicationStageSerializer(serializers.ModelSerializer):
+    stage_label = serializers.CharField(source="get_stage_display", read_only=True)
+
+    class Meta:
+        model = ApplicationStage
+        fields = ["id", "admission", "stage", "stage_label", "note", "happened_at"]

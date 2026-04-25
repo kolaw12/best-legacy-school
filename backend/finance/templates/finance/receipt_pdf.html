@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Receipt {{ payment.receipt_no }} — {{ student.full_name }}</title>
+<style>
+    @page {
+        size: A4;
+        margin: 18mm 16mm;
+        @frame footer {
+            -pdf-frame-content: footerContent;
+            bottom: 8mm; left: 16mm; right: 16mm; height: 12mm;
+        }
+    }
+    body { font-family: Helvetica, Arial, sans-serif; color: #1B1F3B; font-size: 10pt; }
+    h1, h2, h3 { color: #5B6CF5; margin: 0; }
+
+    .head { border-bottom: 2px solid #5B6CF5; padding-bottom: 8mm; margin-bottom: 8mm; }
+    .head .school { font-size: 14pt; font-weight: bold; color: #1B1F3B; }
+    .head .addr { font-size: 8pt; color: #6B7280; }
+    .head .tag { float: right; background: #DCFCE7; color: #166534; padding: 3pt 10pt; border-radius: 999px; font-size: 9pt; font-weight: bold; }
+
+    h1 { font-size: 22pt; margin-top: 4mm; }
+    .receipt-no { color: #6B7280; font-size: 9pt; font-family: Courier, monospace; margin-top: 1mm; }
+
+    .info-grid { width: 100%; margin: 8mm 0; }
+    .info-grid td { padding: 3mm 4mm; vertical-align: top; }
+    .info-grid .lbl { font-size: 7pt; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5pt; font-weight: bold; }
+    .info-grid .val { font-size: 11pt; color: #1B1F3B; font-weight: bold; }
+
+    .amount-band {
+        background: #EEF0FF;
+        padding: 8mm;
+        margin: 6mm 0;
+        border-radius: 4pt;
+        text-align: center;
+    }
+    .amount-band .lbl { font-size: 8pt; color: #3D3B8E; text-transform: uppercase; letter-spacing: 1pt; font-weight: bold; }
+    .amount-band .val { font-size: 28pt; color: #3D3B8E; font-weight: bold; margin-top: 3mm; }
+    .amount-band .words { font-size: 9pt; color: #6B7280; margin-top: 2mm; font-style: italic; }
+
+    table.detail { width: 100%; border-collapse: collapse; margin-top: 4mm; }
+    table.detail th { background: #F8F8FC; color: #6B7280; font-size: 8pt; font-weight: bold; padding: 3mm; border: 1px solid #eee; text-align: left; text-transform: uppercase; }
+    table.detail td { padding: 3mm; border: 1px solid #eee; font-size: 10pt; }
+    table.detail td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: bold; }
+
+    .signatures { margin-top: 18mm; }
+    .signatures table { width: 100%; }
+    .signatures td { width: 50%; padding: 0 8mm; }
+    .signatures .line { border-bottom: 1px dashed #999; height: 12mm; }
+    .signatures .label { font-size: 8pt; color: #6B7280; margin-top: 2mm; }
+
+    .stamp {
+        margin-top: 12mm;
+        border: 2pt solid #16A34A;
+        color: #16A34A;
+        padding: 4mm 8mm;
+        display: inline-block;
+        transform: rotate(-6deg);
+        font-weight: bold;
+        font-size: 14pt;
+        letter-spacing: 2pt;
+    }
+
+    #footerContent { font-size: 7pt; color: #9CA3AF; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="head">
+    <span class="tag">PAYMENT RECEIPT</span>
+    <div class="school">Best Legacy Divine School</div>
+    <div class="addr">8, Kolawole Street · Mowe, Ogun State · Nigeria</div>
+</div>
+
+<h1>Official Receipt</h1>
+<div class="receipt-no">{{ payment.receipt_no }} · issued {{ payment.received_on }}</div>
+
+<table class="info-grid">
+    <tr>
+        <td>
+            <div class="lbl">Received from</div>
+            <div class="val">{{ guardian_name|default:"Guardian on file" }}</div>
+        </td>
+        <td>
+            <div class="lbl">On behalf of</div>
+            <div class="val">{{ student.full_name }}</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="lbl">Pupil class</div>
+            <div class="val">{{ student.class_name }}</div>
+        </td>
+        <td>
+            <div class="lbl">Admission no.</div>
+            <div class="val">{{ student.admission_no }}</div>
+        </td>
+    </tr>
+</table>
+
+<div class="amount-band">
+    <div class="lbl">Amount received</div>
+    <div class="val">NGN {{ amount_str }}</div>
+    {% if amount_words %}<div class="words">{{ amount_words }} naira only</div>{% endif %}
+</div>
+
+<table class="detail">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th style="width:40pt">Term</th>
+            <th style="width:80pt; text-align:right">Amount (NGN)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ invoice.fee_name }} <span style="color:#6B7280; font-size:8pt;">({{ invoice.invoice_no }})</span></td>
+            <td>{{ invoice.term }}</td>
+            <td class="num">{{ amount_str }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<table class="info-grid" style="margin-top:6mm">
+    <tr>
+        <td>
+            <div class="lbl">Payment method</div>
+            <div class="val">{{ payment.method_label }}</div>
+        </td>
+        <td>
+            <div class="lbl">Reference</div>
+            <div class="val">{{ payment.reference|default:"—" }}</div>
+        </td>
+        <td>
+            <div class="lbl">Received by</div>
+            <div class="val">{{ payment.received_by|default:"School Office" }}</div>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="3">
+            <div class="lbl">Invoice balance after this receipt</div>
+            <div class="val">NGN {{ balance_str }} <span style="color:#6B7280; font-size:9pt; font-weight:normal;">({{ invoice_status }})</span></div>
+        </td>
+    </tr>
+</table>
+
+{% if payment.note %}
+<p style="margin-top:6mm; font-size:9pt; color:#6B7280;"><b>Note:</b> {{ payment.note }}</p>
+{% endif %}
+
+<div class="signatures">
+    <table>
+        <tr>
+            <td>
+                <div class="stamp">PAID</div>
+            </td>
+            <td>
+                <div class="line"></div>
+                <div class="label">Bursar's signature</div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="footerContent">Best Legacy Divine School · Generated {{ generated_at }} · Keep this receipt safe</div>
+
+</body>
+</html>

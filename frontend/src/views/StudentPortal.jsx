@@ -117,7 +117,8 @@ const StudentPortal = () => {
                         <div className="p-8 text-center text-gray-500">Loading results...</div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
+                            {/* Desktop Table View */}
+                            <table className="hidden md:table min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
@@ -159,15 +160,48 @@ const StudentPortal = () => {
                                             </td>
                                         </tr>
                                     )}
-                                    {results.length === 0 && (
-                                        <tr>
-                                            <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
-                                                No results found for this ID.
-                                            </td>
-                                        </tr>
-                                    )}
                                 </tbody>
                             </table>
+
+                            {/* Mobile Card View */}
+                            <div className="md:hidden p-4 space-y-4">
+                                {results.map((result) => (
+                                    <div key={result.id} className="bg-gray-50 border border-gray-100 rounded-2xl p-4 shadow-sm">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <h4 className="text-base font-black text-gray-900 uppercase tracking-tighter">{result.subject}</h4>
+                                            <span className={`px-2 py-0.5 text-[10px] font-black rounded-full ${result.score >= 40 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                {result.score >= 40 ? 'PASS' : 'FAIL'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-end">
+                                            <div>
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Score / Grade</p>
+                                                <p className="text-xl font-black text-primary">{result.score} <span className="text-sm text-gray-400">({result.grade})</span></p>
+                                            </div>
+                                            <div className="text-right text-[10px] text-gray-500 font-bold">
+                                                <p>{result.term}</p>
+                                                <p>{result.session}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {results.length > 0 && (
+                                    <div className="bg-primary text-white rounded-2xl p-5 shadow-lg space-y-4">
+                                        <div className="flex justify-between items-center border-b border-white/20 pb-3">
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Aggregate Total</span>
+                                            <span className="text-2xl font-black">{results.reduce((acc, curr) => acc + parseInt(curr.score || 0), 0)}<span className="text-xs opacity-60"> / {results.length * 100}</span></span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Term Average</span>
+                                            <span className="text-3xl font-black">{(results.reduce((acc, curr) => acc + parseInt(curr.score || 0), 0) / results.length).toFixed(1)}%</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {results.length === 0 && (
+                                <div className="py-20 text-center text-gray-400 italic">No results found for this ID.</div>
+                            )}
                         </div>
                     )}
                 </div>
