@@ -26,7 +26,9 @@ const AdminLogin = () => {
             const profile = await login(username, password);
             localStorage.setItem('isAdmin', 'true'); // keep legacy AdminDashboard happy
             if (['super_admin', 'school_admin'].includes(profile.role)) {
-                navigate(from.startsWith('/admin') ? from : '/admin/dashboard');
+                let target = from.startsWith('/admin') ? from : '/admin/dashboard';
+                if (target === '/admin-dashboard') target = '/admin/dashboard';
+                navigate(target);
             } else if (profile.role === 'teacher') {
                 navigate(from.startsWith('/teacher') ? from : '/teacher/dashboard');
             } else if (profile.role === 'parent') {
@@ -72,7 +74,7 @@ const AdminLogin = () => {
                     <Badge tone="mint" dot>Admin Console</Badge>
                 </div>
                 <h1 className="mt-3 text-2xl font-black text-ink text-center">Welcome back.</h1>
-                <p className="mt-1 text-sm text-gray-500 text-center">Sign in to Best Legacy Divine School.</p>
+                <p className="mt-1 text-sm text-gray-500 text-center">Sign in to BLDS.</p>
 
                 {error && (
                     <div className="mt-5 bg-rose-50 border border-rose-200 rounded-xl p-3 text-sm text-rose-700">{error}</div>

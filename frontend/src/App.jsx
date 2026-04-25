@@ -13,7 +13,6 @@ import VirtualTour from './views/VirtualTour';
 import NotFound from './views/NotFound';
 import AdminLogin from './views/AdminLogin';
 import AdminSignup from './views/AdminSignup';
-import AdminDashboard from './views/AdminDashboard';
 import AcademicsLogin from './views/AcademicsLogin';
 import AcademicsSignup from './views/AcademicsSignup';
 import LegacyTeacherPortal from './views/TeacherPortal';
@@ -84,7 +83,6 @@ const AnimatedRoutes = () => {
         {/* Auth */}
         <Route path="/admin-login"  element={<Public><PageTransition><AdminLogin /></PageTransition></Public>} />
         <Route path="/admin-signup" element={<Public><PageTransition><AdminSignup /></PageTransition></Public>} />
-        <Route path="/admin-dashboard" element={<Public><PageTransition><AdminDashboard /></PageTransition></Public>} />
 
         {/* Admin console */}
         <Route path="/admin" element={<RequireRole roles={STAFF_ROLES}><AdminLayout /></RequireRole>}>
