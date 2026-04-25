@@ -55,7 +55,6 @@ const AdminDashboard = () => {
                 subtitle={`${data?.current_session || 'Current session'} · ${data?.current_term || ''}`}
                 actions={[
                     <Button key="adm" to="/admin/admissions" variant="outline" size="sm">Review admissions</Button>,
-                    <Button key="legacy" to="/admin-dashboard" variant="ghost" size="sm">Legacy console</Button>,
                 ]}
             />
 

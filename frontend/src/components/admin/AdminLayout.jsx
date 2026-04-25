@@ -88,17 +88,6 @@ const AdminLayout = () => {
                     {item.label}
                 </NavLink>
             ))}
-            <div className="pt-6 px-3 pb-2 text-[10px] uppercase tracking-widest text-gray-400 font-semibold">Other</div>
-            {LEGACY.map(item => (
-                <Link key={item.to} to={item.to} onClick={onClickLink}
-                      className="flex items-start gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50 hover:text-ink">
-                    <Icon name="settings" />
-                    <span className="flex-1">
-                        <span className="block font-medium">{item.label}</span>
-                        <span className="block text-[11px] text-gray-400">{item.hint}</span>
-                    </span>
-                </Link>
-            ))}
         </nav>
     );
 
@@ -107,8 +96,12 @@ const AdminLayout = () => {
             {/* Desktop sidebar */}
             <aside className="fixed inset-y-0 left-0 hidden lg:flex w-64 bg-white border-r border-gray-100 flex-col z-30">
                 <div className="px-5 py-5 border-b border-gray-100">
-                    <Link to="/" className="flex items-center gap-2">
+                    <Link to="/" className="flex items-center gap-2.5">
                         <Logo size="md" />
+                        <div className="leading-tight">
+                            <div className="font-extrabold text-ink text-sm">BLDS</div>
+                            <div className="text-[10px] text-gray-500 uppercase tracking-widest">Admin Console</div>
+                        </div>
                     </Link>
                 </div>
                 <div className="flex-1 h-0 min-h-0 overflow-y-auto custom-scrollbar overscroll-contain">
@@ -140,8 +133,9 @@ const AdminLayout = () => {
                 <div className="lg:hidden fixed inset-0 z-40 bg-black/40" onClick={() => setMobileOpen(false)}>
                     <aside className="absolute left-0 top-0 bottom-0 w-72 bg-white flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
                         <div className="px-5 py-5 border-b border-gray-100 flex items-center justify-between shrink-0">
-                            <Link to="/" className="flex items-center gap-2">
+                            <Link to="/" className="flex items-center gap-2.5">
                                 <Logo size="md" />
+                                <span className="font-extrabold text-ink text-sm">BLDS</span>
                             </Link>
                             <button onClick={() => setMobileOpen(false)} className="text-gray-400 p-2 -mr-2">
                                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
