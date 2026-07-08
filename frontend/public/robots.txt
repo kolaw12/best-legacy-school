@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin-login
+Disallow: /admin-signup
+Disallow: /admin-dashboard
+Disallow: /teacher
+Disallow: /parent
+Disallow: /academics
+
+Sitemap: https://bestlegacydivineschool.com/sitemap.xml

@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import axios from 'axios';
+import { Trash2 } from 'lucide-react';
 import AdminPageHeader from '../../components/admin/PageHeader';
 import DataTable from '../../components/admin/DataTable';
+import BulkActionBar from '../../components/admin/BulkActionBar';
+import { selectionColumn } from '../../components/admin/selectionColumn';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Input, Select } from '../../components/ui/Field';
 import StudentForm from '../../components/admin/forms/StudentForm';
+import useRowSelection from '../../hooks/useRowSelection';
 import adminApi from '../../config/adminApi';
+import API_URL from '../../config/api';
 import { CLASS_LEVELS } from '../../config/school';
 
 const statusTone = { active: 'mint', graduated: 'neutral', withdrawn: 'warm', suspended: 'warm' };
@@ -20,6 +27,8 @@ const StudentsPage = () => {
     const [sectionFilter, setSectionFilter] = useState('');
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState(null);
+    const [confirm, setConfirm] = useState(null); // { rows: [...] } | null
+    const [busy, setBusy] = useState(false);
 
     useEffect(() => {
         const next = new URLSearchParams(searchParams);
@@ -49,6 +58,25 @@ const StudentsPage = () => {
         );
     }, [q, rows]);
 
+    const selection = useRowSelection(filtered);
+
+    const removeMany = async (toRemove) => {
+        setBusy(true);
+        const failed = [];
+        for (const row of toRemove) {
+            try {
+                await axios.delete(`${API_URL}/api/academics/students/${row.id}/`);
+                setRows(rs => rs.filter(r => r.id !== row.id));
+            } catch (e) {
+                failed.push(`${row.full_name}: ${e.response?.data?.error || 'failed'}`);
+            }
+        }
+        selection.clear();
+        setBusy(false);
+        setConfirm(null);
+        if (failed.length) alert(`Some records couldn't be moved to the trash:\n\n${failed.join('\n')}`);
+    };
+
     return (
         <>
             <AdminPageHeader
@@ -61,7 +89,7 @@ const StudentsPage = () => {
                 ]}
             />
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4 flex flex-col md:flex-row gap-3">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4 flex flex-col md:flex-row gap-3 md:items-center">
                 <div className="flex-1">
                     <Input placeholder="Search by name, admission no, or guardian…" value={q} onChange={e => setQ(e.target.value)} />
                 </div>
@@ -76,6 +104,11 @@ const StudentsPage = () => {
                         <option key={i + 1} value={i + 1}>{CLASS_LEVELS[i]}</option>
                     ))}
                 </Select>
+                <BulkActionBar
+                    count={selection.selectedRows.length}
+                    label="Move to trash"
+                    onAction={() => setConfirm({ rows: selection.selectedRows })}
+                />
             </div>
 
             <DataTable
@@ -84,6 +117,7 @@ const StudentsPage = () => {
                 empty="No students match your filters."
                 onRowClick={(row) => { setEditing(row); setFormOpen(true); }}
                 columns={[
+                    selectionColumn(selection),
                     {
                         key: 'student', label: 'Student',
                         render: r => (
@@ -103,6 +137,18 @@ const StudentsPage = () => {
                     { key: 'guardian_name', label: 'Guardian', render: r => r.guardian_name || <span className="text-gray-400">—</span> },
                     { key: 'guardian_phone', label: 'Phone', render: r => r.guardian_phone || <span className="text-gray-400">—</span> },
                     { key: 'status', label: 'Status', render: r => <Badge tone={statusTone[r.status] || 'neutral'}>{r.status}</Badge> },
+                    {
+                        key: 'actions', label: '',
+                        render: r => (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setConfirm({ rows: [r] }); }}
+                                title="Move to trash"
+                                className="p-2 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                            >
+                                <Trash2 className="w-4 h-4" strokeWidth={2} />
+                            </button>
+                        ),
+                    },
                 ]}
             />
 
@@ -111,6 +157,17 @@ const StudentsPage = () => {
                 initial={editing}
                 onClose={() => setFormOpen(false)}
                 onSaved={load}
+            />
+
+            <ConfirmDialog
+                open={!!confirm}
+                onClose={() => setConfirm(null)}
+                onConfirm={() => removeMany(confirm.rows)}
+                busy={busy}
+                title={confirm?.rows.length > 1 ? `Move ${confirm.rows.length} students to the trash?` : `Move ${confirm?.rows[0]?.full_name} to the trash?`}
+                body="You can restore them later from Trash."
+                confirmLabel={confirm?.rows.length > 1 ? `Move ${confirm.rows.length} to trash` : 'Move to trash'}
+                tone="danger"
             />
         </>
     );

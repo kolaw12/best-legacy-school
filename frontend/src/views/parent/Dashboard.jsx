@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import { Baby, CalendarDays, Wallet, Phone, Users, ClipboardList, ArrowRight } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Reveal from '../../components/ui/Reveal';
@@ -24,8 +25,15 @@ const ParentDashboard = () => {
         axios.get(`${API_URL}/api/assignments/`).then(r => setAssignments(r.data || []));
     }, []);
 
-    const outstanding = invoices.reduce((acc, i) => acc + Number(i.balance || 0), 0);
-    const unpaidCount = invoices.filter(i => i.status !== 'paid').length;
+    // Never trust an unscoped invoice/assignment fetch on its own — an admin
+    // previewing the parent portal (PARENT_ROLES intentionally includes
+    // ADMIN_ROLES) hits the same endpoints as a real parent but isn't
+    // guardian-scoped server-side, so without this filter they'd see every
+    // invoice in the school summed into "Outstanding fees".
+    const childIds = new Set(children.map(c => c.id));
+    const myInvoices = invoices.filter(i => childIds.has(i.student));
+    const outstanding = myInvoices.reduce((acc, i) => acc + Number(i.balance || 0), 0);
+    const unpaidCount = myInvoices.filter(i => i.status !== 'paid').length;
     const dueAssignments = assignments.filter(a => a.is_published).length;
 
     const greeting = (() => {
@@ -42,10 +50,10 @@ const ParentDashboard = () => {
                 title="Welcome to your Parent Portal"
                 subtitle="A 30-second tour of what you can do here."
                 steps={[
-                    { icon: '👶', label: 'View each child\'s class, attendance and report card' },
-                    { icon: '📅', label: 'See homework set by their class teacher' },
-                    { icon: '💸', label: 'Pay fees by transfer; the bursary verifies within 24 hours' },
-                    { icon: '📞', label: 'Mrs Kolawole answers her phone — 0806 766 3966' },
+                    { icon: <Baby className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'View each child\'s class, attendance and report card' },
+                    { icon: <CalendarDays className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'See homework set by their class teacher' },
+                    { icon: <Wallet className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Pay fees by transfer; the bursary verifies within 24 hours' },
+                    { icon: <Phone className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Mrs Kolawole answers her phone — 0806 766 3966' },
                 ]}
             />
 
@@ -63,11 +71,11 @@ const ParentDashboard = () => {
 
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                 <KpiCard tone="primary" label="Children" value={loading ? '—' : children.length} hint="enrolled at Best Legacy"
-                    icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 014-4h4a4 4 0 014 4v2M12 12a4 4 0 100-8 4 4 0 000 8z"/></svg>}/>
+                    icon={<Users className="w-5 h-5" strokeWidth={2} />}/>
                 <KpiCard tone="warm" label="Outstanding fees" value={naira(outstanding)} hint={`${unpaidCount} unpaid invoice${unpaidCount === 1 ? '' : 's'}`}
                     icon={<span className="text-lg">₦</span>}/>
                 <KpiCard tone="sage" label="Open assignments" value={dueAssignments} hint="across your children's classes"
-                    icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>}/>
+                    icon={<ClipboardList className="w-5 h-5" strokeWidth={2} />}/>
             </div>
 
             <Reveal>
@@ -126,7 +134,7 @@ const ParentDashboard = () => {
                                     className="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-primary text-white font-semibold text-sm hover:bg-primary-dark transition"
                                 >
                                     View {c.first_name}'s portal
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                                    <ArrowRight className="w-4 h-4" strokeWidth={2} />
                                 </Link>
                             </motion.div>
                         );

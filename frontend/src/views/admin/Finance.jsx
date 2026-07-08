@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
+import { Banknote, CheckCircle2, AlertTriangle, Receipt } from 'lucide-react';
 import AdminPageHeader from '../../components/admin/PageHeader';
 import DataTable from '../../components/admin/DataTable';
 import KpiCard from '../../components/admin/KpiCard';
@@ -57,10 +58,10 @@ const AdminFinance = () => {
 
             {/* Summary row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <KpiCard tone="primary" label="Total Invoiced" value={loading ? '—' : naira(summary?.totals.due)} hint="this session" icon={<span>₦</span>} />
-                <KpiCard tone="sage"    label="Collected"      value={loading ? '—' : naira(summary?.totals.paid)} hint={summary?.totals.paid > 0 ? 'kudos' : 'nothing recorded yet'} icon={<span>✓</span>} />
-                <KpiCard tone="warm"    label="Outstanding"    value={loading ? '—' : naira(summary?.totals.outstanding)} hint={`${summary?.invoices?.unpaid || 0} unpaid invoices`} icon={<span>!</span>} />
-                <KpiCard tone="ink"     label="Invoices"       value={loading ? '—' : summary?.invoices?.total || 0} hint="all statuses" icon={<span>#</span>} />
+                <KpiCard tone="primary" label="Total Invoiced" value={loading ? '—' : naira(summary?.totals.due)} hint="this session" icon={<Banknote className="w-5 h-5" strokeWidth={2} />} />
+                <KpiCard tone="sage"    label="Collected"      value={loading ? '—' : naira(summary?.totals.paid)} hint={summary?.totals.paid > 0 ? 'kudos' : 'nothing recorded yet'} icon={<CheckCircle2 className="w-5 h-5" strokeWidth={2} />} />
+                <KpiCard tone="warm"    label="Outstanding"    value={loading ? '—' : naira(summary?.totals.outstanding)} hint={`${summary?.invoices?.unpaid || 0} unpaid invoices`} icon={<AlertTriangle className="w-5 h-5" strokeWidth={2} />} />
+                <KpiCard tone="ink"     label="Invoices"       value={loading ? '—' : summary?.invoices?.total || 0} hint="all statuses" icon={<Receipt className="w-5 h-5" strokeWidth={2} />} />
             </div>
 
             {/* Tabs */}

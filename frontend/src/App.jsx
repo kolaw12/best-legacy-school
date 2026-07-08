@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import Layout from './components/Layout';
 import RequireRole from './components/RequireRole';
 import PageTransition from './components/ui/PageTransition';
@@ -12,17 +12,13 @@ import FAQ from './views/FAQ';
 import VirtualTour from './views/VirtualTour';
 import NotFound from './views/NotFound';
 import AdminLogin from './views/AdminLogin';
-import AdminSignup from './views/AdminSignup';
-import AcademicsLogin from './views/AcademicsLogin';
-import AcademicsSignup from './views/AcademicsSignup';
-import LegacyTeacherPortal from './views/TeacherPortal';
-import LegacyStudentPortal from './views/StudentPortal';
 
 // New /admin/* console
 import AdminLayout from './components/admin/AdminLayout';
 import NewAdminDashboard from './views/admin/Dashboard';
 import AdminStudents from './views/admin/Students';
 import AdminTeachers from './views/admin/Teachers';
+import AdminGuardians from './views/admin/Guardians';
 import AdminClasses from './views/admin/Classes';
 import AdminSubjects from './views/admin/Subjects';
 import AdminAdmissions from './views/admin/Admissions';
@@ -30,11 +26,13 @@ import AdminAttendance from './views/admin/Attendance';
 import AdminGrades from './views/admin/Grades';
 import AdminFinance from './views/admin/Finance';
 import AdminAudit from './views/admin/Audit';
+import AdminTrash from './views/admin/Trash';
 import AdminAnnouncements from './views/admin/Announcements';
 import AdminBulkImport from './views/admin/BulkImport';
 import AdminPromotion from './views/admin/Promotion';
 import AdminPickups from './views/admin/Pickups';
-import ReportCardView from './views/admin/ReportCard';
+import ReportCardView from './views/shared/ReportCard';
+import AdminTerms from './views/admin/Terms';
 
 // New /teacher/* portal
 import TeacherLayout from './components/teacher/TeacherLayout';
@@ -42,6 +40,7 @@ import TeacherDashboard from './views/teacher/Dashboard';
 import TeacherClassRoster from './views/teacher/ClassRoster';
 import TeacherAttendance from './views/teacher/Attendance';
 import TeacherGrades from './views/teacher/Grades';
+import TeacherStudentResults from './views/teacher/StudentResults';
 import TeacherAssignments from './views/teacher/Assignments';
 
 // New /parent/* portal
@@ -82,7 +81,10 @@ const AnimatedRoutes = () => {
 
         {/* Auth */}
         <Route path="/admin-login"  element={<Public><PageTransition><AdminLogin /></PageTransition></Public>} />
-        <Route path="/admin-signup" element={<Public><PageTransition><AdminSignup /></PageTransition></Public>} />
+        {/* Self-service signup retired — it only ever wrote a plaintext password to
+            localStorage and had no real backend behind it. Accounts are created
+            server-side (Django admin / seed scripts) with a real role assigned. */}
+        <Route path="/admin-signup" element={<Navigate to="/admin-login" replace />} />
 
         {/* Admin console */}
         <Route path="/admin" element={<RequireRole roles={STAFF_ROLES}><AdminLayout /></RequireRole>}>
@@ -91,6 +93,7 @@ const AnimatedRoutes = () => {
           <Route path="admissions"              element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminAdmissions /></PageTransition></RequireRole>} />
           <Route path="students"                element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminStudents /></PageTransition></RequireRole>} />
           <Route path="teachers"                element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminTeachers /></PageTransition></RequireRole>} />
+          <Route path="guardians"               element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminGuardians /></PageTransition></RequireRole>} />
           <Route path="classes"                 element={<PageTransition><AdminClasses /></PageTransition>} />
           <Route path="subjects"                element={<PageTransition><AdminSubjects /></PageTransition>} />
           <Route path="attendance"              element={<PageTransition><AdminAttendance /></PageTransition>} />
@@ -99,9 +102,11 @@ const AnimatedRoutes = () => {
           <Route path="grades"                  element={<PageTransition><AdminGrades /></PageTransition>} />
           <Route path="finance"                 element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminFinance /></PageTransition></RequireRole>} />
           <Route path="audit"                   element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminAudit /></PageTransition></RequireRole>} />
+          <Route path="trash"                   element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminTrash /></PageTransition></RequireRole>} />
           <Route path="announcements"           element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminAnnouncements /></PageTransition></RequireRole>} />
           <Route path="bulk-import"             element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminBulkImport /></PageTransition></RequireRole>} />
           <Route path="promotion"               element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminPromotion /></PageTransition></RequireRole>} />
+          <Route path="terms"                   element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminTerms /></PageTransition></RequireRole>} />
           <Route path="report-cards/:studentId" element={<PageTransition><ReportCardView /></PageTransition>} />
         </Route>
 
@@ -112,8 +117,10 @@ const AnimatedRoutes = () => {
           <Route path="class"       element={<PageTransition><TeacherClassRoster /></PageTransition>} />
           <Route path="attendance"  element={<PageTransition><TeacherAttendance /></PageTransition>} />
           <Route path="grades"      element={<PageTransition><TeacherGrades /></PageTransition>} />
+          <Route path="students/:studentId/results" element={<PageTransition><TeacherStudentResults /></PageTransition>} />
           <Route path="assignments" element={<PageTransition><TeacherAssignments /></PageTransition>} />
           <Route path="messages"    element={<PageTransition><TeacherMessages /></PageTransition>} />
+          <Route path="report-cards/:studentId" element={<PageTransition><ReportCardView /></PageTransition>} />
         </Route>
 
         {/* Parent portal */}
@@ -124,13 +131,16 @@ const AnimatedRoutes = () => {
           <Route path="fees"        element={<PageTransition><ParentFees /></PageTransition>} />
           <Route path="calendar"    element={<PageTransition><ParentCalendar /></PageTransition>} />
           <Route path="messages"    element={<PageTransition><ParentMessages /></PageTransition>} />
+          <Route path="report-cards/:studentId" element={<PageTransition><ReportCardView /></PageTransition>} />
         </Route>
 
-        {/* Legacy portals (kept untouched) */}
-        <Route path="/academics"          element={<Public><PageTransition><AcademicsLogin /></PageTransition></Public>} />
-        <Route path="/academics/signup"   element={<Public><PageTransition><AcademicsSignup /></PageTransition></Public>} />
-        <Route path="/academics/teacher"  element={<Public><PageTransition><LegacyTeacherPortal /></PageTransition></Public>} />
-        <Route path="/academics/student"  element={<Public><PageTransition><LegacyStudentPortal /></PageTransition></Public>} />
+        {/* Legacy /academics/* portals retired — plaintext localStorage auth,
+            fully superseded by /teacher and /parent above. Old links redirect
+            to the real login instead of 404ing or resolving to a dead page. */}
+        <Route path="/academics"          element={<Navigate to="/admin-login" replace />} />
+        <Route path="/academics/signup"   element={<Navigate to="/admin-login" replace />} />
+        <Route path="/academics/teacher"  element={<Navigate to="/admin-login" replace />} />
+        <Route path="/academics/student"  element={<Navigate to="/admin-login" replace />} />
 
         {/* 404 catch-all */}
         <Route path="*" element={<Public><PageTransition><NotFound /></PageTransition></Public>} />

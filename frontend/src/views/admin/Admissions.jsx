@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { Trash2 } from 'lucide-react';
 import AdminPageHeader from '../../components/admin/PageHeader';
 import DataTable from '../../components/admin/DataTable';
+import BulkActionBar from '../../components/admin/BulkActionBar';
+import { selectionColumn } from '../../components/admin/selectionColumn';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Input, Select } from '../../components/ui/Field';
+import useRowSelection from '../../hooks/useRowSelection';
 import API_URL from '../../config/api';
 import { CLASS_LEVELS } from '../../config/school';
 
@@ -18,6 +23,8 @@ const AdmissionsPage = () => {
     const [status, setStatus] = useState('');
     const [classFilter, setClassFilter] = useState('');
     const [updating, setUpdating] = useState(null);
+    const [confirm, setConfirm] = useState(null); // { rows: [...] } | null
+    const [busy, setBusy] = useState(false);
 
     const load = () => {
         setLoading(true);
@@ -82,6 +89,25 @@ const AdmissionsPage = () => {
         }
     };
 
+    const selection = useRowSelection(filtered);
+
+    const removeMany = async (toRemove) => {
+        setBusy(true);
+        const failed = [];
+        for (const row of toRemove) {
+            try {
+                await axios.delete(`${API_URL}/api/admissions/${row.id}/`);
+                setRows(rs => rs.filter(r => r.id !== row.id));
+            } catch (e) {
+                failed.push(`${row.student_name}: ${e.response?.data?.error || 'failed'}`);
+            }
+        }
+        selection.clear();
+        setBusy(false);
+        setConfirm(null);
+        if (failed.length) alert(`Some applications couldn't be moved to the trash:\n\n${failed.join('\n')}`);
+    };
+
     const counts = rows.reduce((acc, r) => ({ ...acc, [r.status]: (acc[r.status] || 0) + 1 }), {});
 
     return (
@@ -110,6 +136,11 @@ const AdmissionsPage = () => {
                     <option value="">All classes</option>
                     {CLASS_LEVELS.map(c => <option key={c} value={c}>{c}</option>)}
                 </Select>
+                <BulkActionBar
+                    count={selection.selectedRows.length}
+                    label="Move to trash"
+                    onAction={() => setConfirm({ rows: selection.selectedRows })}
+                />
             </div>
 
             <DataTable
@@ -117,6 +148,7 @@ const AdmissionsPage = () => {
                 rows={filtered}
                 empty="No applications match your filters."
                 columns={[
+                    selectionColumn(selection),
                     { key: 'student_id', label: 'App ID', render: r => <span className="font-mono text-xs">{r.student_id}</span> },
                     {
                         key: 'student_name', label: 'Student',
@@ -142,8 +174,9 @@ const AdmissionsPage = () => {
                     {
                         key: 'actions', label: '',
                         render: r => {
+                            let statusAction;
                             if (r.status === 'pending') {
-                                return (
+                                statusAction = (
                                     <div className="flex gap-2">
                                         <button
                                             disabled={updating === r.id}
@@ -157,20 +190,45 @@ const AdmissionsPage = () => {
                                         >Reject</button>
                                     </div>
                                 );
-                            }
-                            if (r.status === 'accepted') {
-                                return (
+                            } else if (r.enrolled) {
+                                statusAction = <Badge tone="mint">Enrolled</Badge>;
+                            } else if (r.status === 'accepted') {
+                                statusAction = (
                                     <button
                                         disabled={updating === r.id}
                                         onClick={() => enroll(r)}
                                         className="text-xs font-semibold px-3 py-1.5 rounded-full bg-secondary text-ink hover:bg-secondary-dark disabled:opacity-50"
                                     >Enrol as Student</button>
                                 );
+                            } else {
+                                statusAction = <span className="text-xs text-gray-400">—</span>;
                             }
-                            return <span className="text-xs text-gray-400">—</span>;
+                            return (
+                                <div className="flex items-center gap-2">
+                                    {statusAction}
+                                    <button
+                                        onClick={() => setConfirm({ rows: [r] })}
+                                        title="Move to trash"
+                                        className="p-2 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                                    >
+                                        <Trash2 className="w-4 h-4" strokeWidth={2} />
+                                    </button>
+                                </div>
+                            );
                         },
                     },
                 ]}
+            />
+
+            <ConfirmDialog
+                open={!!confirm}
+                onClose={() => setConfirm(null)}
+                onConfirm={() => removeMany(confirm.rows)}
+                busy={busy}
+                title={confirm?.rows.length > 1 ? `Move ${confirm.rows.length} applications to the trash?` : `Move ${confirm?.rows[0]?.student_name}'s application to the trash?`}
+                body="You can restore it later from Trash."
+                confirmLabel={confirm?.rows.length > 1 ? `Move ${confirm.rows.length} to trash` : 'Move to trash'}
+                tone="danger"
             />
         </>
     );

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Phone, MapPin } from 'lucide-react';
 import Logo from './ui/Logo';
 
 const SOCIALS = [
@@ -15,8 +16,8 @@ const Footer = () => {
                     {/* Brand + CTA Combined */}
                     <div className="col-span-2 md:col-span-2">
                         <Link to="/" className="inline-flex items-center">
-                            <div className="bg-white rounded-lg p-1.5">
-                                <Logo size="sm" />
+                            <div className="bg-white rounded-lg p-2.5">
+                                <Logo size="xl" />
                             </div>
                         </Link>
                         <h2 className="mt-6 text-2xl font-black text-white leading-tight tracking-tight">
@@ -57,9 +58,15 @@ const Footer = () => {
 
                     <div>
                         <h4 className="font-bold text-white mb-4 uppercase text-[10px] tracking-[0.2em]">Locate</h4>
-                        <div className="space-y-4 text-sm">
-                            <a href="tel:+2348067663966" className="block text-gray-300 hover:text-primary font-bold text-xs uppercase tracking-wider">+234 806 766 3966</a>
-                            <span className="block text-gray-500 leading-snug text-xs">8, Kolawole St, off Uncle Steve, Mowe</span>
+                        <div className="space-y-3 text-sm">
+                            <a href="tel:+2348067663966" className="flex items-center gap-2 text-gray-300 hover:text-primary font-bold text-xs uppercase tracking-wider transition-colors">
+                                <Phone className="w-3.5 h-3.5 shrink-0" strokeWidth={2} />
+                                +234 806 766 3966
+                            </a>
+                            <span className="flex items-start gap-2 text-gray-500 leading-snug text-xs">
+                                <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" strokeWidth={2} />
+                                8, Kolawole St, off Uncle Steve, Mowe
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -74,13 +81,22 @@ const Footer = () => {
                 </div>
             </div>
 
-            {/* Massive Brand Watermark — Smaller & More Integrated */}
-            <div className="absolute bottom-0 left-0 right-0 pointer-events-none select-none opacity-[0.03] transform translate-y-1/2">
-                <div 
-                    className="text-center font-black leading-none"
-                    style={{ fontSize: '18vw', letterSpacing: '-0.04em' }}
+            {/* Massive brand watermark — the letterforms are filled with a
+                real photo (background-clip: text) instead of a flat color,
+                shown at full strength so the photo reads clearly inside
+                the letters rather than as a faint texture. */}
+            <div className="relative mt-10 py-4 pointer-events-none select-none overflow-hidden">
+                <div
+                    className="text-center font-black leading-none bg-clip-text text-transparent bg-cover"
+                    style={{
+                        fontSize: '20vw',
+                        letterSpacing: '-0.04em',
+                        backgroundImage: "url('/cultural_day.jpg')",
+                        backgroundPosition: 'center 30%',
+                        WebkitBackgroundClip: 'text',
+                    }}
                 >
-                    BEST <span className="font-serif italic font-light">LEGACY</span>
+                    BLDS
                 </div>
             </div>
         </footer>

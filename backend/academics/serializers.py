@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from core.secure_media import build_secure_url
 from .models import (
     Session, Term, ClassLevel, Subject,
     Guardian, Teacher, Student, Enrollment, AttendanceRecord,
@@ -72,6 +73,15 @@ class TeacherSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ("staff_id",)
 
+    def to_representation(self, instance):
+        # Swap the raw MEDIA path for a signed, time-limited link on the way
+        # out; the underlying field stays a normal writable ImageField for
+        # uploads (create/update untouched).
+        data = super().to_representation(instance)
+        if instance.photo:
+            data["photo"] = build_secure_url(self.context.get("request"), instance.photo)
+        return data
+
 
 class StudentSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(read_only=True)
@@ -99,8 +109,14 @@ class StudentSerializer(serializers.ModelSerializer):
         return obj.guardian.full_name if obj.guardian else None
 
     def get_has_safety_notes(self, obj):
-        # Tiny convenience flag for UIs that just want to show a "⚠️ has notes" pill.
+        # Tiny convenience flag for UIs that just want to show a "has notes" pill.
         return bool(obj.allergies.strip() or obj.medical_notes.strip() or obj.dietary_notes.strip())
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.photo:
+            data["photo"] = build_secure_url(self.context.get("request"), instance.photo)
+        return data
 
 
 class PickupAuthorizationSerializer(serializers.ModelSerializer):
@@ -122,6 +138,15 @@ class PickupAuthorizationSerializer(serializers.ModelSerializer):
 
     def get_valid_today(self, obj):
         return obj.is_valid_today()
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.photo:
+            data["photo"] = build_secure_url(self.context.get("request"), instance.photo)
+        return data
+
+    def get_photo(self, obj):
+        return build_secure_url(self.context.get("request"), obj.photo)
 
 
 class AttendanceRecordSerializer(serializers.ModelSerializer):

@@ -1,5 +1,7 @@
 from django.db import models
 
+from .soft_delete import SoftDeleteModel
+
 class Event(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
@@ -35,7 +37,7 @@ class Inquiry(models.Model):
     def __str__(self):
         return f"Inquiry from {self.name} - {self.subject}"
 
-class Admission(models.Model):
+class Admission(SoftDeleteModel):
     # Student Details
     student_id = models.CharField(max_length=20, blank=True, unique=True, null=True)
     passport_photo = models.ImageField(upload_to='passports/', null=True, blank=True)
@@ -59,6 +61,9 @@ class Admission(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        base_manager_name = "all_objects"
 
     def __str__(self):
         return f"{self.student_name} - {self.class_applying_for}"

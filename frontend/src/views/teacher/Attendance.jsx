@@ -4,6 +4,7 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { Input } from '../../components/ui/Field';
 import useTeacherClass from '../../context/useTeacherClass';
+import ClassSwitcher from '../../components/teacher/ClassSwitcher';
 import API_URL from '../../config/api';
 
 const STATUS_OPTIONS = [
@@ -21,7 +22,7 @@ const yesterdayOf = (d) => {
 };
 
 const TeacherAttendance = () => {
-    const { classLevel, loading: tLoading } = useTeacherClass();
+    const { classes, classLevel, setClassLevel, loading: tLoading } = useTeacherClass();
     const [date, setDate] = useState(today());
     const [students, setStudents] = useState([]);
     const [marks, setMarks] = useState({});
@@ -123,7 +124,10 @@ const TeacherAttendance = () => {
         <>
             <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
                 <div>
-                    <Badge tone="mint" dot>{classLevel.name}</Badge>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Badge tone="mint" dot>{classLevel.name}</Badge>
+                        <ClassSwitcher classes={classes} value={classLevel} onChange={setClassLevel} />
+                    </div>
                     <h1 className="mt-3 text-2xl md:text-3xl font-black text-ink">Attendance</h1>
                     <p className="mt-1 text-sm text-gray-500">Mark your class for {new Date(date).toLocaleDateString('en-NG', { weekday: 'long', day: 'numeric', month: 'long' })}.</p>
                 </div>

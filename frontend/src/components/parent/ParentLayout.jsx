@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { NavLink, Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Home, Calendar, MessageCircle, Banknote, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Breadcrumbs from '../ui/Breadcrumbs';
 import FeeDueChip from './FeeDueChip';
@@ -14,25 +15,17 @@ const NAV = [
     { to: '/parent/fees',      label: 'Fees',      icon: 'cash' },
 ];
 
-const PATHS = {
-    home:  "M3 11.5L12 4l9 7.5M5 10v9a1 1 0 001 1h3v-5h6v5h3a1 1 0 001-1v-9",
-    cash:  "M12 8c-1.66 0-3 .9-3 2s1.34 2 3 2 3 .9 3 2-1.34 2-3 2m0-8c1.11 0 2.08.4 2.83 1M12 4v2m0 10v2m9-6a9 9 0 11-18 0 9 9 0 0118 0z",
-    calendar: "M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
-    chat:  "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
-    logout:"M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1",
-};
+const ICONS = { home: Home, cash: Banknote, calendar: Calendar, chat: MessageCircle, logout: LogOut };
 
-const Icon = ({ name }) => (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={PATHS[name]}/>
-    </svg>
-);
+const Icon = ({ name }) => {
+    const Cmp = ICONS[name] || Home;
+    return <Cmp className="w-5 h-5 shrink-0" strokeWidth={2} />;
+};
 
 const ParentLayout = () => {
     const [open, setOpen] = useState(false);
     const { profile, logout } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();
 
     const handleLogout = async () => {
         await logout();
@@ -67,7 +60,7 @@ const ParentLayout = () => {
                         <Logo size="md" />
                     </Link>
                 </div>
-                <div className="flex-1 h-0 min-h-0 overflow-y-auto custom-scrollbar overscroll-contain">
+                <div className="flex-1 h-0 min-h-0 overflow-y-auto custom-scrollbar overscroll-contain" data-lenis-prevent>
                     <NavList />
                 </div>
                 <div className="p-4 border-t border-gray-100 space-y-2">
@@ -101,10 +94,10 @@ const ParentLayout = () => {
                                 <Logo size="md" />
                             </Link>
                             <button onClick={() => setOpen(false)} className="text-gray-400">
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                <X className="w-6 h-6" strokeWidth={2} />
                             </button>
                         </div>
-                        <div className="flex-1 h-0 min-h-0 overflow-y-auto custom-scrollbar overscroll-contain">
+                        <div className="flex-1 h-0 min-h-0 overflow-y-auto custom-scrollbar overscroll-contain" data-lenis-prevent>
                             <NavList onClickLink={() => setOpen(false)} />
                         </div>
                     </motion.aside>
@@ -116,7 +109,7 @@ const ParentLayout = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <button onClick={() => setOpen(true)} className="lg:hidden p-2 text-ink">
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                                <Menu className="w-6 h-6" strokeWidth={2} />
                             </button>
                             <Breadcrumbs />
                         </div>

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { ArrowRight } from 'lucide-react';
+import useMyChildren from '../../context/useMyChildren';
 import API_URL from '../../config/api';
 
 const naira = (v) => `₦${Number(v || 0).toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
@@ -10,6 +12,7 @@ const naira = (v) => `₦${Number(v || 0).toLocaleString('en-NG', { maximumFract
  * Turns warm-coral when due in <7 days, ink when paid up.
  */
 const FeeDueChip = () => {
+    const { children } = useMyChildren();
     const [outstanding, setOutstanding] = useState(0);
     const [nextDue, setNextDue] = useState(null);
     const [count, setCount] = useState(0);
@@ -19,7 +22,14 @@ const FeeDueChip = () => {
         axios.get(`${API_URL}/api/finance/invoices/`)
             .then(r => {
                 if (cancelled) return;
-                const invoices = r.data || [];
+                // /api/finance/invoices/ only auto-scopes to "my children" for
+                // the exact `parent` role — an admin previewing this portal
+                // (PARENT_ROLES intentionally includes ADMIN_ROLES) gets every
+                // invoice in the school back unfiltered, so this chip must
+                // scope to the resolved children itself, same as the
+                // dashboard and fees page.
+                const childIds = new Set(children.map(c => c.id));
+                const invoices = (r.data || []).filter(i => childIds.has(i.student));
                 const open = invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled');
                 const total = open.reduce((acc, i) => acc + Number(i.balance || 0), 0);
                 setOutstanding(total);
@@ -30,7 +40,7 @@ const FeeDueChip = () => {
             })
             .catch(() => { /* silent — chip just hides */ });
         return () => { cancelled = true; };
-    }, []);
+    }, [children]);
 
     if (outstanding <= 0) {
         return (
@@ -63,7 +73,7 @@ const FeeDueChip = () => {
                 ? <>Due in {days} day{days === 1 ? '' : 's'} · {naira(outstanding)}</>
                 : <>{naira(outstanding)} outstanding · pay now</>
             }
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            <ArrowRight className="w-3 h-3" strokeWidth={2.5} />
         </Link>
     );
 };

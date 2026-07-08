@@ -1,3 +1,4 @@
+import { ClipboardList } from 'lucide-react';
 import Skeleton from '../ui/Skeleton';
 import EmptyState from '../ui/EmptyState';
 
@@ -35,7 +36,7 @@ const DataTable = ({
     if (!rows.length) {
         return (
             <EmptyState
-                icon={emptyIcon || '📋'}
+                icon={emptyIcon || <ClipboardList className="w-6 h-6" strokeWidth={1.75} />}
                 title={emptyTitle || (typeof empty === 'string' ? empty : 'Nothing here yet')}
                 body={emptyBody || (typeof empty === 'string' ? null : empty)}
                 action={emptyAction}

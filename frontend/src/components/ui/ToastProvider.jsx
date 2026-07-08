@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 /**
  * Lightweight toast system.
@@ -10,9 +11,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 const ToastContext = createContext(null);
 
 const TONES = {
-    success: { dot: 'bg-primary',   ring: 'ring-primary/30',    text: 'text-primary-dark',   icon: '✓' },
-    error:   { dot: 'bg-rose-500',  ring: 'ring-rose-300',      text: 'text-rose-700',       icon: '!' },
-    info:    { dot: 'bg-secondary', ring: 'ring-secondary/30',  text: 'text-secondary-dark', icon: 'i' },
+    success: { dot: 'bg-primary',   ring: 'ring-primary/30',    text: 'text-primary-dark',   icon: CheckCircle2 },
+    error:   { dot: 'bg-rose-500',  ring: 'ring-rose-300',      text: 'text-rose-700',       icon: AlertCircle },
+    info:    { dot: 'bg-secondary', ring: 'ring-secondary/30',  text: 'text-secondary-dark', icon: Info },
 };
 
 let _id = 0;
@@ -60,8 +61,8 @@ export const ToastProvider = ({ children }) => {
                                 transition={{ type: 'spring', stiffness: 240, damping: 22 }}
                                 className={`pointer-events-auto bg-white rounded-2xl shadow-card-lg p-4 flex items-start gap-3 ring-1 ${tone.ring}`}
                             >
-                                <span className={`shrink-0 w-7 h-7 rounded-full ${tone.dot} text-white flex items-center justify-center text-sm font-black`}>
-                                    {tone.icon}
+                                <span className={`shrink-0 w-7 h-7 rounded-full ${tone.dot} text-white flex items-center justify-center`}>
+                                    <tone.icon className="w-4 h-4" strokeWidth={2.5} />
                                 </span>
                                 <div className={`flex-1 text-sm font-semibold ${tone.text}`}>{t.message}</div>
                                 <button
@@ -69,7 +70,7 @@ export const ToastProvider = ({ children }) => {
                                     aria-label="Dismiss"
                                     className="shrink-0 text-gray-400 hover:text-ink p-1 -m-1"
                                 >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    <X className="w-4 h-4" strokeWidth={2} />
                                 </button>
                             </motion.div>
                         );

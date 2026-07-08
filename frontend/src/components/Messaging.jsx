@@ -59,7 +59,7 @@ const Messaging = ({ title = 'Messages', allowNew = true }) => {
                             {allowNew && <div className="mt-2">Start one with the button above.</div>}
                         </div>
                     ) : (
-                        <ul className="divide-y divide-gray-100 max-h-[640px] overflow-auto">
+                        <ul className="divide-y divide-gray-100 max-h-[640px] overflow-auto" data-lenis-prevent>
                             {threads.map(t => (
                                 <li key={t.id}>
                                     <button
@@ -147,7 +147,7 @@ const ThreadView = ({ thread, messages, onSent }) => {
                     With: {thread.participant_names?.join(', ') || '—'}
                 </div>
             </div>
-            <div ref={scrollRef} className="flex-1 overflow-auto p-5 space-y-3">
+            <div ref={scrollRef} className="flex-1 overflow-auto p-5 space-y-3" data-lenis-prevent>
                 {messages.length === 0 ? (
                     <p className="text-sm text-gray-400 text-center pt-8">No messages yet — say hello below.</p>
                 ) : messages.map(m => {

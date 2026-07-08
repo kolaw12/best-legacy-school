@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { CheckSquare, NotebookPen, PencilLine, Users, TrendingUp, BookOpen, AlertTriangle } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import KpiCard from '../../components/admin/KpiCard';
 import WelcomeCard from '../../components/ui/WelcomeCard';
 import useTeacherClass from '../../context/useTeacherClass';
+import ClassSwitcher from '../../components/teacher/ClassSwitcher';
 import API_URL from '../../config/api';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
 const TeacherDashboard = () => {
-    const { teacher, classLevel, loading: tLoading } = useTeacherClass();
+    const { teacher, classes, classLevel, setClassLevel, isClassTeacher, loading: tLoading } = useTeacherClass();
     const [roster, setRoster] = useState([]);
     const [todayRecords, setTodayRecords] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -45,7 +47,9 @@ const TeacherDashboard = () => {
     if (!classLevel) {
         return (
             <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
-                <div className="w-12 h-12 rounded-full bg-secondary-soft text-secondary mx-auto flex items-center justify-center text-2xl">!</div>
+                <div className="w-12 h-12 rounded-full bg-secondary-soft text-secondary mx-auto flex items-center justify-center">
+                    <AlertTriangle className="w-6 h-6" strokeWidth={1.75} />
+                </div>
                 <h2 className="mt-4 text-xl font-black text-ink">No class assigned yet</h2>
                 <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
                     {teacher
@@ -64,18 +68,23 @@ const TeacherDashboard = () => {
                 title={`Welcome, ${teacher?.first_name || 'teacher'}`}
                 subtitle="Four things this portal does — once you've used each, this card disappears."
                 steps={[
-                    { icon: '✅', label: 'Mark attendance for your class each morning' },
-                    { icon: '📒', label: 'Enter CA / exam scores; totals + grades compute for you' },
-                    { icon: '📝', label: 'Set assignments and grade what comes back' },
-                    { icon: '👨‍👩‍👧', label: 'Class roster shows guardian phone numbers when you need them' },
+                    { icon: <CheckSquare className="w-4 h-4 text-secondary-dark" strokeWidth={2} />, label: 'Mark attendance for your class each morning' },
+                    { icon: <NotebookPen className="w-4 h-4 text-secondary-dark" strokeWidth={2} />, label: 'Enter CA / exam scores; totals + grades compute for you' },
+                    { icon: <PencilLine className="w-4 h-4 text-secondary-dark" strokeWidth={2} />, label: 'Set assignments and grade what comes back' },
+                    { icon: <Users className="w-4 h-4 text-secondary-dark" strokeWidth={2} />, label: 'Class roster shows guardian phone numbers when you need them' },
                 ]}
             />
             <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
                 <div>
-                    <Badge tone="warm" dot>{classLevel.section === 'nursery' ? 'Nursery Section' : 'Basic Section'}</Badge>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Badge tone="warm" dot>{classLevel.section === 'nursery' ? 'Nursery Section' : 'Basic Section'}</Badge>
+                        <ClassSwitcher classes={classes} value={classLevel} onChange={setClassLevel} />
+                    </div>
                     <h1 className="mt-3 text-2xl md:text-3xl font-black text-ink">Welcome, {teacher?.first_name}.</h1>
                     <p className="mt-1 text-sm text-gray-500">
-                        You're the class teacher of <span className="font-semibold text-ink">{classLevel.name}</span>.
+                        {isClassTeacher
+                            ? <>You're the class teacher of <span className="font-semibold text-ink">{classLevel.name}</span>.</>
+                            : <>You teach a subject in <span className="font-semibold text-ink">{classLevel.name}</span>{classes.length > 1 ? ` (and ${classes.length - 1} other class${classes.length > 2 ? 'es' : ''})` : ''}.</>}
                     </p>
                 </div>
                 <div className="flex gap-2 flex-wrap">
@@ -88,13 +97,13 @@ const TeacherDashboard = () => {
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <KpiCard tone="primary" label="Class Size" value={loading ? '—' : roster.length} hint={classLevel.name}
-                         icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 014-4h4a4 4 0 014 4v2M12 12a4 4 0 100-8 4 4 0 000 8z"/></svg>}/>
+                         icon={<Users className="w-5 h-5" strokeWidth={2} />}/>
                 <KpiCard tone="warm" label="Present Today" value={loading ? '—' : presentToday} hint={attendanceMarked ? `of ${todayRecords.length} marked` : 'not marked yet'}
-                         icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>}/>
+                         icon={<CheckSquare className="w-5 h-5" strokeWidth={2} />}/>
                 <KpiCard tone="sage" label="Attendance Rate" value={loading ? '—' : (rate != null ? `${rate}%` : '—')} hint="Today"
-                         icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>}/>
+                         icon={<TrendingUp className="w-5 h-5" strokeWidth={2} />}/>
                 <KpiCard tone="ink" label={classLevel.section === 'nursery' ? 'Assessment Domains' : 'Subjects'} value={classLevel.section === 'nursery' ? 8 : '14'} hint="curriculum size"
-                         icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 19V5a2 2 0 012-2h12v14H6a2 2 0 00-2 2zM4 19a2 2 0 002 2h12M10 7h4"/></svg>}/>
+                         icon={<BookOpen className="w-5 h-5" strokeWidth={2} />}/>
             </div>
 
             {/* Roster preview */}

@@ -1,17 +1,52 @@
 import { useMemo, useState } from 'react';
 import axios from 'axios';
-import PageHero from '../components/PageHero';
-import Badge from '../components/ui/Badge';
+import { Link } from 'react-router-dom';
+import { Mail, Clock, Handshake, Receipt, Check, PartyPopper, ArrowRight } from 'lucide-react';
 import Button from '../components/ui/Button';
-import SectionEyebrow from '../components/ui/SectionEyebrow';
 import Field, { Input, Select, Textarea, FileInput } from '../components/ui/Field';
 import API_URL from '../config/api';
 import { CLASS_LEVELS, NURSERY_LEVELS } from '../config/school';
 import ConfettiBurst from '../components/ui/ConfettiBurst';
 import CopyButton from '../components/ui/CopyButton';
+import Seo from '../components/Seo';
 import { useToast } from '../components/ui/ToastProvider';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
+import MarqueeStrip from '../components/ui/MarqueeStrip';
 import Reveal from '../components/ui/Reveal';
+
+const EASE = [0.22, 1, 0.36, 1];
+
+const Fade = ({ children, delay = 0, x = 0, y = 24, className }) => {
+    const reduced = useReducedMotion();
+    if (reduced) return <div className={className}>{children}</div>;
+    return (
+        <motion.div
+            className={className}
+            initial={{ opacity: 0, x, y, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, x: 0, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.9, delay, ease: EASE }}
+        >
+            {children}
+        </motion.div>
+    );
+};
+
+const Eyebrow = ({ children, tone = 'light', center = false }) => (
+    <div className={`flex items-center gap-3 ${center ? 'justify-center' : ''}`}>
+        <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+        <span className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${tone === 'dark' ? 'text-white/70' : 'text-gray-500'}`}>
+            {children}
+        </span>
+    </div>
+);
+
+const ADMISSIONS_TICKER = [
+    'Applications open for 2026 / 2027',
+    'Nursery 1 → Basic 6',
+    'Reply within 2 working days',
+    'One-on-one assessment, not a group test',
+    'Sibling discount on the second child',
+];
 
 // --- inline validation rules -------------------------------------------------
 const validators = {
@@ -218,7 +253,7 @@ const Admissions = () => {
                 errorMessage = 'No response from server. Please check your internet connection.';
             }
             setStatus({ type: 'error', message: errorMessage });
-            toast.error('Submission failed — see details on the page.');
+            toast.error('Submission failed, see details on the page.');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
@@ -226,171 +261,184 @@ const Admissions = () => {
     const selectedIsNursery = NURSERY_LEVELS.includes(formData.class_applying_for);
 
     return (
-        <div className="bg-white">
-            <PageHero
-                eyebrow="ADMISSIONS 2026 / 2027"
-                title="A warm start for every new Legacy learner."
-                subtitle="Applications are open for Nursery 1 through Basic 6. Here's how the process works and how to apply."
-                bgImage="/group_celebration.jpg"
-            >
-                <div className="flex flex-wrap gap-3">
-                    <Button href="#apply">Start Application</Button>
-                    <Button to="/contact" variant="outline">Speak to Admissions</Button>
+        <div className="bg-white -mt-16 md:-mt-[4.5rem]">
+            <Seo
+                title="Admissions — Apply Now"
+                description="Applications are open for Nursery 1 through Basic 6 at Best Legacy Divine School, Mowe. See fees, the application process, and apply online today."
+                path="/admissions"
+            />
+            {/* Full-bleed dark hero — deliberately different from the light,
+                split-column Home/About heroes: a single cinematic photo,
+                centered copy, and an admissions-facts ticker underneath. */}
+            <section className="relative min-h-[62vh] flex items-center bg-ink overflow-hidden pt-16 md:pt-[4.5rem]">
+                <div className="absolute inset-0">
+                    <img src="/school_hero_Section.jpg" alt="Pupils celebrating at Best Legacy Divine School" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/75 to-ink/40" />
+                    <div className="absolute inset-0 grain-dot opacity-20 mix-blend-overlay" />
                 </div>
-            </PageHero>
 
-            {/* ============ NARRATIVE LEAD (design audit #5) ============ */}
-            <section className="bg-bg py-16 md:py-20 border-b border-gray-100 relative overflow-hidden">
-                <div className="absolute -top-12 right-0 w-72 h-72 rounded-full blob-warm blur-3xl pointer-events-none"></div>
-                <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-12 items-start">
-                    <Reveal>
-                        <motion.article 
-                            whileHover={{ y: -8 }}
-                            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                            className="bg-white rounded-3xl shadow-card hover:shadow-card-lg p-7 md:p-9 relative transition-shadow"
-                        >
-                            <div className="absolute -top-4 -left-4 w-12 h-12 rounded-2xl bg-secondary text-ink flex items-center justify-center text-2xl shadow-md">✉️</div>
-                            <div className="text-xs font-bold uppercase tracking-widest text-secondary">A note from us</div>
-                            <h2 className="mt-3 text-2xl md:text-3xl font-black text-primary leading-tight text-balance">
+                <div className="relative max-w-3xl mx-auto px-6 sm:px-8 text-center py-20">
+                    <Fade>
+                        <Eyebrow tone="dark" center>Admissions 2026 / 2027</Eyebrow>
+                        <h1 className="mt-6 font-serif text-4xl sm:text-5xl md:text-6xl font-medium text-white leading-[1.1] text-balance">
+                            A warm start for every new <span className="italic text-gold">Legacy learner</span>.
+                        </h1>
+                        <p className="mt-6 max-w-xl mx-auto text-white/75 text-lg leading-relaxed">
+                            Applications are open for Nursery 1 through Basic 6. Here&rsquo;s how the process works and how to apply.
+                        </p>
+                        <div className="mt-9 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
+                            <a
+                                href="#apply"
+                                className="inline-flex items-center gap-2 bg-white text-ink font-semibold px-7 py-3.5 rounded-full shadow-[0_12px_32px_-8px_rgba(0,0,0,0.35)] hover:bg-white/90 transition-colors"
+                            >
+                                Start application
+                                <ArrowRight className="w-4 h-4" strokeWidth={2} />
+                            </a>
+                            <Link
+                                to="/contact"
+                                className="inline-flex items-center gap-2 text-white font-semibold border-b border-white/40 pb-0.5 hover:border-gold hover:text-gold transition-colors"
+                            >
+                                Speak to admissions
+                            </Link>
+                        </div>
+                    </Fade>
+                </div>
+            </section>
+
+            <MarqueeStrip tone="ink" items={ADMISSIONS_TICKER} />
+
+            {/* ============ NARRATIVE LEAD ============ */}
+            <section className="bg-paper py-16 md:py-20">
+                <div className="max-w-6xl mx-auto px-6 sm:px-8 grid md:grid-cols-2 gap-12 items-start">
+                    <Fade>
+                        <article className="bg-white rounded-2xl border border-gray-100 shadow-card hover:shadow-card-lg transition-shadow p-7 md:p-9">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center">
+                                    <Mail className="w-5 h-5" strokeWidth={1.75} />
+                                </div>
+                                <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">A note from us</span>
+                            </div>
+                            <h2 className="mt-6 font-serif text-2xl md:text-3xl text-ink leading-tight text-balance">
                                 Admissions here is a conversation, not a queue.
                             </h2>
                             <div className="mt-5 space-y-4 text-gray-600 leading-relaxed">
                                 <p>
-                                    Every September we admit about 40 new pupils across Nursery 1 to Basic 6. Before we ever ask for paperwork, we'd rather meet your child — at a low-pressure 30-minute visit where they play, we listen, and you ask anything.
+                                    Every September we admit about 40 new pupils across Nursery 1 to Basic 6. Before we ever ask for paperwork, we&rsquo;d rather meet your child at a low-pressure 30-minute visit where they play, we listen, and you ask anything.
                                 </p>
                                 <p>
-                                    Fill the form below to begin. We reply by email within <span className="font-semibold text-ink">2 working days</span>; if it's urgent, the head teacher's number is on the contact page and she answers it herself.
+                                    Fill the form below to begin. We reply by email within <span className="font-semibold text-ink">2 working days</span>; if it&rsquo;s urgent, the head teacher&rsquo;s number is on the contact page and she answers it herself.
                                 </p>
                             </div>
                             <div className="mt-6 flex items-center gap-3 pt-5 border-t border-gray-100">
-                                <img src="/staff_members.jpg" alt="" className="w-12 h-12 rounded-full object-cover ring-2 ring-mint" loading="lazy" width={48} height={48}/>
+                                <img src="/staff_members.jpg" alt="" className="w-12 h-12 rounded-full object-cover ring-2 ring-gold/30" loading="lazy" width={48} height={48}/>
                                 <div className="text-sm">
-                                    <div className="font-bold text-ink">Mrs Olusola Kolawole</div>
+                                    <div className="font-semibold text-ink">Mrs Olusola Kolawole</div>
                                     <div className="text-xs text-gray-500">Head Teacher · Best Legacy Divine School</div>
                                 </div>
                             </div>
-                        </motion.article>
-                    </Reveal>
+                        </article>
+                    </Fade>
 
                     <div className="md:pt-6">
-                        <Reveal>
-                            <Badge tone="mint" dot>What to expect</Badge>
-                            <h3 className="mt-3 text-2xl md:text-3xl font-black text-primary leading-tight">Three things we promise.</h3>
-                        </Reveal>
-                        <Reveal stagger gap={0.15}>
-                            <ul className="mt-6 space-y-5">
-                                {[
-                                    { icon: '⏱️', title: 'A reply within 2 working days', body: 'No silent application forms. If you don\'t hear back, our system has failed you — please call us.' },
-                                    { icon: '🤝', title: 'No large-group "assessments"',  body: 'Your child\'s visit is one-on-one with their would-be class teacher. Less stress, more honest.' },
-                                    { icon: '🧾', title: 'Fees in writing, no surprises',  body: 'Tuition, books, feeding, uniform — all itemised before you commit. No mid-term add-ons.' },
-                                ].map(p => (
-                                    <motion.li 
-                                        key={p.title} 
-                                        whileHover={{ x: 8 }}
-                                        className="flex items-start gap-4 p-4 rounded-2xl hover:bg-white/50 transition-colors"
-                                    >
-                                        <span className="shrink-0 w-11 h-11 rounded-2xl bg-mint flex items-center justify-center text-xl shadow-sm">{p.icon}</span>
+                        <Fade>
+                            <Eyebrow>What to expect</Eyebrow>
+                            <h3 className="mt-4 font-serif text-2xl md:text-3xl text-ink leading-tight">Three things we promise.</h3>
+                        </Fade>
+                        <ul className="mt-6 space-y-3">
+                            {[
+                                { icon: Clock, title: 'A reply within 2 working days', body: 'No silent application forms. If you don\'t hear back, our system has failed you, please call us.' },
+                                { icon: Handshake, title: 'No large-group "assessments"',  body: 'Your child\'s visit is one-on-one with their would-be class teacher. Less stress, more honest.' },
+                                { icon: Receipt, title: 'Fees in writing, no surprises',  body: 'Tuition, books, feeding, uniform: all itemised before you commit. No mid-term add-ons.' },
+                            ].map((p, i) => (
+                                <Fade key={p.title} delay={i * 0.08}>
+                                    <li className="flex items-start gap-4 p-4 rounded-2xl hover:bg-white/70 transition-colors">
+                                        <span className="shrink-0 w-11 h-11 rounded-2xl bg-primary-soft flex items-center justify-center text-primary"><p.icon className="w-5 h-5" strokeWidth={1.75} /></span>
                                         <div>
-                                            <div className="font-bold text-ink">{p.title}</div>
+                                            <div className="font-semibold text-ink">{p.title}</div>
                                             <p className="mt-1 text-sm text-gray-600 leading-relaxed">{p.body}</p>
                                         </div>
-                                    </motion.li>
-                                ))}
-                            </ul>
-                        </Reveal>
+                                    </li>
+                                </Fade>
+                            ))}
+                        </ul>
                     </div>
                 </div>
             </section>
 
             {/* 4-STEP ADMISSIONS JOURNEY */}
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-                <Reveal>
-                    <SectionEyebrow
-                        eyebrow="Admissions Journey"
-                        title="Four simple steps from enquiry to first day."
-                        description="We keep the process personal. Every family meets with a teacher before we confirm a place."
-                    />
-                </Reveal>
-                <Reveal stagger gap={0.1}>
-                    <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                        {STEPS.map((s) => (
-                            <motion.div 
-                                key={s.n} 
-                                whileHover={{ y: -6, scale: 1.02 }}
-                                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                                className="relative bg-white rounded-2xl p-6 border border-gray-100 hover:border-primary/40 hover:shadow-card-lg transition-all"
-                            >
-                                <div className="text-xs font-bold text-primary">{s.n}</div>
-                                <h4 className="mt-3 font-bold text-ink text-lg">{s.title}</h4>
-                                <p className="mt-2 text-sm text-gray-500 leading-relaxed">{s.desc}</p>
-                            </motion.div>
+            <section className="bg-white py-20">
+                <div className="max-w-6xl mx-auto px-6 sm:px-8">
+                    <Fade>
+                        <Eyebrow>Admissions journey</Eyebrow>
+                        <h2 className="mt-6 font-serif text-3xl md:text-5xl text-ink leading-[1.1] max-w-2xl text-balance">
+                            Four simple steps from enquiry to first day.
+                        </h2>
+                        <p className="mt-4 text-gray-600 max-w-xl">
+                            We keep the process personal. Every family meets with a teacher before we confirm a place.
+                        </p>
+                    </Fade>
+                    <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                        {STEPS.map((s, i) => (
+                            <Fade key={s.n} delay={i * 0.08}>
+                                <div className="h-full rounded-2xl p-6 border border-gray-100 hover:border-gold/30 hover:shadow-card-lg transition-all">
+                                    <div className="font-serif text-2xl text-primary">{s.n}</div>
+                                    <h4 className="mt-3 font-semibold text-ink text-lg">{s.title}</h4>
+                                    <p className="mt-2 text-sm text-gray-500 leading-relaxed">{s.desc}</p>
+                                </div>
+                            </Fade>
                         ))}
                     </div>
-                </Reveal>
-            </section>
-
-            {/* CLASSES + WHAT TO BRING */}
-            <section className="bg-bg py-20">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-10">
-                    <Reveal delay={0}>
-                        <motion.div 
-                            whileHover={{ y: -8 }}
-                            className="bg-white rounded-3xl p-8 shadow-card hover:shadow-card-lg transition-shadow h-full"
-                        >
-                            <Badge tone="mint" dot>Open for 2026 / 2027</Badge>
-                            <h3 className="mt-4 text-2xl font-black text-ink">Class levels currently admitting</h3>
-                            <p className="mt-2 text-gray-600 text-sm">We admit from Nursery 1 and continue through Basic 6. Class sizes are limited to maintain quality.</p>
-                            <div className="mt-6 grid grid-cols-2 gap-3">
-                                {CLASS_LEVELS.map((c) => (
-                                    <motion.div 
-                                        key={c} 
-                                        whileHover={{ scale: 1.05 }}
-                                        className="flex items-center gap-2 text-sm text-ink bg-primary-soft/60 rounded-xl px-4 py-2.5 cursor-default"
-                                    >
-                                        <svg className="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg>
-                                        {c}
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    </Reveal>
-                    
-                    <Reveal delay={0.15}>
-                        <motion.div 
-                            whileHover={{ y: -8 }}
-                            className="bg-white rounded-3xl p-8 shadow-card hover:shadow-card-lg transition-shadow h-full"
-                        >
-                            <Badge tone="warm" dot>Documents</Badge>
-                            <h3 className="mt-4 text-2xl font-black text-ink">What to bring to the assessment</h3>
-                            <ul className="mt-6 space-y-3">
-                                {WHAT_TO_BRING.map((item) => (
-                                    <motion.li 
-                                        key={item} 
-                                        whileHover={{ x: 6 }}
-                                        className="flex items-start gap-3 text-sm text-ink p-2 rounded-xl hover:bg-gray-50"
-                                    >
-                                        <span className="w-6 h-6 rounded-full bg-secondary-soft text-secondary-dark flex items-center justify-center shrink-0">
-                                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg>
-                                        </span>
-                                        {item}
-                                    </motion.li>
-                                ))}
-                            </ul>
-                        </motion.div>
-                    </Reveal>
                 </div>
             </section>
 
-            {/* FEE CALCULATOR + AGE-TO-CLASS MAPPER (agent #6) */}
+            {/* CLASSES + WHAT TO BRING */}
+            <section className="bg-paper py-20">
+                <div className="max-w-6xl mx-auto px-6 sm:px-8 grid md:grid-cols-2 gap-6">
+                    <Fade className="h-full">
+                        <div className="h-full bg-white rounded-2xl border border-gray-100 shadow-card hover:shadow-card-lg transition-shadow p-8">
+                            <Eyebrow>Open for 2026 / 2027</Eyebrow>
+                            <h3 className="mt-5 font-serif text-2xl text-ink">Class levels currently admitting</h3>
+                            <p className="mt-2 text-gray-600 text-sm">We admit from Nursery 1 and continue through Basic 6. Class sizes are limited to maintain quality.</p>
+                            <div className="mt-6 grid grid-cols-2 gap-3">
+                                {CLASS_LEVELS.map((c) => (
+                                    <div key={c} className="flex items-center gap-2 text-sm text-ink bg-primary-soft/60 rounded-xl px-4 py-2.5">
+                                        <Check className="w-4 h-4 text-primary" strokeWidth={2.5} />
+                                        {c}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </Fade>
+
+                    <Fade delay={0.1} className="h-full">
+                        <div className="h-full bg-white rounded-2xl border border-gray-100 shadow-card hover:shadow-card-lg transition-shadow p-8">
+                            <Eyebrow>Documents</Eyebrow>
+                            <h3 className="mt-5 font-serif text-2xl text-ink">What to bring to the assessment</h3>
+                            <ul className="mt-6 space-y-3">
+                                {WHAT_TO_BRING.map((item) => (
+                                    <li key={item} className="flex items-start gap-3 text-sm text-ink p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                                        <span className="w-6 h-6 rounded-full bg-primary-soft text-primary flex items-center justify-center shrink-0">
+                                            <Check className="w-3 h-3" strokeWidth={2.5} />
+                                        </span>
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </Fade>
+                </div>
+            </section>
+
+            {/* FEE CALCULATOR + AGE-TO-CLASS MAPPER */}
             <section className="bg-white pt-10 pb-4">
-                <Reveal>
-                    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="bg-gradient-to-br from-primary-soft via-white to-secondary-soft rounded-3xl p-6 md:p-8 border border-gray-100 shadow-card">
+                <Fade>
+                    <div className="max-w-4xl mx-auto px-6 sm:px-8">
+                        <div className="bg-paper rounded-2xl p-6 md:p-8 border border-gray-100">
                             <div className="md:flex items-start gap-8">
                                 <div className="md:w-1/3 mb-5 md:mb-0">
-                                    <Badge tone="warm" dot>Quick check</Badge>
-                                    <h3 className="mt-3 text-xl md:text-2xl font-black text-primary leading-tight">Which class? What's the fee?</h3>
-                                    <p className="mt-2 text-sm text-gray-600">Pop in your child's date of birth — we'll suggest a class level and the termly fee.</p>
+                                    <Eyebrow>Quick check</Eyebrow>
+                                    <h3 className="mt-4 font-serif text-xl md:text-2xl text-ink leading-tight">Which class? What&rsquo;s the fee?</h3>
+                                    <p className="mt-2 text-sm text-gray-600">Pop in your child&rsquo;s date of birth and we&rsquo;ll suggest a class level and the termly fee.</p>
                                 </div>
                                 <div className="md:w-2/3">
                                     <Field label="Child's date of birth">
@@ -403,62 +451,65 @@ const Admissions = () => {
                                     </Field>
                                     {recommendedFee ? (
                                         <motion.div
-                                            initial={{ opacity: 0, y: 10, scale: 0.98 }} 
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.5, ease: EASE }}
                                             className="mt-4 grid sm:grid-cols-3 gap-3"
                                         >
-                                            <div className="bg-white rounded-2xl p-4 shadow-sm">
-                                                <div className="text-xs text-gray-500 font-bold uppercase">Class</div>
-                                                <div className="mt-1 font-black text-ink">{recommendedFee.class}</div>
+                                            <div className="bg-white rounded-2xl p-4 border border-gray-100">
+                                                <div className="text-xs text-gray-500 font-semibold uppercase">Class</div>
+                                                <div className="mt-1 font-semibold text-ink">{recommendedFee.class}</div>
                                             </div>
-                                            <div className="bg-white rounded-2xl p-4 shadow-sm">
-                                                <div className="text-xs text-gray-500 font-bold uppercase">Tier</div>
-                                                <div className="mt-1 font-black text-ink">{recommendedFee.label}</div>
+                                            <div className="bg-white rounded-2xl p-4 border border-gray-100">
+                                                <div className="text-xs text-gray-500 font-semibold uppercase">Tier</div>
+                                                <div className="mt-1 font-semibold text-ink">{recommendedFee.label}</div>
                                             </div>
-                                            <div className="bg-primary text-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
-                                                <div className="absolute top-2 right-2 flex gap-1 bg-white/20 p-1 rounded-lg z-10">
+                                            <div className="bg-ink text-white rounded-2xl p-4 relative overflow-hidden">
+                                                <div className="absolute top-2 right-2 flex gap-1 bg-white/10 p-1 rounded-lg z-10">
                                                     {['NGN', 'USD', 'GBP'].map(c => (
                                                         <button
                                                             key={c} onClick={() => setCurrency(c)}
-                                                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded transition-colors ${currency === c ? 'bg-white text-primary' : 'text-white hover:bg-white/10'}`}
+                                                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded transition-colors ${currency === c ? 'bg-white text-ink' : 'text-white/70 hover:bg-white/10'}`}
                                                         >
                                                             {c}
                                                         </button>
                                                     ))}
                                                 </div>
-                                                <div className="text-xs text-white/80 font-bold uppercase">Termly fee</div>
-                                                <div className="mt-1 font-black text-xl">{formatCurrency(recommendedFee.amount, currency)}</div>
+                                                <div className="text-xs text-white/60 font-semibold uppercase">Termly fee</div>
+                                                <div className="mt-1 font-serif text-xl">{formatCurrency(recommendedFee.amount, currency)}</div>
                                                 {currency !== 'NGN' && (
-                                                    <div className="mt-1 text-[10px] text-white/70 leading-snug">
-                                                        Indicative only — fees are paid in NGN at the school rate on the day.
+                                                    <div className="mt-1 text-[10px] text-white/60 leading-snug">
+                                                        Indicative only. Fees are paid in NGN at the school rate on the day.
                                                     </div>
                                                 )}
                                             </div>
                                         </motion.div>
                                     ) : formData.date_of_birth ? (
                                         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 text-xs text-secondary-dark">
-                                            That age sits outside our Nursery 1 → Basic 6 range. <a href="/contact" className="font-semibold underline hover:text-primary">Send us a note</a> and we'll discuss.
+                                            That age sits outside our Nursery 1 → Basic 6 range. <a href="/contact" className="font-semibold underline hover:text-primary">Send us a note</a> and we&rsquo;ll discuss.
                                         </motion.p>
                                     ) : (
-                                        <p className="mt-3 text-xs text-gray-500">Sibling discount: 10% off the second child's tuition.</p>
+                                        <p className="mt-3 text-xs text-gray-500">Sibling discount: 10% off the second child&rsquo;s tuition.</p>
                                     )}
                                 </div>
                             </div>
                         </div>
                     </div>
-                </Reveal>
+                </Fade>
             </section>
 
             {/* APPLICATION FORM */}
             <section id="apply" className="py-20 scroll-mt-24">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <SectionEyebrow
-                        eyebrow="Application Form"
-                        title="Submit your child's application."
-                        description="Takes about 5 minutes. We'll email a confirmation to the address you enter below."
-                        align="center"
-                    />
+                <div className="max-w-4xl mx-auto px-6 sm:px-8">
+                    <Fade className="text-center">
+                        <Eyebrow center>Application form</Eyebrow>
+                        <h2 className="mt-6 font-serif text-3xl md:text-4xl text-ink leading-tight text-balance">
+                            Submit your child&rsquo;s application.
+                        </h2>
+                        <p className="mt-4 text-gray-600 max-w-xl mx-auto">
+                            Takes about 5 minutes. We&rsquo;ll email a confirmation to the address you enter below.
+                        </p>
+                    </Fade>
 
                     <div className="mt-10 bg-white rounded-3xl shadow-card-lg border border-gray-100 p-6 md:p-10">
                         {status.type === 'success' && submission && (
@@ -473,8 +524,8 @@ const Admissions = () => {
                                     <motion.span
                                         animate={{ rotate: [0, -10, 10, -6, 6, 0] }}
                                         transition={{ duration: 1.4, ease: 'easeInOut' }}
-                                        className="inline-block text-xl"
-                                    >🎉</motion.span>
+                                        className="inline-block"
+                                    ><PartyPopper className="w-5 h-5" strokeWidth={2} /></motion.span>
                                     Welcome to the Best Legacy journey!
                                 </div>
                                 <p className="mt-2 text-sm text-ink">
@@ -494,7 +545,7 @@ const Admissions = () => {
                                     <span className="text-xs text-gray-500 self-center">Forward this confirmation to your spouse or family:</span>
                                     <a
                                         href={`https://wa.me/?text=${encodeURIComponent(
-                                            `Best Legacy admission submitted ✅\n` +
+                                            `Best Legacy admission submitted\n` +
                                             `Pupil: ${submission.student}\n` +
                                             `Class: ${submission.klass}\n` +
                                             `Ref ID: ${submission.refId}\n\n` +
@@ -508,7 +559,7 @@ const Admissions = () => {
                                         Send to WhatsApp
                                     </a>
                                     <a
-                                        href={`mailto:?subject=${encodeURIComponent('Best Legacy admission — ' + submission.student)}&body=${encodeURIComponent(
+                                        href={`mailto:?subject=${encodeURIComponent('Best Legacy admission: ' + submission.student)}&body=${encodeURIComponent(
                                             `Pupil: ${submission.student}\nClass: ${submission.klass}\nRef ID: ${submission.refId}\n\nBest Legacy will email back within 2 working days.`
                                         )}`}
                                         className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-ink text-xs font-semibold border border-gray-200 hover:border-primary hover:text-primary transition"
@@ -537,7 +588,7 @@ const Admissions = () => {
                                 ].map((s) => (
                                     <div key={s.step} className={`flex flex-col items-center gap-2 cursor-pointer ${currentStep === s.step ? 'opacity-100' : 'opacity-50 hover:opacity-80'}`} onClick={() => setCurrentStep(s.step)}>
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${currentStep === s.step ? 'bg-primary text-white shadow-md' : currentStep > s.step ? 'bg-mint text-ink' : 'bg-gray-100 text-gray-400'}`}>
-                                            {currentStep > s.step ? '✓' : s.step}
+                                            {currentStep > s.step ? <Check className="w-4 h-4" strokeWidth={2.5} /> : s.step}
                                         </div>
                                         <span className={`text-xs font-bold uppercase tracking-widest hidden md:block ${currentStep === s.step ? 'text-primary' : 'text-gray-500'}`}>{s.label}</span>
                                     </div>

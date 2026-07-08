@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Printer, UserCheck } from 'lucide-react';
 import API_URL from '../../config/api';
 import Reveal from '../../components/ui/Reveal';
 import Badge from '../../components/ui/Badge';
@@ -69,7 +70,7 @@ const Pickups = () => {
                             onClick={() => window.print()}
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-dark transition"
                         >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <Printer className="w-4 h-4" strokeWidth={2} />
                             Print
                         </button>
                     </div>
@@ -85,7 +86,7 @@ const Pickups = () => {
                 <div className="py-16 text-center text-sm text-gray-400">Loading…</div>
             ) : items.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
-                    <div className="text-5xl mb-3">🚸</div>
+                    <UserCheck className="w-10 h-10 mx-auto mb-3 text-gray-300" strokeWidth={1.5} />
                     <h3 className="font-bold text-ink">No active pickups for today</h3>
                     <p className="text-sm text-gray-500 mt-1">Parents haven't added any authorisations yet, or all entries have expired.</p>
                 </div>

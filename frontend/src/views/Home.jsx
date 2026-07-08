@@ -1,687 +1,653 @@
 import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useGSAP } from '@gsap/react';
-
-gsap.registerPlugin(ScrollTrigger);
 import { Link } from 'react-router-dom';
-import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
-import Reveal from '../components/ui/Reveal';
+import { Users, Award, ShieldCheck, GraduationCap, Pencil, BookOpen, Ruler, Volleyball, Star, Backpack, Palette, Calculator, Puzzle, PaintBucket, Lightbulb } from 'lucide-react';
 import CountUp from '../components/ui/CountUp';
-import MarqueeStrip from '../components/ui/MarqueeStrip';
-import SparkleField from '../components/ui/SparkleField';
 import CursorSpotlight from '../components/ui/CursorSpotlight';
-import SquiggleDivider from '../components/ui/SquiggleDivider';
-import SnapCarousel from '../components/ui/SnapCarousel';
 import TiltCard from '../components/ui/TiltCard';
 import Magnetic from '../components/ui/Magnetic';
+import MarqueeStrip from '../components/ui/MarqueeStrip';
+import Seo from '../components/Seo';
+
+const EASE = [0.22, 1, 0.36, 1];
 
 /* ========================================================================
-   Day at Best Legacy timeline data
+   Motion primitives — quiet-luxury choreography: fade/blur/slide/wipe,
+   scroll-tied parallax and progress, ambient continuous loops. No spring
+   bounce, no rotation, everything guarded by prefers-reduced-motion.
    ======================================================================== */
-const DAY_STOPS = [
-    { time: '7:30am',  title: 'Warm Welcome',         body: 'Pupils arrive to a calm song, a hello from their class teacher and a quiet morning activity.', emoji: '☀️', tone: 'mint' },
-    { time: '8:00am',  title: 'Morning Assembly',     body: 'A short assembly: hymn, a thought for the day, and a shout-out for one pupil who showed kindness yesterday.', emoji: '🎶', tone: 'warm' },
-    { time: '9:00am',  title: 'Core Lessons',         body: 'Phonics, numeracy and reading happen when little minds are freshest. Lessons run 30 minutes max for nursery, 45 for basic.', emoji: '📘', tone: 'mint' },
-    { time: '10:30am', title: 'Snack & Free Play',    body: 'A healthy snack provided by the school, then 30 minutes of unstructured outdoor play. No screens. Lots of running.', emoji: '🍎', tone: 'warm' },
-    { time: '11:30am', title: 'Creative Block',       body: 'Art, music, drama, or science exploration depending on the day. Children rotate so every week covers all four.', emoji: '🎨', tone: 'mint' },
-    { time: '1:00pm',  title: 'Lunch Together',       body: 'Hot meal in the dining hall. Older basic pupils help nursery friends with their plates — a small thing that teaches a lot.', emoji: '🍲', tone: 'warm' },
-    { time: '2:30pm',  title: 'Quiet Close & Home',   body: 'Reading time, gentle reflection, then a tidy classroom and a smile at the gate. Parents collect by 3:00pm.', emoji: '📚', tone: 'mint' },
+
+/** Fixed reading-progress bar, tied 1:1 to scroll (not decorative — left on
+ *  even under reduced motion, since it's direct manipulation feedback). */
+const ScrollProgress = () => {
+    const { scrollYProgress } = useScroll();
+    return (
+        <motion.div
+            aria-hidden="true"
+            className="fixed top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-primary to-gold origin-left z-[100]"
+            style={{ scaleX: scrollYProgress }}
+        />
+    );
+};
+
+/** Fade/slide/blur-in wrapper. Animates on mount rather than on
+ *  scroll-into-view: this site uses Lenis smooth-scroll (see main.jsx),
+ *  which can leave whileInView-based reveals stuck at their hidden initial
+ *  state (native IntersectionObserver timing doesn't always line up with
+ *  Lenis-driven scroll updates). Mount-triggered animation is slightly less
+ *  "reveals as you scroll" but is guaranteed to actually show the content. */
+const Reveal = ({ children, delay = 0, x = 0, y = 24, className, as: Tag = 'div' }) => {
+    const reduced = useReducedMotion();
+    if (reduced) return <Tag className={className}>{children}</Tag>;
+    const MotionTag = motion[Tag] || motion.div;
+    return (
+        <MotionTag
+            className={className}
+            initial={{ opacity: 0, x, y, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, x: 0, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.9, delay, ease: EASE }}
+        >
+            {children}
+        </MotionTag>
+    );
+};
+
+/** Mask-line headline reveal — the line slides up from behind an overflow
+ *  clip, the classic premium hero-headline entrance. Animates on mount (not
+ *  scroll-into-view) since this is only ever used for above-the-fold hero
+ *  copy that's visible immediately — whileInView can get stuck at its
+ *  hidden initial state for content that's already in the viewport at load. */
+const LineReveal = ({ children, delay = 0, className = '' }) => {
+    const reduced = useReducedMotion();
+    if (reduced) return <span className={className}>{children}</span>;
+    return (
+        <span className={`block overflow-hidden ${className}`}>
+            <motion.span
+                className="block"
+                initial={{ y: '100%' }}
+                animate={{ y: '0%' }}
+                transition={{ duration: 0.9, delay, ease: EASE }}
+            >
+                {children}
+            </motion.span>
+        </span>
+    );
+};
+
+/** Photo with a curtain-wipe reveal on scroll-in, optional parallax drift
+ *  and optional ambient "breathing" zoom for continuous life. */
+const RevealImage = ({ src, alt, aspect = 'aspect-[4/3]', parallax = false, breathe = false, delay = 0, className = '' }) => {
+    const reduced = useReducedMotion();
+    const ref = useRef(null);
+    const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
+    const y = useTransform(scrollYProgress, [0, 1], [-24, 24]);
+
+    return (
+        <div ref={ref} className={`relative overflow-hidden rounded-2xl shadow-card-lg ${aspect} ${className}`}>
+            <motion.div style={{ y: parallax && !reduced ? y : 0 }} className="absolute inset-x-0 -top-[8%] h-[116%]">
+                <img src={src} alt={alt} loading="lazy" className={`w-full h-full object-cover ${breathe && !reduced ? 'animate-breathe' : ''}`} />
+            </motion.div>
+            {!reduced && (
+                <motion.div
+                    aria-hidden="true"
+                    initial={{ scaleX: 1 }}
+                    animate={{ scaleX: 0 }}
+                    transition={{ duration: 0.85, delay, ease: EASE }}
+                    style={{ transformOrigin: 'right' }}
+                    className="absolute inset-0 bg-ink z-10"
+                />
+            )}
+        </div>
+    );
+};
+
+const Eyebrow = ({ children, tone = 'light', className = '' }) => (
+    <div className={`flex items-center gap-3 ${className}`}>
+        <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+        <span className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${tone === 'dark' ? 'text-white/70' : 'text-gray-500'}`}>
+            {children}
+        </span>
+    </div>
+);
+
+const ArrowIcon = ({ className = 'w-4 h-4' }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+    </svg>
+);
+
+const CheckIcon = ({ className = 'w-4 h-4' }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+);
+
+/** A single school-themed icon, gently bobbing/rotating in an otherwise
+ *  empty patch of background — decorative, not interactive. Callers add
+ *  `hidden sm:block` etc. via className where a section's padding band
+ *  is too tight on mobile to hold it without crowding real content. */
+const FloatingIcon = ({ icon: Icon, className = '', size = 'w-10 h-10', color = 'text-primary/40', rotate = 0, delay = 0, duration = 7 }) => {
+    const reduced = useReducedMotion();
+    if (reduced) {
+        // Still show the icon under reduced-motion — just skip the loop.
+        return (
+            <div aria-hidden="true" className={`absolute pointer-events-none ${className}`} style={{ transform: `rotate(${rotate}deg)` }}>
+                <Icon className={`${size} ${color}`} strokeWidth={1.5} />
+            </div>
+        );
+    }
+    return (
+        <motion.div
+            aria-hidden="true"
+            className={`absolute pointer-events-none ${className}`}
+            initial={{ opacity: 0, y: 12, rotate }}
+            animate={{ opacity: 1, y: [0, -14, 0], rotate: [rotate, rotate + 10, rotate] }}
+            transition={{
+                opacity: { duration: 0.8, delay },
+                y: { duration, repeat: Infinity, ease: 'easeInOut', delay },
+                rotate: { duration: duration * 1.2, repeat: Infinity, ease: 'easeInOut', delay },
+            }}
+        >
+            <Icon className={`${size} ${color}`} strokeWidth={1.5} />
+        </motion.div>
+    );
+};
+
+/* ========================================================================
+   Content
+   ======================================================================== */
+const TICKER_ITEMS = [
+    'Nursery 1 → Basic 6',
+    'Sixteen years in Mowe',
+    'Class teachers who know every child by name',
+    'Apply for the 2026 / 2027 session',
+    '8, Kolawole Street, Ogun State',
 ];
 
-/* ========================================================================
-   Real parent stories (replaces template testimonials)
-   ======================================================================== */
+const TRUST_ITEMS = [
+    { line1: 'Registered with',    line2: 'Ogun State Ministry of Education' },
+    { line1: 'Member',              line2: 'Association of Private Schools' },
+    { line1: 'Christian-led, but', line2: 'open to children of all faiths' },
+    { line1: 'Established',         line2: '2009 · 16+ years serving Mowe' },
+];
+
+const DAY_STOPS = [
+    { time: '7:30am',  title: 'Warm welcome',       body: 'Pupils arrive to a calm song, a hello from their class teacher and a quiet morning activity.' },
+    { time: '8:00am',  title: 'Morning assembly',   body: 'A short assembly: hymn, a thought for the day, and a shout-out for one pupil who showed kindness yesterday.' },
+    { time: '9:00am',  title: 'Core lessons',       body: 'Phonics, numeracy and reading happen when little minds are freshest. Lessons run 30 minutes max for nursery, 45 for basic.' },
+    { time: '10:30am', title: 'Snack & free play',  body: 'A healthy snack provided by the school, then 30 minutes of unstructured outdoor play. No screens. Lots of running.' },
+    { time: '11:30am', title: 'Creative block',     body: 'Art, music, drama, or science exploration depending on the day. Children rotate so every week covers all four.' },
+    { time: '1:00pm',  title: 'Lunch together',     body: 'Hot meal in the dining hall. Older basic pupils help nursery friends with their plates, a small thing that teaches a lot.' },
+    { time: '2:30pm',  title: 'Quiet close & home', body: 'Reading time, gentle reflection, then a tidy classroom and a smile at the gate. Parents collect by 3:00pm.' },
+];
+
+const FEATURES = [
+    { n: '01', t: 'Creative learning', d: 'Hands-on activities for every subject. Even mathematics becomes a game when you teach it well.', img: '/cultural_day.jpg' },
+    { n: '02', t: 'Trained teachers',  d: 'Every class teacher holds a B.Ed or NCE. We don’t hire shortcuts.', img: '/staff_members.jpg' },
+    { n: '03', t: 'Whole-child care',  d: 'Academic, social, emotional, spiritual. We track all four because parents do too.', img: '/school_hero_Section.jpg' },
+    { n: '04', t: 'Safe & familiar',   d: 'Locked-gate campus, named visitor logbook, and a school nurse on duty.', img: '/fun_in_the_pool.jpg' },
+];
+
+const TIERS = [
+    { name: 'Nursery (1 & 2)', age: '3–5 years',  price: '₦75,000',  featured: false },
+    { name: 'Basic 1 – 3', age: '6–8 years',  price: '₦95,000',  featured: true },
+    { name: 'Basic 4 – 6', age: '9–11 years', price: '₦115,000', featured: false },
+];
+
+const INCLUDED = [
+    'Tuition & class materials',
+    'Textbooks & exercise books',
+    'Daily hot lunch & snack',
+    'Termly reports & PTA meetings',
+    'School nurse on call',
+];
+
 const PARENT_STORIES = [
     {
         name: 'Mrs Funke Adeleke',
         child: 'Mother of Ayomide, Basic 3',
         photo: '/staff_members.jpg',
-        quote: '"In her first term I watched her go from shy at the gate to running ahead of me. They notice the small things at Best Legacy."',
-        body: 'We moved to Mowe in 2024 and visited four schools before we landed here. What sold us was that Mrs Bello, her would-be class teacher, sat on the floor with her at the assessment. Two years on, Ayomide reads above her level and is writing little stories in her journal at home.',
+        quote: 'In her first term I watched her go from shy at the gate to running ahead of me.',
+        body: 'We moved to Mowe in 2024 and visited four schools before we landed here. What sold us was that Mrs Bello, her would-be class teacher, sat on the floor with her at the assessment. Two years on, Ayomide reads above her level and writes little stories in her journal at home.',
     },
     {
         name: 'Mr Musa Bello',
         child: 'Father of Zainab, Basic 4',
-        photo: '/school_ceremony.jpg',
-        quote: '"Her teachers email us before there\'s ever a problem. That alone is rare."',
-        body: 'I work shifts and don\'t always make it for pickup. Best Legacy never makes me feel like the absent parent. They send Friday updates, share photos from cultural day on time, and the head teacher actually answers her phone. Small things, but they change a parent\'s week.',
+        photo: '/fun_in_the_pool.jpg',
+        quote: 'Her teachers email us before there’s ever a problem. That alone is rare.',
+        body: 'I work shifts and don’t always make it for pickup. Best Legacy never makes me feel like the absent parent. They send Friday updates, share photos from cultural day on time, and the head teacher actually answers her phone.',
     },
     {
         name: 'Mrs Ngozi Eze',
         child: 'Mother of Samuel, Basic 2',
-        photo: '/group_celebration.jpg',
-        quote: '"We chose them for the values, we stayed for the discipline."',
-        body: 'Samuel had been at a much bigger school where he was just a number. Here he has 18 classmates, a class teacher who knows his strengths, and a school that genuinely teaches respect — at home he now greets visitors before being asked. That\'s what an early-years foundation should do.',
+        photo: '/cultural_day.jpg',
+        quote: 'We chose them for the values, we stayed for the discipline.',
+        body: 'Samuel had been at a much bigger school where he was just a number. Here he has 18 classmates, a class teacher who knows his strengths, and a school that genuinely teaches respect.',
     },
 ];
 
-/* ========================================================================
-   Honest trust strip — only what is actually true
-   ======================================================================== */
-const TRUST_ITEMS = [
-    { line1: 'Registered with',        line2: 'Ogun State Ministry of Education' },
-    { line1: 'Member',                  line2: 'Association of Private Schools' },
-    { line1: 'Christian-led, but',     line2: 'open to children of all faiths' },
-    { line1: 'Established',             line2: '2008 · 16+ years serving Mowe' },
+const STATS = [
+    { num: 18,  suffix: '',  label: 'Maximum class size', desc: 'Small enough that every child is known by name.', icon: Users },
+    { num: 16,  suffix: '+', label: 'Years of excellence', desc: 'Serving families in Mowe since 2009.', icon: Award },
+    { num: 100, suffix: '%', label: 'Certified teachers', desc: 'Every class led by a qualified B.Ed or NCE holder.', icon: ShieldCheck },
+    { num: 560, suffix: '+', label: 'Pupils enrolled', desc: 'A growing community of confident learners.', icon: GraduationCap },
 ];
 
-const LetterReveal = ({ text }) => {
-    const letters = text.split("");
-    return (
-        <span className="inline-block">
-            {letters.map((char, i) => (
-                <motion.span
-                    key={i}
-                    initial={{ opacity: 0, y: 20, rotate: 10 }}
-                    animate={{ opacity: 1, y: 0, rotate: 0 }}
-                    transition={{
-                        duration: 0.8,
-                        delay: i * 0.03,
-                        ease: [0.2, 0.65, 0.3, 0.9]
-                    }}
-                    className="inline-block"
-                >
-                    {char === " " ? "\u00A0" : char}
-                </motion.span>
-            ))}
-        </span>
-    );
-};
-
-const Home = () => {
-    return (
-        <div className="flex flex-col -mt-16 overflow-x-hidden w-full max-w-[100vw]">
-            <Hero />
-            <MarqueeStrip
-                tone="primary"
-                items={[
-                    'Nursery 1 → Basic 6',
-                    'Sixteen years in Mowe',
-                    'Class teachers who know every child by name',
-                    'Apply for the 2026 / 2027 session',
-                    '8, Kolawole Street, Ogun State',
-                ]}
-            />
-            <TrustStrip />
-            <AboutSixteenYears />
-            <DayTimelineSection />
-            <FeaturesGrid />
-            <PricingTiers />
-            <PullQuoteBand />
-            <ParentStories />
-            <ImpactStats />
-            <MobileStickyBar />
-        </div>
-    );
-};
-
-/* ----------------------------------------------------------------- Mobile Sticky Actions */
-const MobileStickyBar = () => (
-    <div className="fixed bottom-6 left-4 right-4 z-50 md:hidden">
-        <motion.div 
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="bg-white/80 backdrop-blur-xl border border-white/20 p-2 rounded-2xl shadow-2xl grid grid-cols-2 gap-2"
-        >
-            <a 
-                href="tel:+2348030000000"
-                className="bg-primary text-white font-bold py-3.5 px-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-lg active:scale-95 transition-transform"
-            >
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                Call Us
-            </a>
-            <Link 
-                to="/admissions" 
-                className="bg-white text-primary border border-primary/20 font-bold py-3.5 px-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-sm active:scale-95 transition-transform"
-            >
-                Apply
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-            </Link>
-        </motion.div>
+/* ========================================================================
+   Page
+   ======================================================================== */
+const Home = () => (
+    <div className="-mt-16 md:-mt-[4.5rem] bg-white overflow-x-hidden w-full max-w-[100vw]">
+        <Seo
+            title="Nursery & Primary School in Mowe, Ogun State"
+            description="A warm, high-standards Nigerian school in Mowe where small classes and dedicated teachers build the foundation your child deserves. Nursery 1 through Basic 6."
+            path="/"
+        />
+        <ScrollProgress />
+        <Hero />
+        <MarqueeStrip tone="ink" items={TICKER_ITEMS} />
+        <IntroSpread />
+        <TrustLine />
+        <DayAtSchool />
+        <Features />
+        <Programmes />
+        <PullQuote />
+        <ParentStories />
+        <ImpactBand />
+        <FinalCTA />
     </div>
 );
 
-/* ----------------------------------------------------------------- Hero (Modern Bento Style) */
+/* ----------------------------------------------------------------- Hero */
+const HERO_STATS = [
+    { num: 16,  suffix: '+', label: 'Years in Mowe' },
+    { num: 560, suffix: '+', label: 'Pupils enrolled' },
+    { num: 18,  suffix: '',  label: 'Avg. class size' },
+];
+
 const Hero = () => {
     const reduced = useReducedMotion();
-    const heroRef = useRef(null);
-    const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
-    const imgY = useTransform(scrollYProgress, [0, 1], [0, -60]);
 
     return (
-        <section ref={heroRef} className="relative bg-bg pt-32 pb-24 md:pt-44 md:pb-40 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 auto-rows-[minmax(180px,auto)]">
-                    
-                    {/* The Anchor (Main Headline Block) */}
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                        className="md:col-span-8 md:row-span-2 bg-white rounded-[2.5rem] p-8 md:p-16 shadow-sm border border-gray-100 flex flex-col justify-center relative overflow-hidden group"
-                    >
-                        {/* Mobile background image + overlay */}
-                        <div className="absolute inset-0 md:hidden">
-                            <img src="/school_hero_Section.png" alt="" className="w-full h-full object-cover opacity-80" />
-                            <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/50 to-white/90"></div>
-                        </div>
-                        <div className="absolute top-0 right-0 w-[60%] h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none rounded-r-[2.5rem] hidden md:block"></div>
-                        <Badge tone="mint" dot className="self-start mb-8 relative z-10">BEST LEGACY DIVINE SCHOOL</Badge>
-                        <h1 className="text-5xl md:text-7xl font-black text-ink leading-[1.05] tracking-tighter relative z-10">
-                            Nurturing minds.<br/>
-                            Building <span className="relative inline-block text-primary italic font-serif">
-                                legacies
-                                <motion.svg
-                                    className="absolute -bottom-2 left-0 w-full h-4 text-secondary/40 pointer-events-none"
-                                    viewBox="0 0 300 20" preserveAspectRatio="none"
-                                >
-                                    <motion.path
-                                        d="M5,15 Q150,5 295,15" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"
-                                        initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
-                                    />
-                                </motion.svg>
-                            </span>.
-                        </h1>
-                        <p className="mt-8 text-gray-500 text-lg md:text-xl max-w-lg leading-relaxed relative z-10">
+        <section className="relative bg-paper overflow-hidden pt-28 pb-12 md:pt-32 md:pb-16">
+            <div className="absolute inset-0 mesh-gradient-premium opacity-70 pointer-events-none" />
+            <CursorSpotlight color="rgba(14,134,212,0.12)" size={560} />
+
+            {/* School-themed decoration in the section's empty top/bottom
+                padding bands — safe from the two-column content at every
+                breakpoint since nothing else occupies that vertical strip. */}
+            <FloatingIcon icon={Pencil}     className="top-24 left-[6%]"      size="w-10 h-10" color="text-primary/70" rotate={-20} delay={0.6}  duration={7} />
+            <FloatingIcon icon={BookOpen}   className="top-24 right-[7%]"     size="w-12 h-12" color="text-gold/80"    rotate={12}  delay={0.9}  duration={8} />
+            <FloatingIcon icon={Ruler}      className="hidden sm:block top-20 left-[40%]" size="w-9 h-9" color="text-gold/70" rotate={30}  delay={1.2}  duration={6.5} />
+            <FloatingIcon icon={Volleyball} className="bottom-3 left-[9%]"    size="w-10 h-10" color="text-primary/70" rotate={0}   delay={0.75} duration={6} />
+            <FloatingIcon icon={Star}       className="bottom-4 right-[10%]"  size="w-8 h-8"  color="text-primary/70" rotate={-10} delay={1.4}  duration={5.5} />
+
+            <div className="relative max-w-6xl mx-auto px-6 sm:px-8 grid md:grid-cols-12 gap-y-10 gap-x-10 items-center">
+                {/* Text column */}
+                <div className="md:col-span-7">
+                    <Reveal>
+                        <Eyebrow>Best Legacy Divine School &middot; Mowe, Ogun State</Eyebrow>
+                    </Reveal>
+                    <h1 className="mt-5 font-serif text-4xl sm:text-5xl md:text-6xl font-medium text-ink leading-[1.05] tracking-tight text-balance">
+                        <LineReveal delay={0.05}>Nurturing minds.</LineReveal>
+                        <LineReveal delay={0.2}>Building <span className="italic text-primary">legacies</span>.</LineReveal>
+                    </h1>
+                    <Reveal delay={0.4}>
+                        <p className="mt-5 max-w-lg text-gray-600 text-lg leading-relaxed">
                             A warm, high-standards Nigerian school in Mowe where small classes and dedicated teachers build the foundation your child deserves.
                         </p>
-                        <div className="mt-10 flex flex-wrap gap-4 relative z-10">
-                            <Magnetic>
-                                <Link to="/admissions" className="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all group-btn">
+                    </Reveal>
+                    <Reveal delay={0.5}>
+                        <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
+                            <Magnetic strength={0.25}>
+                                <Link
+                                    to="/admissions"
+                                    className="inline-flex items-center gap-2 bg-ink text-white font-semibold px-7 py-3.5 rounded-full shadow-[0_12px_32px_-8px_rgba(27,31,59,0.35)] hover:bg-gray-800 transition-colors"
+                                >
                                     Apply for 2026/27
-                                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                    <ArrowIcon />
                                 </Link>
                             </Magnetic>
-                            <Magnetic>
-                                <Link to="/about" className="bg-gray-50 text-ink font-bold px-8 py-4 rounded-full border border-gray-200 hover:border-primary hover:bg-white transition-all shadow-sm">
-                                    Visit the school
-                                </Link>
-                            </Magnetic>
+                            <Link
+                                to="/about"
+                                className="inline-flex items-center gap-2 text-ink font-semibold border-b border-ink/20 pb-0.5 hover:border-gold hover:text-primary transition-colors"
+                            >
+                                Visit the school
+                            </Link>
                         </div>
-                    </motion.div>
+                    </Reveal>
 
-                    {/* The Heart (Hero Image Block) */}
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
-                        className="md:col-span-4 md:row-span-2 rounded-[2.5rem] overflow-hidden relative shadow-sm border border-gray-100 group min-h-[350px] md:min-h-0"
-                    >
-                        <div className="absolute inset-0 bg-ink/10 z-10 group-hover:bg-transparent transition-colors duration-500"></div>
-                        <motion.img 
-                            style={{ y: reduced ? 0 : imgY }}
-                            src="/school_hero_Section.png" 
-                            alt="Pupil at Best Legacy" 
-                            className="absolute inset-0 w-full h-[120%] object-cover object-top -mt-[10%] group-hover:scale-105 transition-transform duration-1000"
-                        />
-                    </motion.div>
-
-                    {/* The Proof (Stats Block) */}
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                        className="md:col-span-8 md:row-span-1 bg-ink text-white rounded-[2.5rem] p-8 shadow-sm flex items-center justify-between relative overflow-hidden"
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent"></div>
-                        <div className="relative z-10 flex w-full justify-around text-center">
-                            <div>
-                                <div className="text-4xl md:text-5xl font-black font-serif italic"><CountUp to={16} suffix="+" /></div>
-                                <div className="text-xs uppercase tracking-widest text-mint mt-2 font-bold">Years Experience</div>
-                            </div>
-                            <div className="w-px bg-white/20"></div>
-                            <div>
-                                <div className="text-4xl md:text-5xl font-black font-serif italic"><CountUp to={560} suffix="+" /></div>
-                                <div className="text-xs uppercase tracking-widest text-mint mt-2 font-bold">Pupils Enrolled</div>
-                            </div>
-                            <div className="w-px bg-white/20 hidden sm:block"></div>
-                            <div className="hidden sm:block">
-                                <div className="text-4xl md:text-5xl font-black font-serif italic"><CountUp to={18} suffix="" /></div>
-                                <div className="text-xs uppercase tracking-widest text-mint mt-2 font-bold">Avg Class Size</div>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* The Journey (Badge/Graphic Block) */}
-                    <motion.div 
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-                        className="md:col-span-4 md:row-span-1 bg-secondary text-ink rounded-[2.5rem] p-8 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden"
-                    >
-                        {/* Decorative squiggle */}
-                        <svg className="absolute -right-4 -top-4 w-32 h-32 text-white/20 rotate-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        
-                        <div className="text-sm font-bold uppercase tracking-widest text-ink/80 mb-2 z-10">Journey</div>
-                        <div className="text-2xl font-black leading-tight z-10">
-                            Nursery 1 <br/>
-                            <span className="text-white">→ Basic 6</span>
-                        </div>
-                    </motion.div>
-
-                </div>
-            </div>
-        </section>
-    );
-};
-
-/* ----------------------------------------------------------------- Trust strip */
-const TrustStrip = () => (
-    <section className="bg-white border-y border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-5 text-center md:text-left">
-            {TRUST_ITEMS.map((t) => (
-                <div key={t.line2} className="text-xs">
-                    <div className="text-gray-400 uppercase tracking-widest text-[10px] font-bold">{t.line1}</div>
-                    <div className="mt-1 font-semibold text-ink leading-snug">{t.line2}</div>
-                </div>
-            ))}
-        </div>
-    </section>
-);
-
-/* ----------------------------------------------------------------- About 16+ years */
-const AboutSixteenYears = () => (
-    <section className="bg-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-12 items-start">
-            <Reveal>
-                <Badge tone="mint">About Us</Badge>
-                <div className="mt-6 flex items-end gap-4">
-                    <div className="text-7xl md:text-8xl font-black text-primary leading-none">
-                        <CountUp to={16} duration={1.2} /><span className="text-brand-green">+</span>
-                    </div>
-                </div>
-                <p className="mt-4 text-gray-500 text-sm max-w-xs">
-                    Sixteen years in Mowe. Thousands of pupils. The same simple rule: small classes, named teachers, and a school that picks up the phone.
-                </p>
-            </Reveal>
-            <Reveal delay={0.1}>
-                <h2 className="text-3xl md:text-4xl font-black text-primary leading-tight">
-                    Play, structure and faith — combined into a foundation that follows your child for life.
-                </h2>
-                <p className="mt-5 text-gray-600">
-                    Our nursery section runs on observation and play. From Basic 1 the days get more structured, but the values don't change: every child is known, every parent is heard, every teacher is qualified.
-                </p>
-                <Button to="/about" size="md" className="mt-6">
-                    More about us
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                </Button>
-            </Reveal>
-        </div>
-    </section>
-);
-
-/* ----------------------------------------------------------------- Day timeline (NEW — design audit #1) */
-const DayTimelineSection = () => {
-    const ref = useRef(null);
-    const reduced = useReducedMotion();
-    const { scrollYProgress } = useScroll({ target: ref, offset: ['start 0.7', 'end 0.4'] });
-    const lineHeight = useTransform(scrollYProgress, [0, 1], ['0%', '100%']);
-
-    return (
-        <section ref={ref} className="bg-bg py-24 relative overflow-hidden">
-            <div className="absolute -top-24 right-1/4 w-72 h-72 rounded-full blob-mint blur-3xl pointer-events-none"></div>
-
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <Reveal>
-                    <div className="text-center mb-16 max-w-2xl mx-auto">
-                        <Badge tone="warm" dot>A typical day</Badge>
-                        <h2 className="mt-4 text-3xl md:text-5xl font-black text-primary leading-[1.1] text-balance">
-                            What does a day at Best Legacy actually look like?
-                        </h2>
-                        <div className="mt-3 flex justify-center text-secondary">
-                            <SquiggleDivider width={160} />
-                        </div>
-                        <p className="mt-5 text-gray-600">
-                            Less marketing, more honesty. This is the rhythm of a regular Wednesday for a Nursery 2 or Basic 3 child.
-                        </p>
-                    </div>
-                </Reveal>
-
-                <div className="relative">
-                    {/* Center spine — gradient ghost */}
-                    <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-[2px] bg-gray-200 md:-translate-x-1/2 rounded-full"></div>
-                    {/* Center spine — animated fill */}
-                    {!reduced && (
-                        <motion.div
-                            className="absolute left-6 md:left-1/2 top-0 w-[2px] bg-gradient-to-b from-primary via-primary to-secondary md:-translate-x-1/2 rounded-full origin-top"
-                            style={{ height: lineHeight }}
-                        />
-                    )}
-                    {reduced && (
-                        <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-[2px] bg-gradient-to-b from-primary to-secondary md:-translate-x-1/2 rounded-full"></div>
-                    )}
-
-                    <div className="space-y-12 md:space-y-20">
-                        {DAY_STOPS.map((stop, i) => {
-                            const left = i % 2 === 0;
-                            return (
-                                <Reveal key={stop.title} delay={i * 0.05}>
-                                    <div className={`relative md:grid md:grid-cols-2 md:gap-12 items-center ${left ? '' : 'md:[direction:rtl]'}`}>
-                                        {/* Dot */}
-                                        <div className="absolute left-6 md:left-1/2 -translate-x-1/2 -top-2 z-10">
-                                            <motion.div
-                                                whileHover={reduced ? undefined : { scale: 1.15 }}
-                                                className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-lg ${stop.tone === 'warm' ? 'bg-secondary text-ink' : 'bg-primary text-white'}`}
-                                            >
-                                                <span>{stop.emoji}</span>
-                                            </motion.div>
-                                        </div>
-
-                                        {/* Card */}
-                                        <div className={`pl-20 md:pl-0 ${left ? 'md:pr-16 md:text-right' : 'md:pl-16 md:[direction:ltr]'}`}>
-                                            <div className="text-xs font-bold uppercase tracking-widest text-gray-400">{stop.time}</div>
-                                            <h3 className="mt-2 text-xl md:text-2xl font-black text-primary">{stop.title}</h3>
-                                            <p className="mt-3 text-gray-600 leading-relaxed">{stop.body}</p>
-                                        </div>
-                                        <div className="hidden md:block"></div>
+                    <Reveal delay={0.6}>
+                        <div className="mt-8 flex flex-wrap items-center gap-x-10 gap-y-4 pt-6 border-t border-gray-200/70">
+                            {HERO_STATS.map((s) => (
+                                <div key={s.label}>
+                                    <div className="font-serif text-2xl md:text-3xl text-ink">
+                                        <CountUp to={s.num} suffix={s.suffix} />
                                     </div>
-                                </Reveal>
-                            );
-                        })}
-                    </div>
+                                    <div className="mt-1 text-[11px] uppercase tracking-[0.15em] text-gray-500">{s.label}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </Reveal>
                 </div>
 
-                <Reveal delay={0.2}>
-                    <div className="mt-20 text-center">
-                        <Button to="/admissions" size="lg">Book a school visit</Button>
-                    </div>
-                </Reveal>
-            </div>
-        </section>
-    );
-};
-
-
-/* ----------------------------------------------------------------- Features grid */
-const FeaturesGrid = () => {
-    const container = useRef(null);
-
-    useGSAP(() => {
-        gsap.from('.feature-card', {
-            y: 100,
-            opacity: 0,
-            rotation: 5,
-            duration: 1,
-            stagger: 0.15,
-            ease: 'back.out(1.7)',
-            scrollTrigger: {
-                trigger: '.features-grid',
-                start: 'top 80%',
-            }
-        });
-    }, { scope: container });
-
-    return (
-        <section className="bg-white pt-32 pb-20" ref={container}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <Reveal>
-                    <div className="grid md:grid-cols-2 gap-10 mb-12 items-end">
-                        <div>
-                            <Badge tone="mint">Features</Badge>
-                            <p className="mt-4 text-gray-600 max-w-md">
-                                Our environment encourages curiosity, character and confidence — without losing the academic rigour parents expect.
-                            </p>
-                        </div>
-                        <h2 className="text-3xl md:text-4xl font-black text-primary leading-tight">
-                            Built around <span className="text-brand-green">small</span>, safe, attentive classrooms.
-                        </h2>
-                    </div>
-                </Reveal>
-
-                <div className="features-grid mt-24 pt-10 lg:mt-0 lg:pt-0 flex overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory lg:grid lg:grid-cols-12 lg:gap-6 lg:overflow-visible lg:pb-0 no-scrollbar">
-                    {[
-                        { n: '01', t: 'Creative Learning', d: 'Hands-on activities for every subject — even maths becomes a game when you do it well.', img: '/cultural_day.jpg', span: 'lg:col-span-8' },
-                        { n: '02', t: 'Trained Teachers',  d: 'Every class teacher holds a B.Ed or NCE. We don\'t hire shortcuts.', img: '/staff_members.jpg', span: 'lg:col-span-4' },
-                        { n: '03', t: 'Whole-child Care',  d: 'Academic, social, emotional, spiritual. We track all four because parents do too.', img: '/school_ceremony.jpg', span: 'lg:col-span-4' },
-                        { n: '04', t: 'Safe & Familiar',   d: 'Locked-gate campus, named visitor logbook, and a school nurse on duty.', img: '/fun_in_the_pool.jpg', span: 'lg:col-span-8' },
-                    ].map((f) => (
-                        <motion.div
-                            key={f.n}
-                            whileHover={{ y: -8 }}
-                            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                            className={`group relative feature-card shrink-0 w-[85vw] sm:w-[400px] lg:w-auto snap-center mr-6 lg:mr-0 ${f.span}`}
-                        >
-                            {/* Glow Shadow — Blurred image underneath */}
-                            <div 
-                                className="absolute inset-4 opacity-40 blur-3xl saturate-150 transition-all duration-500 group-hover:opacity-70 group-hover:scale-105"
-                                style={{ 
-                                    backgroundImage: `url(${f.img})`,
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center',
-                                    zIndex: 0
-                                }}
+                {/* Image column — a small real-life collage, not one generic stock shot */}
+                <div className="md:col-span-5 relative">
+                    <Reveal x={24} y={0} delay={0.15}>
+                        <div className="relative">
+                            <motion.div
+                                initial={{ opacity: 0, x: -16, y: -16 }}
+                                animate={{ opacity: 1, x: 0, y: 0 }}
+                                transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                                className="absolute -inset-4 border border-gold/40 rounded-2xl -z-0 hidden md:block"
+                            />
+                            <RevealImage
+                                src="/school_hero_Section.jpg"
+                                alt="Pupil at Best Legacy Divine School"
+                                aspect=""
+                                className="w-full h-[280px] md:h-[420px]"
+                                breathe
+                                delay={0.2}
                             />
 
-                            <div className="relative h-full card-gradient-border p-6 shadow-sm hover:shadow-md flex flex-col bg-white z-10">
-                                <div className="flex justify-between items-start">
-                                    <div className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{f.n} · FEATURE</div>
-                                    <div className="w-8 h-8 rounded-full bg-primary-soft text-primary flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                                    </div>
-                                </div>
-                                <h3 className="mt-4 text-2xl font-black text-ink leading-tight">{f.t}</h3>
-                                <p className="mt-3 text-sm text-gray-500 max-w-sm leading-relaxed">{f.d}</p>
-                                <div className="mt-8 rounded-2xl overflow-hidden aspect-video lg:aspect-auto lg:flex-grow border border-gray-100">
-                                    <img src={f.img} alt={f.t} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition duration-700"/>
-                                </div>
-                            </div>
-                        </motion.div>
-                    ))}
+                            {/* Est. badge — top-left, out of the way of the photo overlap */}
+                            <motion.div
+                                initial={{ opacity: 0, y: -12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.7, delay: 0.75, ease: [0.22, 1, 0.36, 1] }}
+                                className="absolute -top-4 -left-4 bg-white text-ink rounded-2xl px-4 py-2.5 shadow-[0_16px_32px_-10px_rgba(27,31,59,0.3)] hidden sm:block"
+                            >
+                                <div className="text-[9px] uppercase tracking-[0.15em] text-gray-400">Est.</div>
+                                <div className="font-serif text-lg leading-none text-primary">2009</div>
+                            </motion.div>
+
+                            {/* Second photo — a candid moment overlapping the main shot, mosaic-style */}
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 16 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                transition={{ duration: 0.8, delay: 0.85, ease: [0.22, 1, 0.36, 1] }}
+                                className="absolute -bottom-6 -right-4 sm:-right-6 w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border-4 border-white shadow-[0_20px_45px_-12px_rgba(27,31,59,0.45)] overflow-hidden"
+                            >
+                                <img src="/cultural_day.jpg" alt="Pupils at Best Legacy's cultural day" loading="lazy" className="w-full h-full object-cover" />
+                            </motion.div>
+                        </div>
+                    </Reveal>
                 </div>
             </div>
+
+            {!reduced && (
+                <motion.div
+                    aria-hidden="true"
+                    className="absolute bottom-4 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-1.5 text-gray-400 text-[10px] uppercase tracking-[0.2em]"
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                    Scroll
+                    <span className="w-px h-5 bg-gray-300" />
+                </motion.div>
+            )}
         </section>
     );
 };
 
-/* ----------------------------------------------------------------- Pricing tiers */
-const PricingTiers = () => (
-    <section className="bg-bg py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Reveal>
-                <div className="text-center mb-16">
-                    <Badge tone="mint">Our Programmes</Badge>
-                    <h2 className="mt-6 text-4xl md:text-5xl font-black text-ink tracking-tight">Termly fees, kept simple.</h2>
-                    <p className="mt-4 text-base text-gray-500 max-w-xl mx-auto">All amounts in Naira and per term. Books and feeding included. Sibling discount on the second child.</p>
-                </div>
-            </Reveal>
+/* ----------------------------------------------------------------- Intro spread (about + layered image) */
+const IntroSpread = () => (
+    <section className="relative bg-white pt-28 pb-24 md:pt-32 md:pb-32 overflow-hidden">
+        <div className="absolute inset-0 mesh-gradient-premium opacity-60 pointer-events-none" />
 
-            <Reveal stagger gap={0.1}>
-                {/* Mobile Slider / Desktop Grid Container */}
-                <div className="flex overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory lg:grid lg:grid-cols-3 lg:gap-8 lg:overflow-visible lg:pb-0 lg:max-w-6xl lg:mx-auto items-center no-scrollbar">
-                    {[
-                        { name: 'Nursery (1 & 2)', age: '3–5 years',  price: '₦75K', featured: false },
-                        { name: 'Basic 1 – 3',     age: '6–8 years',  price: '₦95K', featured: true },
-                        { name: 'Basic 4 – 6',     age: '9–11 years', price: '₦115K', featured: false },
-                    ].map((p) => (
+        <FloatingIcon icon={Backpack} className="hidden sm:block top-10 right-[8%]" size="w-16 h-16" color="text-primary/60" rotate={-12} delay={0.3} duration={7.5} />
+        <FloatingIcon icon={Palette}  className="hidden sm:block bottom-10 left-[4%]" size="w-14 h-14" color="text-gold/70" rotate={15}  delay={0.6} duration={6.5} />
+
+        <div className="relative max-w-6xl mx-auto px-6 sm:px-8 grid md:grid-cols-12 gap-y-16 gap-x-12 items-center">
+            <div className="md:col-span-5 relative">
+                <Reveal x={-24} y={0}>
+                    <div className="relative">
                         <motion.div
-                            key={p.name}
-                            whileHover={{ y: -12, scale: 1.02 }}
-                            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                            className={`relative rounded-[2.5rem] p-8 md:p-10 flex flex-col h-full z-10 overflow-hidden shrink-0 w-[85vw] sm:w-[400px] lg:w-auto snap-center mr-6 lg:mr-0 ${
-                                p.featured 
-                                ? 'bg-ink text-white shadow-2xl lg:-my-8' 
-                                : 'bg-white text-ink shadow-card border border-gray-100'
-                            }`}
-                        >
-                            {/* Premium Glow effect for featured card */}
-                            {p.featured && (
-                                <>
-                                    <div className="absolute top-0 right-0 w-[150%] h-[150%] bg-gradient-to-bl from-primary/40 via-secondary/20 to-transparent pointer-events-none rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
-                                    <div className="absolute inset-0 border-2 border-white/10 rounded-[2.5rem] pointer-events-none"></div>
-                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
-                                </>
-                            )}
-
-                            <div className="flex items-center justify-between relative z-10">
-                                <div>
-                                    <div className="font-black text-2xl tracking-tight">{p.name}</div>
-                                    <div className={`text-sm font-medium mt-1 ${p.featured ? 'text-gray-400' : 'text-gray-500'}`}>Ages: {p.age}</div>
-                                </div>
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${p.featured ? 'bg-white/10 text-mint' : 'bg-primary-soft text-primary'}`}>
-                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9" strokeWidth="2"/></svg>
-                                </div>
-                            </div>
-
-                            <div className="mt-8 relative z-10">
-                                <span className="text-5xl font-black tracking-tighter">{p.price}</span>
-                                <span className={`text-sm font-bold ml-1 ${p.featured ? 'text-gray-400' : 'text-gray-400'}`}>/term</span>
-                            </div>
-
-                            <div className={`mt-8 pt-8 border-t ${p.featured ? 'border-white/10' : 'border-gray-100'} flex-grow relative z-10`}>
-                                <div className="font-bold mb-4 uppercase tracking-wider text-xs">Everything included</div>
-                                <ul className="space-y-4">
-                                    {['Tuition & class materials', 'Textbooks & exercise books', 'Daily hot lunch & snack', 'Termly reports & PTA meetings', 'School nurse on call'].map(i => (
-                                        <li key={i} className="flex items-start gap-3">
-                                            <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${p.featured ? 'bg-primary text-white' : 'bg-mint text-primary'}`}>
-                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                            </div>
-                                            <span className={`text-sm font-medium ${p.featured ? 'text-gray-300' : 'text-gray-600'}`}>{i}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-
-                            <div className="mt-10 relative z-10 space-y-3">
-                                <Link 
-                                    to="/admissions" 
-                                    className={`block w-full text-center rounded-2xl font-bold px-6 py-4 transition-all shadow-sm ${
-                                        p.featured 
-                                        ? 'bg-white text-ink hover:bg-gray-100 hover:scale-[1.02]' 
-                                        : 'bg-primary text-white hover:bg-primary-dark hover:scale-[1.02]'
-                                    }`}
-                                >
-                                    Apply now
-                                </Link>
-                                
-                                {/* Call Mrs Kolawole Button */}
-                                <a 
-                                    href="tel:+2348030000000"
-                                    className={`flex items-center justify-center gap-3 w-full py-3 px-4 rounded-xl font-bold text-xs transition-all ${
-                                        p.featured 
-                                        ? 'bg-primary text-white hover:bg-primary-dark' 
-                                        : 'bg-primary-soft text-primary hover:bg-primary/10'
-                                    }`}
-                                >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                                    Call Us
-                                </a>
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
-            </Reveal>
-        </div>
-    </section>
-);
-
-/* ----------------------------------------------------------------- Parent stories (NEW — design audit #2) */
-const ParentStories = () => (
-    <section className="bg-bg py-24 relative overflow-hidden">
-        <div className="absolute -top-12 left-1/4 w-72 h-72 rounded-full blob-warm blur-3xl pointer-events-none"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Reveal>
-                <div className="text-center mb-16 max-w-2xl mx-auto">
-                    <Badge tone="warm" dot>Parent stories</Badge>
-                    <h2 className="mt-4 text-3xl md:text-5xl font-black text-primary leading-tight text-balance">
-                        Three parents, three reasons to stay.
-                    </h2>
-                    <div className="mt-3 flex justify-center text-secondary">
-                        <SquiggleDivider width={140} />
-                    </div>
-                    <p className="mt-5 text-gray-600">No five-star averages — just real stories from Mowe families.</p>
-                </div>
-            </Reveal>
-
-            <Reveal stagger gap={0.1}>
-                {/* Mobile Slider / Desktop Grid */}
-                <div className="flex overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:pb-0 no-scrollbar">
-                    {PARENT_STORIES.map(s => (
-                        <div key={s.name} className="shrink-0 w-[85vw] sm:w-[400px] md:w-auto snap-center mr-6 md:mr-0">
-                            <TiltCard
-                                max={4}
-                                className="bg-white rounded-3xl p-7 shadow-card hover:shadow-card-lg flex flex-col h-full"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <img src={s.photo} alt="" className="w-14 h-14 rounded-full object-cover ring-2 ring-mint" loading="lazy" width={56} height={56}/>
-                                    <div>
-                                        <div className="font-bold text-ink">{s.name}</div>
-                                        <div className="text-xs text-gray-500">{s.child}</div>
-                                    </div>
-                                </div>
-                                <div className="mt-6 text-sm text-gray-600 font-medium leading-relaxed italic">{s.quote}</div>
-                                <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-500 leading-relaxed flex-grow">{s.body}</div>
-                            </TiltCard>
-                        </div>
-                    ))}
-                </div>
-            </Reveal>
-        </div>
-    </section>
-);
-
-/* ----------------------------------------------------------------- Impact Stats */
-const ImpactStats = () => {
-    const container = useRef(null);
-
-    useGSAP(() => {
-        gsap.from('.stat-item', {
-            scale: 0.5,
-            opacity: 0,
-            duration: 1,
-            stagger: 0.1,
-            ease: 'elastic.out(1, 0.5)',
-            scrollTrigger: {
-                trigger: '.stats-grid',
-                start: 'top 85%',
-            }
-        });
-    }, { scope: container });
-
-    return (
-        <section className="bg-ink text-white py-16 md:py-20 relative overflow-hidden" ref={container}>
-            {/* Elegant dark background with subtle glow */}
-            <div className="absolute top-0 right-0 w-[80%] h-full bg-gradient-to-l from-primary/20 to-transparent pointer-events-none rounded-l-full blur-3xl"></div>
-
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                <Reveal>
-                    <div className="text-center max-w-3xl mx-auto mb-12">
-                        <Badge tone="mint" className="bg-white/10 text-mint border-white/20">The Legacy in Numbers</Badge>
-                        <h2 className="mt-4 text-3xl md:text-5xl font-black leading-tight tracking-tighter">
-                            Small details, <br/>
-                            <span className="text-mint italic font-serif">massive impact</span>.
-                        </h2>
-                        <p className="mt-4 text-gray-400 text-lg">
-                            Behind every child's smile is a foundation built on dedication, experience, and an environment designed for growth.
-                        </p>
+                            initial={{ opacity: 0, x: 16, y: 16 }}
+                            animate={{ opacity: 1, x: 0, y: 0 }}
+                            transition={{ duration: 0.9, delay: 0.15, ease: EASE }}
+                            className="absolute -inset-4 border border-gold/40 rounded-2xl -z-0 hidden md:block"
+                        />
+                        <RevealImage src="/school_library.jpg" alt="Best Legacy library corner" aspect="aspect-[4/5]" parallax delay={0.1} />
                     </div>
                 </Reveal>
+            </div>
 
-                <div className="stats-grid flex overflow-x-auto pb-8 -mx-4 px-4 snap-x snap-mandatory lg:grid lg:grid-cols-4 lg:gap-x-8 lg:gap-y-10 lg:overflow-visible lg:pb-0 no-scrollbar">
-                    {[
-                        { num: 18, suffix: '',   label: 'Maximum Class Size', desc: 'Ensuring every pupil receives dedicated attention and personalized care.', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
-                        { num: 16, suffix: '+',  label: 'Years of Excellence', desc: 'A proven track record of nurturing young minds in Mowe since 2008.', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-                        { num: 100, suffix: '%', label: 'Certified Teachers', desc: 'Every class is led by qualified educators holding a B.Ed or NCE.', icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z' },
-                        { num: 560, suffix: '+', label: 'Pupils Enrolled', desc: 'A growing community of confident learners transitioning to top secondary schools.', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
-                    ].map((stat, i) => (
-                        <div key={stat.label} className="stat-item flex flex-col items-center text-center group shrink-0 w-[80vw] sm:w-[300px] lg:w-auto snap-center mr-8 lg:mr-0">
-                            <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4 text-mint group-hover:scale-110 group-hover:bg-mint/10 transition-all duration-500">
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d={stat.icon} />
-                                </svg>
+            <div className="md:col-span-7">
+                <Reveal delay={0.1} x={24} y={0}>
+                    <Eyebrow>About us</Eyebrow>
+                    <h2 className="mt-6 font-serif text-3xl md:text-5xl text-ink leading-tight text-balance">
+                        Play, structure and faith combine into a foundation that follows your child <span className="italic text-primary">for life</span>.
+                    </h2>
+                    <p className="mt-6 text-gray-600 leading-relaxed max-w-xl">
+                        Our nursery section runs on observation and play. From Basic 1 the days get more structured, but the values don&rsquo;t change: every child is known, every parent is heard, every teacher is qualified.
+                    </p>
+
+                    <div className="mt-10 flex flex-wrap items-center gap-x-10 gap-y-6">
+                        <Reveal delay={0.2}>
+                            <div>
+                                <div className="font-serif text-4xl text-ink">
+                                    <CountUp to={16} /><span className="text-primary">+</span>
+                                </div>
+                                <div className="mt-1 text-xs uppercase tracking-[0.15em] text-gray-500">Years in Mowe</div>
                             </div>
-                            <div className="text-4xl md:text-5xl font-black text-white font-serif italic mb-2 tracking-tighter">
-                                <CountUp to={stat.num} suffix={stat.suffix} />
+                        </Reveal>
+                        <div className="w-px h-10 bg-gray-200 hidden sm:block" />
+                        <Reveal delay={0.28}>
+                            <div>
+                                <div className="font-serif text-4xl text-ink"><CountUp to={100} suffix="%" /></div>
+                                <div className="mt-1 text-xs uppercase tracking-[0.15em] text-gray-500">Certified teachers</div>
                             </div>
-                            <h4 className="text-base font-bold text-white mb-2">{stat.label}</h4>
-                            <p className="text-xs text-gray-400 leading-relaxed max-w-[14rem] mx-auto">
-                                {stat.desc}
-                            </p>
+                        </Reveal>
+                        <div className="w-px h-10 bg-gray-200 hidden sm:block" />
+                        <Link to="/about" className="inline-flex items-center gap-2 text-ink font-semibold border-b border-ink/20 pb-0.5 hover:border-gold hover:text-gold transition-colors">
+                            More about us
+                            <ArrowIcon />
+                        </Link>
+                    </div>
+                </Reveal>
+            </div>
+        </div>
+    </section>
+);
+
+/* ----------------------------------------------------------------- Trust line */
+const TrustLine = () => (
+    <section className="bg-paper py-10 border-y border-gray-200/70">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+            <div className="flex flex-wrap items-center justify-center gap-3">
+                {TRUST_ITEMS.map((t, i) => (
+                    <Reveal key={t.line2} delay={i * 0.06} y={12} className="text-xs bg-white/70 border border-gray-200 rounded-full px-4 py-2">
+                        <span className="uppercase tracking-[0.1em] text-gray-400">{t.line1}</span>{' '}
+                        <span className="font-semibold text-ink">{t.line2}</span>
+                    </Reveal>
+                ))}
+            </div>
+        </div>
+    </section>
+);
+
+/* ----------------------------------------------------------------- A day at school — sticky cinematic image + schedule */
+const DayAtSchool = () => {
+    const reduced = useReducedMotion();
+    const listRef = useRef(null);
+    const { scrollYProgress } = useScroll({ target: listRef, offset: ['start 0.75', 'end 0.6'] });
+
+    return (
+        <section className="bg-white py-16 md:py-20">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8">
+                <Reveal>
+                    <Eyebrow>A day at Best Legacy</Eyebrow>
+                    <h2 className="mt-6 font-serif text-3xl md:text-5xl text-ink leading-[1.1] max-w-2xl text-balance">
+                        What does a regular Wednesday actually look like?
+                    </h2>
+                </Reveal>
+
+                <div className="mt-10 grid md:grid-cols-12 gap-10 md:gap-16 md:items-start">
+                    <div className="md:col-span-5">
+                        <RevealImage src="/school_library.jpg" alt="A morning at Best Legacy" aspect="aspect-[4/5] md:aspect-[3/4]" className="max-h-[420px]" breathe />
+                    </div>
+
+                    <div className="md:col-span-7 relative" ref={listRef}>
+                        <div className="absolute left-0 top-0 bottom-0 w-px bg-gray-200" />
+                        {!reduced && (
+                            <motion.div
+                                aria-hidden="true"
+                                className="absolute left-0 top-0 w-px bg-gradient-to-b from-primary to-gold origin-top"
+                                style={{ scaleY: scrollYProgress, height: '100%' }}
+                            />
+                        )}
+                        <div className="divide-y divide-gray-200 border-t border-b border-gray-200 pl-6">
+                            {DAY_STOPS.map((stop, i) => (
+                                <Reveal key={stop.title} x={-16} y={0} delay={i * 0.04}>
+                                    <div className="py-3.5 transition-colors duration-300 hover:bg-paper/60 -mx-6 px-6">
+                                        <div className="flex items-baseline gap-3">
+                                            <span className="shrink-0 w-16 text-[11px] font-semibold uppercase tracking-[0.05em] text-gray-400 whitespace-nowrap">{stop.time}</span>
+                                            <h3 className="font-serif text-lg text-ink">{stop.title}</h3>
+                                        </div>
+                                        <p className="mt-1 pl-[4.75rem] text-sm text-gray-600 leading-relaxed max-w-md">{stop.body}</p>
+                                    </div>
+                                </Reveal>
+                            ))}
                         </div>
+                    </div>
+                </div>
+
+                <Reveal delay={0.1}>
+                    <div className="mt-10">
+                        <Magnetic strength={0.2}>
+                            <Link to="/admissions" className="inline-flex items-center gap-2 bg-ink text-white font-semibold px-7 py-3.5 rounded-full hover:bg-gray-800 transition-colors">
+                                Book a school visit
+                                <ArrowIcon />
+                            </Link>
+                        </Magnetic>
+                    </div>
+                </Reveal>
+            </div>
+        </section>
+    );
+};
+
+/* ----------------------------------------------------------------- Features */
+const Features = () => (
+    <section className="relative bg-paper py-24 md:py-32 overflow-hidden">
+        <FloatingIcon icon={Calculator} className="hidden sm:block top-14 left-[5%]" size="w-14 h-14" color="text-primary/60" rotate={-15} delay={0.3} duration={7} />
+        <FloatingIcon icon={Puzzle}     className="hidden sm:block bottom-14 right-[6%]" size="w-16 h-16" color="text-gold/70" rotate={18}  delay={0.6} duration={8} />
+
+        <div className="relative max-w-6xl mx-auto px-6 sm:px-8">
+            <Reveal>
+                <Eyebrow>What to expect</Eyebrow>
+                <h2 className="mt-6 font-serif text-3xl md:text-5xl text-ink leading-[1.1] max-w-2xl text-balance">
+                    Built around small, safe, attentive classrooms.
+                </h2>
+            </Reveal>
+
+            <div className="mt-20 space-y-20 md:space-y-28">
+                {FEATURES.map((f, i) => {
+                    const reverse = i % 2 === 1;
+                    return (
+                        <div key={f.n} className={`grid md:grid-cols-2 gap-8 md:gap-16 items-center ${reverse ? 'md:[direction:rtl]' : ''}`}>
+                            <Reveal x={reverse ? 24 : -24} y={0} className="relative md:[direction:ltr]">
+                                <div
+                                    className="absolute -inset-6 rounded-3xl opacity-70 blur-2xl pointer-events-none"
+                                    style={{ background: 'radial-gradient(circle, rgba(14,134,212,0.14) 0%, rgba(212,175,55,0.08) 60%, transparent 80%)' }}
+                                />
+                                <motion.div whileHover={{ y: -6 }} transition={{ duration: 0.4, ease: EASE }} className="relative">
+                                    <RevealImage src={f.img} alt={f.t} aspect="aspect-[4/3]" parallax />
+                                </motion.div>
+                            </Reveal>
+                            <Reveal delay={0.1} x={reverse ? -24 : 24} y={0} className="md:[direction:ltr]">
+                                <div className="text-xs font-semibold text-gold tracking-[0.15em]">{f.n}</div>
+                                <h3 className="mt-3 font-serif text-2xl md:text-3xl text-ink">{f.t}</h3>
+                                <p className="mt-4 text-gray-600 leading-relaxed max-w-md">{f.d}</p>
+                            </Reveal>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    </section>
+);
+
+/* ----------------------------------------------------------------- Programmes / fees */
+const Programmes = () => {
+    const reduced = useReducedMotion();
+    return (
+        <section className="bg-white py-24 md:py-32">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8">
+                <Reveal>
+                    <Eyebrow>Fees</Eyebrow>
+                    <h2 className="mt-6 font-serif text-3xl md:text-5xl text-ink leading-[1.1] max-w-2xl text-balance">
+                        Termly fees, kept simple.
+                    </h2>
+                    <p className="mt-4 text-gray-600 max-w-xl">
+                        All amounts in naira, per term. Books and feeding included. Sibling discount on the second child.
+                    </p>
+                </Reveal>
+
+                <div className="mt-16 flex gap-6 overflow-x-auto snap-x snap-mandatory no-scrollbar -mx-6 px-6 pb-2 md:mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-3 md:gap-8 md:overflow-visible md:items-center">
+                    {TIERS.map((p, i) => (
+                        <Reveal key={p.name} delay={i * 0.08} className="h-full shrink-0 w-[82%] snap-center md:w-auto md:shrink">
+                            <TiltCard
+                                max={p.featured ? 0 : 4}
+                                highlight={!p.featured}
+                                className={`relative rounded-2xl p-8 md:p-10 flex flex-col h-full overflow-hidden ${
+                                    p.featured
+                                        ? 'bg-ink text-white shadow-[0_30px_60px_-15px_rgba(27,31,59,0.5)] md:-my-6 md:py-14'
+                                        : 'bg-white text-ink border border-gray-200 shadow-card'
+                                }`}
+                            >
+                                {p.featured && (
+                                    <motion.div
+                                        aria-hidden="true"
+                                        className="absolute -top-24 -right-24 w-72 h-72 rounded-full pointer-events-none"
+                                        style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.35) 0%, transparent 70%)' }}
+                                        animate={reduced ? undefined : { opacity: [0.4, 0.75, 0.4] }}
+                                        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                                    />
+                                )}
+                                <div className="relative">
+                                    {p.featured && (
+                                        <div className="mb-4 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-gold">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+                                            Most popular
+                                        </div>
+                                    )}
+                                    <div className={`text-xs font-semibold uppercase tracking-[0.15em] ${p.featured ? 'text-white/50' : 'text-gray-400'}`}>{p.age}</div>
+                                    <h3 className="mt-2 font-serif text-2xl">{p.name}</h3>
+                                    <div className="mt-8">
+                                        <span className="font-serif text-4xl">{p.price}</span>
+                                        <span className={`text-sm ${p.featured ? 'text-white/50' : 'text-gray-400'}`}> /term</span>
+                                    </div>
+                                    <ul className="mt-8 space-y-3">
+                                        {INCLUDED.map((item) => (
+                                            <li key={item} className={`flex items-start gap-2.5 text-sm ${p.featured ? 'text-white/75' : 'text-gray-600'}`}>
+                                                <CheckIcon className={`w-4 h-4 mt-0.5 shrink-0 ${p.featured ? 'text-gold' : 'text-primary'}`} />
+                                                {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <div className="mt-10 space-y-3">
+                                        <Link
+                                            to="/admissions"
+                                            className={`block text-center rounded-full font-semibold px-6 py-3.5 transition-colors ${
+                                                p.featured ? 'bg-white text-ink hover:bg-white/90' : 'bg-ink text-white hover:bg-gray-800'
+                                            }`}
+                                        >
+                                            Apply now
+                                        </Link>
+                                        <a
+                                            href="tel:+2348067663966"
+                                            className={`block text-center text-sm font-semibold transition-colors ${
+                                                p.featured ? 'text-white/60 hover:text-gold' : 'text-gray-500 hover:text-ink'
+                                            }`}
+                                        >
+                                            Call the school &rarr;
+                                        </a>
+                                    </div>
+                                </div>
+                            </TiltCard>
+                        </Reveal>
                     ))}
                 </div>
             </div>
@@ -689,37 +655,26 @@ const ImpactStats = () => {
     );
 };
 
-/* ----------------------------------------------------------------- Editorial pull-quote band (agent #11) */
-const PullQuoteBand = () => (
-    <section className="bg-gradient-to-br from-primary-soft to-secondary-soft relative overflow-hidden py-24 md:py-32">
-        {/* Giant decorative quotation mark, breathing */}
+/* ----------------------------------------------------------------- Pull quote */
+const PullQuote = () => (
+    <section className="relative bg-paper py-14 md:py-20 overflow-hidden">
+        <div className="absolute inset-0 mesh-gradient-premium opacity-70 pointer-events-none" />
         <div
             aria-hidden="true"
-            className="absolute -top-16 -left-6 md:-left-2 text-[260px] md:text-[420px] font-display font-black leading-none text-white/40 select-none animate-breathe"
-            style={{ fontFamily: 'serif' }}
+            className="absolute top-2 left-1/2 -translate-x-1/2 text-[90px] md:text-[140px] font-serif leading-none text-gold/25 select-none animate-breathe"
         >
-            “
+            &ldquo;
         </div>
-        <div
-            aria-hidden="true"
-            className="absolute -bottom-32 right-0 text-[260px] md:text-[420px] font-display font-black leading-none text-white/30 select-none animate-breathe"
-            style={{ fontFamily: 'serif', animationDelay: '2s' }}
-        >
-            ”
-        </div>
-
-        <div className="relative max-w-4xl mx-auto px-6 sm:px-10 text-center">
+        <div className="relative max-w-3xl mx-auto px-6 sm:px-8 text-center">
             <Reveal>
-                <p className="text-3xl md:text-5xl font-black text-primary leading-[1.15] text-balance">
-                    "We chose them for the values, we stayed for the discipline. <span className="text-secondary">Best Legacy is teaching our son who he is.</span>"
+                <p className="font-serif text-3xl md:text-5xl text-ink leading-[1.25] text-balance">
+                    We chose them for the values, we stayed for the discipline. <span className="italic text-primary">Best Legacy is teaching our son who he is.</span>
                 </p>
-            </Reveal>
-            <Reveal delay={0.15}>
-                <div className="mt-8 flex items-center justify-center gap-3">
-                    <img src="/group_celebration.jpg" alt="" className="w-11 h-11 rounded-full object-cover ring-2 ring-white shadow-md" loading="lazy" width={44} height={44}/>
+                <div className="mt-6 flex items-center justify-center gap-3">
+                    <img src="/cultural_day.jpg" alt="" className="w-10 h-10 rounded-full object-cover ring-2 ring-gold/40" loading="lazy" width={40} height={40} />
                     <div className="text-left">
-                        <div className="font-bold text-ink">Mrs Ngozi Eze</div>
-                        <div className="text-xs text-gray-600">Mother of Samuel, Basic 2</div>
+                        <div className="font-semibold text-ink text-sm">Mrs Ngozi Eze</div>
+                        <div className="text-xs text-gray-500">Mother of Samuel, Basic 2</div>
                     </div>
                 </div>
             </Reveal>
@@ -727,38 +682,116 @@ const PullQuoteBand = () => (
     </section>
 );
 
-/* ----------------------------------------------------------------- School life snap carousel */
-const SchoolLifeCarousel = () => (
-    <section className="bg-bg py-20 relative overflow-hidden">
-        <div className="absolute -top-12 right-1/4 w-72 h-72 rounded-full blob-warm blur-3xl pointer-events-none"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+/* ----------------------------------------------------------------- Parent stories */
+const ParentStories = () => (
+    <section className="bg-white py-24 md:py-32">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
             <Reveal>
-                <div className="md:flex items-end justify-between mb-10 gap-8">
-                    <div>
-                        <Badge tone="mint">School life</Badge>
-                        <h2 className="mt-4 text-3xl md:text-5xl font-black text-primary leading-tight text-balance">
-                            Scroll through a term at Best Legacy.
-                        </h2>
-                        <div className="mt-3 text-secondary">
-                            <SquiggleDivider width={160} />
-                        </div>
-                    </div>
-                    <p className="text-gray-600 max-w-md mt-4 md:mt-0">
-                        Cultural Day, science fair, graduation, a Friday assembly. Drag, swipe or use the dots to step through.
-                    </p>
-                </div>
+                <Eyebrow>Parent stories</Eyebrow>
+                <h2 className="mt-6 font-serif text-3xl md:text-5xl text-ink leading-[1.1] max-w-2xl text-balance">
+                    Three parents, three reasons to stay.
+                </h2>
             </Reveal>
 
-            <Reveal delay={0.1}>
-                <SnapCarousel
-                    slides={[
-                        { src: '/cultural_day.jpg',     tag: 'Cultural Day',  caption: '"My favourite day of the year." — every Basic 4 pupil, ever.' },
-                        { src: '/group_celebration.jpg', tag: 'Graduation',    caption: 'Class of Basic 6, 2025, before they head off to secondary school.' },
-                        { src: '/school_ceremony.jpg',  tag: 'Assembly',      caption: 'Hymn, thought for the day, and a kindness shout-out — every morning.' },
-                        { src: '/staff_members.jpg',    tag: 'Staff',         caption: 'The teachers your child will know by name — and who will know them right back.' },
-                        { src: '/fun_in_the_pool.jpg',  tag: 'PE & Play',      caption: 'Real outdoor play. No screens. Lots of running.' },
-                    ]}
-                />
+            <div className="mt-16 flex gap-6 overflow-x-auto snap-x snap-mandatory no-scrollbar -mx-6 px-6 pb-2 md:mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-3 md:gap-8 md:overflow-visible">
+                {PARENT_STORIES.map((s, i) => (
+                    <Reveal key={s.name} delay={i * 0.08} className="h-full shrink-0 w-[82%] snap-center md:w-auto md:shrink">
+                        <TiltCard max={4} className="bg-white rounded-2xl border border-gray-100 shadow-card hover:shadow-card-lg transition-shadow duration-300 p-7 h-full flex flex-col">
+                            <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-gold/30">
+                                    <motion.img
+                                        src={s.photo}
+                                        alt=""
+                                        loading="lazy"
+                                        width={44}
+                                        height={44}
+                                        whileHover={{ scale: 1.12 }}
+                                        transition={{ duration: 0.4, ease: EASE }}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div>
+                                    <div className="font-semibold text-ink text-sm">{s.name}</div>
+                                    <div className="text-xs text-gray-500">{s.child}</div>
+                                </div>
+                            </div>
+                            <p className="mt-6 font-serif italic text-ink text-lg leading-snug">&ldquo;{s.quote}&rdquo;</p>
+                            <p className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-500 leading-relaxed flex-grow">{s.body}</p>
+                        </TiltCard>
+                    </Reveal>
+                ))}
+            </div>
+        </div>
+    </section>
+);
+
+/* ----------------------------------------------------------------- Impact band */
+const ImpactBand = () => (
+    <section className="relative bg-ink text-white py-20 md:py-28 overflow-hidden">
+        <div className="absolute top-0 right-0 w-[70%] h-full bg-gradient-to-l from-primary/20 to-transparent pointer-events-none rounded-l-full blur-3xl" />
+        <div className="absolute inset-0 grain-dot opacity-20 mix-blend-overlay pointer-events-none" />
+        <div
+            aria-hidden="true"
+            className="absolute -bottom-10 -left-6 font-serif italic text-[10rem] md:text-[14rem] leading-none text-white/[0.03] select-none pointer-events-none"
+        >
+            legacy
+        </div>
+
+        <div className="relative max-w-6xl mx-auto px-6 sm:px-8">
+            <Reveal>
+                <Eyebrow tone="dark">The legacy in numbers</Eyebrow>
+                <h2 className="mt-6 font-serif text-3xl md:text-4xl leading-tight max-w-lg text-balance">
+                    Small details, <span className="italic text-gold">massive impact</span>.
+                </h2>
+            </Reveal>
+
+            <div className="mt-14 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+                {STATS.map((s, i) => (
+                    <Reveal key={s.label} delay={i * 0.08} className="h-full">
+                        <div className="group h-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-6 transition-colors duration-300 hover:border-gold/30 hover:bg-white/[0.05]">
+                            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gold transition-transform duration-300 group-hover:scale-110">
+                                <s.icon className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.75} />
+                            </div>
+                            <div className="mt-4 sm:mt-6 font-serif text-2xl sm:text-4xl md:text-[2.75rem] leading-none">
+                                <CountUp to={s.num} />{s.suffix && <span className="text-gold">{s.suffix}</span>}
+                            </div>
+                            <div className="mt-2 sm:mt-3 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-white/70">{s.label}</div>
+                            <div className="mt-2 h-px w-8 bg-gold/40 hidden sm:block" />
+                            <p className="mt-3 text-sm text-white/50 leading-relaxed hidden sm:block">{s.desc}</p>
+                        </div>
+                    </Reveal>
+                ))}
+            </div>
+        </div>
+    </section>
+);
+
+/* ----------------------------------------------------------------- Final CTA */
+const FinalCTA = () => (
+    <section className="relative bg-gradient-to-br from-primary via-primary-dark to-ink text-white py-20 md:py-28 overflow-hidden animate-grad-drift">
+        <div className="absolute inset-0 grain-dot opacity-20 mix-blend-overlay pointer-events-none" />
+
+        <FloatingIcon icon={Lightbulb}   className="hidden sm:block top-10 left-[7%]" size="w-14 h-14" color="text-white/50" rotate={-10} delay={0.3} duration={7} />
+        <FloatingIcon icon={PaintBucket} className="hidden sm:block bottom-10 right-[8%]" size="w-16 h-16" color="text-gold/70" rotate={14}  delay={0.6} duration={8} />
+        <div className="relative max-w-3xl mx-auto px-6 sm:px-8 text-center">
+            <Reveal>
+                <h2 className="font-serif text-3xl md:text-5xl leading-tight text-balance">
+                    Ready to see it for yourself?
+                </h2>
+                <p className="mt-4 text-white/80 max-w-lg mx-auto">
+                    Book a visit, meet the class teachers, and see why families stay in Mowe for sixteen years and counting.
+                </p>
+                <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
+                    <Magnetic strength={0.25}>
+                        <Link to="/admissions" className="inline-flex items-center gap-2 bg-white text-primary font-semibold px-7 py-3.5 rounded-full shadow-[0_12px_32px_-8px_rgba(0,0,0,0.35)] hover:bg-white/90 transition-colors">
+                            Apply for 2026/27
+                            <ArrowIcon />
+                        </Link>
+                    </Magnetic>
+                    <a href="tel:+2348067663966" className="inline-flex items-center gap-2 text-white font-semibold border-b border-white/40 pb-0.5 hover:border-gold hover:text-gold transition-colors">
+                        Call the school
+                    </a>
+                </div>
             </Reveal>
         </div>
     </section>

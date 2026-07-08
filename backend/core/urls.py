@@ -5,6 +5,7 @@ from .views import (
     EventViewSet, GalleryImageViewSet, InquiryViewSet, AdmissionViewSet, StudentResultViewSet,
     TourBookingViewSet, ApplicationStageViewSet, application_status,
 )
+from .trash import trash_list
 
 
 def healthcheck(_request):
@@ -25,5 +26,6 @@ router.register(r'application-stages', ApplicationStageViewSet)
 urlpatterns = [
     path('healthz/', healthcheck, name='healthcheck'),
     path('application-status/', application_status, name='application-status'),
+    path('trash/', trash_list, name='trash-list'),
     path('', include(router.urls)),
 ]

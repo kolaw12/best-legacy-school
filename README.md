@@ -16,7 +16,7 @@ A comprehensive school management website built with Django (backend) and React 
 ## Tech Stack
 
 **Frontend:**
-- React 18
+- React 19
 - Vite
 - Tailwind CSS
 - React Router
@@ -38,6 +38,14 @@ venv\Scripts\activate  # Windows
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py createsuperuser
+
+# Optional: demo data for local dev (db.sqlite3 is gitignored, so this
+# replaces what used to be a committed database). All idempotent.
+python manage.py seed_users        # admin/admin123, teacher/teacher123, student/student123
+python manage.py seed_academics --with-samples
+python manage.py seed_fees
+python manage.py seed_assignments
+
 python manage.py runserver
 ```
 

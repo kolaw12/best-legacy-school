@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { UploadCloud, CheckCircle2 } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { Select } from '../../components/ui/Field';
 import useTeacherClass from '../../context/useTeacherClass';
+import ClassSwitcher from '../../components/teacher/ClassSwitcher';
+import QuickAddSubject from '../../components/teacher/QuickAddSubject';
 import API_URL from '../../config/api';
 
 const RATING_OPTIONS = [
@@ -26,11 +30,10 @@ const NURSERY_DOMAINS = [
 ];
 
 const TeacherGrades = () => {
-    const { classLevel, loading: tLoading } = useTeacherClass();
+    const { classes, classLevel, setClassLevel, loading: tLoading } = useTeacherClass();
     const [students, setStudents] = useState([]);
     const [subjects, setSubjects] = useState([]);
     const [terms, setTerms] = useState([]);
-    const [currentTermId, setCurrentTermId] = useState(null);
     const [subjectId, setSubjectId] = useState(null);       // basic only
     const [domain, setDomain] = useState(NURSERY_DOMAINS[0].code); // nursery only
     const [termId, setTermId] = useState(null);
@@ -41,9 +44,10 @@ const TeacherGrades = () => {
 
     const isNursery = classLevel?.section === 'nursery';
 
-    // Load shared reference data once
+    // Load shared reference data whenever the selected class changes
     useEffect(() => {
         if (!classLevel?.id) return;
+        setSubjectId(null); // avoid carrying a subject over from a different section
         Promise.all([
             axios.get(`${API_URL}/api/academics/students/`, { params: { class_level: classLevel.id, status: 'active' } }),
             axios.get(`${API_URL}/api/academics/subjects/`, { params: { section: classLevel.section } }),
@@ -52,12 +56,11 @@ const TeacherGrades = () => {
             setStudents(sRes.data || []);
             const subs = subRes.data || [];
             setSubjects(subs);
-            if (subs.length && !subjectId) setSubjectId(String(subs[0].id));
+            if (subs.length) setSubjectId(String(subs[0].id));
             const ts = tRes.data || [];
             setTerms(ts);
             const current = ts.find(t => t.is_current) || ts[0];
             if (current) {
-                setCurrentTermId(current.id);
                 setTermId(current.id);
             }
         });
@@ -149,50 +152,90 @@ const TeacherGrades = () => {
         return { avg, max: Math.max(...totals, 0), min: Math.min(...totals, 0) };
     }, [rows, students, isNursery]);
 
+    const gradedCount = useMemo(() => {
+        if (isNursery) return students.filter(s => !!rows[s.id]?.remark || rows[s.id]?.rating).length;
+        return students.filter(s => {
+            const r = rows[s.id];
+            return r && (Number(r.ca1) > 0 || Number(r.ca2) > 0 || Number(r.exam) > 0);
+        }).length;
+    }, [rows, students, isNursery]);
+
     if (tLoading) return <div className="py-16 text-center text-gray-400 text-sm">Loading…</div>;
-    if (!classLevel) return <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center text-sm text-gray-500">No class assigned.</div>;
+    if (!classLevel) {
+        return (
+            <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
+                <h2 className="text-lg font-bold text-ink">No class assigned yet</h2>
+                <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
+                    You're not currently set up as a class teacher or a subject teacher for any class. Ask an admin to assign you one so results entry unlocks here.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <>
             <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
                 <div>
-                    <Badge tone={isNursery ? 'warm' : 'mint'} dot>{classLevel.name}</Badge>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Badge tone={isNursery ? 'warm' : 'mint'} dot>{classLevel.name}</Badge>
+                        <ClassSwitcher classes={classes} value={classLevel} onChange={setClassLevel} />
+                    </div>
                     <h1 className="mt-3 text-2xl md:text-3xl font-black text-ink">{isNursery ? 'Developmental Assessment' : 'Grade Entry'}</h1>
                     <p className="mt-1 text-sm text-gray-500">
                         {isNursery
                             ? 'Rate each pupil per domain on a 5-point scale. Comments are optional.'
                             : 'Enter CA1 (0–20), CA2 (0–20), and Exam (0–60). Totals and letter grades are computed automatically.'}
+                        {' '}Prefer to work one pupil at a time across every subject? <Link to="/teacher/class" className="text-primary font-semibold hover:underline">Go to your class roster →</Link>
                     </p>
                 </div>
-                <Button size="sm" onClick={save} disabled={saving || !students.length}>{saving ? 'Saving…' : 'Save entries'}</Button>
             </header>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4 grid md:grid-cols-3 gap-3">
-                <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Term</label>
-                    <Select value={termId || ''} onChange={e => setTermId(Number(e.target.value))}>
-                        {terms.map(t => (
-                            <option key={t.id} value={t.id}>
-                                {t.name} — {t.session_name}{t.is_current ? ' (current)' : ''}
-                            </option>
-                        ))}
-                    </Select>
+            {/* Term / subject / upload — the one place everything needed to submit results lives, kept sticky so it never scrolls out of reach */}
+            <div className="sticky top-16 z-10 bg-white rounded-2xl border border-gray-100 shadow-card p-4 mb-4">
+                <div className="flex flex-col lg:flex-row lg:items-end gap-3">
+                    <div className="flex-1 grid sm:grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Term</label>
+                            <Select value={termId || ''} onChange={e => setTermId(Number(e.target.value))}>
+                                {terms.map(t => (
+                                    <option key={t.id} value={t.id}>
+                                        {t.name} — {t.session_name}{t.is_current ? ' (current)' : ''}
+                                    </option>
+                                ))}
+                            </Select>
+                        </div>
+                        {isNursery ? (
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Domain</label>
+                                <Select value={domain} onChange={e => setDomain(e.target.value)}>
+                                    {NURSERY_DOMAINS.map(d => <option key={d.code} value={d.code}>{d.label}</option>)}
+                                </Select>
+                            </div>
+                        ) : (
+                            <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="block text-xs font-semibold text-gray-500">Subject</label>
+                                    <QuickAddSubject
+                                        section={classLevel?.section}
+                                        onAdded={(s) => { setSubjects(subs => [...subs, s]); setSubjectId(String(s.id)); }}
+                                    />
+                                </div>
+                                <Select value={subjectId || ''} onChange={e => setSubjectId(e.target.value)}>
+                                    {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                </Select>
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">
+                            {gradedCount}/{students.length} pupils entered
+                        </span>
+                        <Button size="sm" onClick={save} disabled={saving || !students.length} className="shrink-0">
+                            <UploadCloud className="w-4 h-4" strokeWidth={2} />
+                            {saving ? 'Uploading…' : 'Upload results'}
+                        </Button>
+                    </div>
                 </div>
-                {isNursery ? (
-                    <div className="md:col-span-2">
-                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">Domain</label>
-                        <Select value={domain} onChange={e => setDomain(e.target.value)}>
-                            {NURSERY_DOMAINS.map(d => <option key={d.code} value={d.code}>{d.label}</option>)}
-                        </Select>
-                    </div>
-                ) : (
-                    <div className="md:col-span-2">
-                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">Subject</label>
-                        <Select value={subjectId || ''} onChange={e => setSubjectId(e.target.value)}>
-                            {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                        </Select>
-                    </div>
-                )}
             </div>
 
             {!isNursery && summary && (
@@ -204,8 +247,9 @@ const TeacherGrades = () => {
             )}
 
             {saved && (
-                <div className={`rounded-xl p-3 mb-4 text-sm ${saved.ok ? 'bg-primary-soft text-primary-dark' : 'bg-rose-50 text-rose-700'}`}>
-                    {saved.ok ? `Saved ${saved.saved} entries.` : `Save failed: ${saved.error}`}
+                <div className={`rounded-xl p-3 mb-4 text-sm flex items-center gap-2 ${saved.ok ? 'bg-primary-soft text-primary-dark' : 'bg-rose-50 text-rose-700'}`}>
+                    {saved.ok && <CheckCircle2 className="w-4 h-4 shrink-0" strokeWidth={2} />}
+                    {saved.ok ? `Uploaded results for ${saved.saved} pupils.` : `Upload failed: ${saved.error}`}
                 </div>
             )}
 

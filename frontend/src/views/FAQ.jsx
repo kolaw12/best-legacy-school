@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { ThumbsUp, ThumbsDown, SearchX, Phone, Search } from 'lucide-react';
 import PageHero from '../components/PageHero';
+import Seo from '../components/Seo';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Reveal from '../components/ui/Reveal';
@@ -126,13 +128,13 @@ const Item = ({ q, a }) => {
                                     <span>Was this helpful?</span>
                                     <button
                                         onClick={() => setVote('yes')}
-                                        className="px-3 py-1 rounded-full bg-white border border-gray-200 hover:border-primary hover:text-primary transition font-semibold"
-                                    >👍 Yes</button>
+                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-gray-200 hover:border-primary hover:text-primary transition font-semibold"
+                                    ><ThumbsUp className="w-3.5 h-3.5" strokeWidth={2} /> Yes</button>
                                     <Link
                                         to={{ pathname: '/contact', search: '?subject=' + encodeURIComponent(q) }}
                                         onClick={() => setVote('no')}
-                                        className="px-3 py-1 rounded-full bg-white border border-gray-200 hover:border-secondary hover:text-secondary transition font-semibold"
-                                    >👎 Ask us directly</Link>
+                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-gray-200 hover:border-secondary hover:text-secondary transition font-semibold"
+                                    ><ThumbsDown className="w-3.5 h-3.5" strokeWidth={2} /> Ask us directly</Link>
                                 </>
                             ) : vote === 'yes' ? (
                                 <span className="text-primary-dark font-semibold">Thanks — glad it helped.</span>
@@ -166,8 +168,24 @@ const FAQ = () => {
     const totalMatches = filtered.reduce((acc, g) => acc + g.items.length, 0);
     const totalAll = FAQ_GROUPS.reduce((acc, g) => acc + g.items.length, 0);
 
+    const faqJsonLd = useMemo(() => ({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: FAQ_GROUPS.flatMap(g => g.items).map(({ q, a }) => ({
+            '@type': 'Question',
+            name: q,
+            acceptedAnswer: { '@type': 'Answer', text: a },
+        })),
+    }), []);
+
     return (
     <div className="bg-white">
+        <Seo
+            title="Frequently Asked Questions"
+            description="Real questions from real parents — admissions, fees, daily life, and values at Best Legacy Divine School, answered."
+            path="/faq"
+            jsonLd={faqJsonLd}
+        />
         <PageHero
             eyebrow="Frequently Asked Questions"
             title="Real questions from real parents."
@@ -183,7 +201,7 @@ const FAQ = () => {
                 <Reveal>
                     <div className="bg-white rounded-3xl shadow-card p-5 md:p-6 flex flex-col md:flex-row gap-3 md:items-center">
                         <div className="flex-1 relative">
-                            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={2} />
                             <Input
                                 value={query}
                                 onChange={e => setQuery(e.target.value)}
@@ -202,7 +220,7 @@ const FAQ = () => {
 
                 {filtered.length === 0 && (
                     <div className="bg-white rounded-3xl border border-dashed border-gray-200 p-12 text-center">
-                        <div className="text-3xl">🤔</div>
+                        <SearchX className="w-8 h-8 mx-auto text-gray-300" strokeWidth={1.5} />
                         <h3 className="mt-3 font-bold text-ink">No matching questions</h3>
                         <p className="mt-2 text-sm text-gray-500">Try a different word — or <Link to="/contact" className="text-primary font-semibold hover:underline">ask us directly</Link>.</p>
                     </div>
@@ -228,7 +246,7 @@ const FAQ = () => {
                         <div className="flex flex-wrap gap-3">
                             <Button to="/contact" variant="dark" size="lg">Send a message</Button>
                             <a href="tel:+2348067663966" className="inline-flex items-center gap-2 bg-white text-secondary-dark font-semibold px-6 py-3.5 rounded-full hover:bg-secondary-soft transition">
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h2a1 1 0 011 .76l1 4a1 1 0 01-.55 1.13L7.6 9.5a12 12 0 006.9 6.9l.6-1.85a1 1 0 011.13-.55l4 1A1 1 0 0121 16v2a2 2 0 01-2 2 16 16 0 01-16-16z"/></svg>
+                                <Phone className="w-4 h-4" strokeWidth={2} />
                                 +234 (0) 806 766 3966
                             </a>
                         </div>

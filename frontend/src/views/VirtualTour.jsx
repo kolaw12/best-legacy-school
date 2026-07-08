@@ -1,12 +1,37 @@
 import { useRef } from 'react';
-import { motion } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
-import PageHero from '../components/PageHero';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Play } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 import Button from '../components/ui/Button';
+import Seo from '../components/Seo';
+
+const EASE = [0.22, 1, 0.36, 1];
+
+const Fade = ({ children, delay = 0, className }) => {
+    const reduced = useReducedMotion();
+    if (reduced) return <div className={className}>{children}</div>;
+    return (
+        <motion.div
+            className={className}
+            initial={{ opacity: 0, y: 24, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.9, delay, ease: EASE }}
+        >
+            {children}
+        </motion.div>
+    );
+};
+
+const Eyebrow = ({ children, center = false }) => (
+    <div className={`flex items-center gap-3 ${center ? 'justify-center' : ''}`}>
+        <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+        <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/70">{children}</span>
+    </div>
+);
 
 const TOUR_STOPS = [
     {
@@ -19,13 +44,13 @@ const TOUR_STOPS = [
         id: 'library',
         title: 'The Discovery Library',
         description: 'Stocked with over 5,000 titles, from classic literature to modern encyclopedias, fostering a deep love for reading.',
-        image: '/school_library.png'
+        image: '/school_library.jpg'
     },
     {
         id: 'tech',
         title: 'Tech & Science Hub',
         description: 'Our modern computer and science labs prepare pupils for the digital age and hands-on discovery.',
-        image: '/group_celebration.jpg'
+        image: '/school_hero_Section.jpg'
     },
     {
         id: 'playground',
@@ -104,15 +129,52 @@ const VirtualTour = () => {
     }, { scope: container });
 
     return (
-        <div className="bg-bg min-h-screen" ref={container}>
-            <PageHero
-                eyebrow="IMMERSIVE EXPERIENCE"
-                title="Walk our halls from anywhere in the world."
-                subtitle="Take a digital stroll through the Best Legacy campus in Mowe."
-                bgImage="/school_hero_Section.png"
+        <div className="bg-bg min-h-screen -mt-16 md:-mt-[4.5rem]" ref={container}>
+            <Seo
+                title="Virtual Tour"
+                description="Take a digital stroll through the Best Legacy Divine School campus in Mowe: four stops, real photos, no visit required."
+                path="/virtual-tour"
             />
+            {/* Video-preview-card hero — deliberately different from the
+                other pages: a dark "player" card instead of a full-bleed
+                photo or split text/image layout. */}
+            <section className="relative bg-ink overflow-hidden pt-24 md:pt-28 pb-16 md:pb-20">
+                <div className="absolute inset-0 grain-dot opacity-20 mix-blend-overlay pointer-events-none" />
+                <div className="absolute top-0 right-0 w-[60%] h-full bg-gradient-to-l from-primary/20 to-transparent blur-3xl pointer-events-none" />
 
-            <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="relative max-w-3xl mx-auto px-6 sm:px-8 text-center">
+                    <Fade>
+                        <Eyebrow center>Immersive experience</Eyebrow>
+                        <h1 className="mt-6 font-serif text-4xl sm:text-5xl md:text-6xl font-medium text-white leading-[1.1] text-balance">
+                            Walk our halls from <span className="italic text-gold">anywhere</span> in the world.
+                        </h1>
+                        <p className="mt-6 max-w-xl mx-auto text-white/70 text-lg leading-relaxed">
+                            Take a digital stroll through the Best Legacy campus in Mowe: four stops, real photos, no visit required.
+                        </p>
+                    </Fade>
+                </div>
+
+                <Fade delay={0.15} className="relative max-w-4xl mx-auto px-6 sm:px-8 mt-10">
+                    <a
+                        href="#stops"
+                        aria-label="Jump to the campus tour stops"
+                        className="group relative block rounded-2xl overflow-hidden aspect-video border border-white/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)]"
+                    >
+                        <img src="/school_hero_Section.jpg" alt="Preview of the Best Legacy campus tour" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-ink/35 group-hover:bg-ink/25 transition-colors" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/95 flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform">
+                                <Play className="w-6 h-6 md:w-7 md:h-7 text-ink translate-x-0.5" fill="currentColor" strokeWidth={0} />
+                            </span>
+                        </div>
+                        <div className="absolute bottom-4 left-4 bg-black/40 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1.5 rounded-full">
+                            4 stops &middot; ~3 min
+                        </div>
+                    </a>
+                </Fade>
+            </section>
+
+            <section id="stops" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
                 <div className="text-center mb-16 tour-header overflow-hidden">
                     <h2 className="text-3xl md:text-4xl font-black text-ink">Discover Our Campus</h2>
                     <p className="mt-4 text-gray-600 max-w-2xl mx-auto">Explore our purpose-built facilities designed to nurture excellence and creativity.</p>

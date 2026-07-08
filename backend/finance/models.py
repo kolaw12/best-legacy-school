@@ -9,9 +9,10 @@ from django.db import models
 from django.utils import timezone
 
 from academics.models import ClassLevel, Term, Student
+from core.soft_delete import SoftDeleteModel
 
 
-class FeeSchedule(models.Model):
+class FeeSchedule(SoftDeleteModel):
     class_level = models.ForeignKey(ClassLevel, on_delete=models.CASCADE, related_name="fee_schedules")
     term = models.ForeignKey(Term, on_delete=models.CASCADE, related_name="fee_schedules")
     name = models.CharField(max_length=100, help_text='e.g. "Tuition & Books"')
@@ -22,12 +23,13 @@ class FeeSchedule(models.Model):
     class Meta:
         unique_together = [("class_level", "term", "name")]
         ordering = ["term__start_date", "class_level__order", "name"]
+        base_manager_name = "all_objects"
 
     def __str__(self):
         return f"{self.class_level.name} · {self.name} · ₦{self.amount:,.0f}"
 
 
-class Invoice(models.Model):
+class Invoice(SoftDeleteModel):
     STATUS_CHOICES = [
         ("unpaid",    "Unpaid"),
         ("partial",   "Partial"),
@@ -49,6 +51,7 @@ class Invoice(models.Model):
     class Meta:
         unique_together = [("student", "fee_schedule")]
         ordering = ["-issued_on"]
+        base_manager_name = "all_objects"
 
     def __str__(self):
         return f"{self.invoice_no} · {self.student.full_name}"
@@ -61,7 +64,7 @@ class Invoice(models.Model):
         if not self.invoice_no:
             year = timezone.now().year
             prefix = f"BLS/INV/{year}/"
-            last = Invoice.objects.filter(invoice_no__startswith=prefix).order_by("-invoice_no").first()
+            last = Invoice.all_objects.filter(invoice_no__startswith=prefix).order_by("-invoice_no").first()
             next_num = 1
             if last and last.invoice_no:
                 try:
@@ -82,7 +85,7 @@ class Invoice(models.Model):
             self.status = "unpaid"
 
 
-class PaymentPlan(models.Model):
+class PaymentPlan(SoftDeleteModel):
     """Lets a parent split an Invoice into N timed instalments."""
     STATUS = [("active", "Active"), ("completed", "Completed"), ("cancelled", "Cancelled")]
     invoice    = models.OneToOneField(Invoice, on_delete=models.CASCADE, related_name="payment_plan")
@@ -93,12 +96,13 @@ class PaymentPlan(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        base_manager_name = "all_objects"
 
     def __str__(self):
         return f"{self.invoice.invoice_no} · {self.instalments}× plan"
 
 
-class PaymentPlanInstalment(models.Model):
+class PaymentPlanInstalment(SoftDeleteModel):
     plan       = models.ForeignKey(PaymentPlan, on_delete=models.CASCADE, related_name="schedule")
     sequence   = models.PositiveIntegerField(help_text="1, 2, 3 …")
     amount     = models.DecimalField(max_digits=12, decimal_places=2)
@@ -110,12 +114,13 @@ class PaymentPlanInstalment(models.Model):
     class Meta:
         ordering = ["sequence"]
         unique_together = [("plan", "sequence")]
+        base_manager_name = "all_objects"
 
     def __str__(self):
         return f"{self.plan.invoice.invoice_no} · #{self.sequence} · ₦{self.amount}"
 
 
-class Payment(models.Model):
+class Payment(SoftDeleteModel):
     METHOD_CHOICES = [
         ("cash",     "Cash"),
         ("transfer", "Bank Transfer"),
@@ -135,6 +140,7 @@ class Payment(models.Model):
 
     class Meta:
         ordering = ["-received_on", "-created_at"]
+        base_manager_name = "all_objects"
 
     def __str__(self):
         return f"{self.receipt_no} · ₦{self.amount:,.0f}"
@@ -143,7 +149,7 @@ class Payment(models.Model):
         if not self.receipt_no:
             year = timezone.now().year
             prefix = f"BLS/RCP/{year}/"
-            last = Payment.objects.filter(receipt_no__startswith=prefix).order_by("-receipt_no").first()
+            last = Payment.all_objects.filter(receipt_no__startswith=prefix).order_by("-receipt_no").first()
             next_num = 1
             if last and last.receipt_no:
                 try:
@@ -153,7 +159,11 @@ class Payment(models.Model):
             self.receipt_no = f"{prefix}{next_num:05d}"
         super().save(*args, **kwargs)
 
-        # Roll up the new total onto the invoice
+        # Roll up the new total onto the invoice. `inv.payments` uses the
+        # default (soft-delete-filtered) manager, so a just-trashed payment
+        # correctly drops out of this sum — soft_delete() calls this same
+        # save() via SoftDeleteModel, so deleting a payment now recomputes
+        # the invoice instead of leaving it stale.
         inv = self.invoice
         paid = inv.payments.aggregate(s=models.Sum("amount"))["s"] or Decimal("0")
         inv.amount_paid = paid

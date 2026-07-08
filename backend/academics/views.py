@@ -1,5 +1,5 @@
 from datetime import date as date_cls
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 
 from django.db.models import Count, Q
@@ -8,11 +8,14 @@ from django.template.loader import render_to_string
 from django.utils.dateparse import parse_date
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from accounts.models import Role, ADMIN_ROLES
-from accounts.permissions import IsAdminOrReadOnly, IsTeacherOrAdmin
+from accounts.permissions import IsAdminOrReadOnly, IsTeacherOrAdmin, IsStaff
+from accounts.provisioning import provision_login
+from core.branding import logo_data_uri
+from core.mixins import SoftDeleteViewSetMixin, ProvisionCredentialsMixin
 
 
 def _profile(request):
@@ -72,6 +75,27 @@ class SessionViewSet(viewsets.ModelViewSet):
     serializer_class = SessionSerializer
     permission_classes = [IsAdminOrReadOnly]
 
+    def perform_create(self, serializer):
+        # A session is useless without its 3 terms — auto-create First/Second/
+        # Third split evenly across the session's date range, rather than
+        # making the admin add each one by hand every single year. Dates are
+        # just a starting point; edit them individually on the Terms page.
+        session = serializer.save()
+        span = (session.end_date - session.start_date).days
+        third = span // 3
+        bounds = [
+            session.start_date,
+            session.start_date + timedelta(days=third),
+            session.start_date + timedelta(days=2 * third + 1),
+            session.end_date,
+        ]
+        for name, start, end in zip(
+            [Term.FIRST, Term.SECOND, Term.THIRD],
+            bounds[:3],
+            [bounds[1] - timedelta(days=1), bounds[2] - timedelta(days=1), bounds[3]],
+        ):
+            Term.objects.create(session=session, name=name, start_date=start, end_date=end)
+
 
 class TermViewSet(viewsets.ModelViewSet):
     queryset = Term.objects.select_related("session").all()
@@ -80,7 +104,7 @@ class TermViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
 
 
-class ClassLevelViewSet(viewsets.ModelViewSet):
+class ClassLevelViewSet(SoftDeleteViewSetMixin, viewsets.ModelViewSet):
     queryset = ClassLevel.objects.all().order_by("order")
     serializer_class = ClassLevelSerializer
     filter_backends = [filters.SearchFilter]
@@ -95,12 +119,21 @@ class ClassLevelViewSet(viewsets.ModelViewSet):
         return qs
 
 
-class SubjectViewSet(viewsets.ModelViewSet):
+class SubjectViewSet(SoftDeleteViewSetMixin, viewsets.ModelViewSet):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ["name", "code"]
     permission_classes = [IsAdminOrReadOnly]
+
+    def get_permissions(self):
+        # Teachers may add new subjects (they hit this when a subject they
+        # need is missing from the dropdown while grading/assigning work),
+        # but editing or trashing an *existing* subject — shared across every
+        # teacher's dropdowns — stays admin-only.
+        if self.action == "create":
+            return [IsTeacherOrAdmin()]
+        return super().get_permissions()
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -110,15 +143,37 @@ class SubjectViewSet(viewsets.ModelViewSet):
         return qs
 
 
-class GuardianViewSet(viewsets.ModelViewSet):
+class GuardianViewSet(ProvisionCredentialsMixin, SoftDeleteViewSetMixin, viewsets.ModelViewSet):
     queryset = Guardian.objects.all()
     serializer_class = GuardianSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ["first_name", "last_name", "phone", "email"]
     permission_classes = [IsAdminOrReadOnly]
 
+    def perform_create(self, serializer):
+        guardian = serializer.save()
+        if guardian.email and not guardian.user_profiles.exists():
+            self._provisioned = provision_login(
+                email=guardian.email, first_name=guardian.first_name, last_name=guardian.last_name,
+                role=Role.PARENT, guardian=guardian,
+            )
 
-class TeacherViewSet(viewsets.ModelViewSet):
+    @action(detail=True, methods=["post", "delete"])
+    def purge(self, request, pk=None):
+        # Guardian -> Student uses on_delete=SET_NULL, not PROTECT, so a hard
+        # delete here wouldn't raise ProtectedError like the other trashable
+        # models do — it would silently orphan any remaining children
+        # (guardian_id -> NULL) instead. Block it explicitly.
+        instance = self._get_any_object(pk)
+        if instance.children.exists():
+            return Response(
+                {"error": f"Can't permanently delete '{instance.full_name}' — {instance.children.count()} child record(s) still point to them. Reassign those pupils to a different guardian first."},
+                status=400,
+            )
+        return super().purge(request, pk=pk)
+
+
+class TeacherViewSet(ProvisionCredentialsMixin, SoftDeleteViewSetMixin, viewsets.ModelViewSet):
     queryset = (
         Teacher.objects
         .select_related("class_teacher_of")
@@ -129,6 +184,14 @@ class TeacherViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ["first_name", "last_name", "email", "staff_id"]
     permission_classes = [IsAdminOrReadOnly]
+
+    def perform_create(self, serializer):
+        teacher = serializer.save()
+        if teacher.email and not hasattr(teacher, "user_profile"):
+            self._provisioned = provision_login(
+                email=teacher.email, first_name=teacher.first_name, last_name=teacher.last_name,
+                role=Role.TEACHER, teacher=teacher,
+            )
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -375,7 +438,7 @@ def students_bulk_import(request):
     })
 
 
-class StudentViewSet(viewsets.ModelViewSet):
+class StudentViewSet(SoftDeleteViewSetMixin, viewsets.ModelViewSet):
     queryset = (
         Student.objects
         .select_related("class_level", "guardian", "current_session")
@@ -548,7 +611,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_200_OK)
 
 
-class BasicGradeViewSet(viewsets.ModelViewSet):
+class BasicGradeViewSet(SoftDeleteViewSetMixin, viewsets.ModelViewSet):
     queryset = BasicGrade.objects.select_related("student", "subject", "term", "term__session", "teacher").all()
     serializer_class = BasicGradeSerializer
 
@@ -603,10 +666,24 @@ class BasicGradeViewSet(viewsets.ModelViewSet):
         if profile and profile.teacher:
             marker = profile.teacher
 
+        allowed_student_ids = None
+        if _role(request) == Role.TEACHER:
+            class_ids = _teacher_class_ids(request)
+            allowed_student_ids = set(
+                Student.objects.filter(class_level_id__in=class_ids or [0]).values_list("id", flat=True)
+            )
+
         saved, errors = 0, []
         for r in rows:
+            if allowed_student_ids is not None and r.get("student") not in allowed_student_ids:
+                errors.append({"student": r.get("student"), "error": "Student is not in one of your classes."})
+                continue
             try:
-                BasicGrade.objects.update_or_create(
+                # all_objects, not objects: a previously-trashed row for this
+                # exact (student, subject, term) still holds the unique slot,
+                # so the filtered manager would try to INSERT a duplicate and
+                # hit an IntegrityError instead of reviving it.
+                BasicGrade.all_objects.update_or_create(
                     student_id=r["student"], subject=subject, term=term,
                     defaults={
                         "ca1":  r.get("ca1", 0),
@@ -614,6 +691,8 @@ class BasicGradeViewSet(viewsets.ModelViewSet):
                         "exam": r.get("exam", 0),
                         "remark": r.get("remark", ""),
                         "teacher": marker,
+                        "is_deleted": False,
+                        "deleted_at": None,
                     },
                 )
                 saved += 1
@@ -622,7 +701,7 @@ class BasicGradeViewSet(viewsets.ModelViewSet):
         return Response({"saved": saved, "errors": errors})
 
 
-class NurseryAssessmentViewSet(viewsets.ModelViewSet):
+class NurseryAssessmentViewSet(SoftDeleteViewSetMixin, viewsets.ModelViewSet):
     queryset = NurseryAssessment.objects.select_related("student", "term", "term__session").all()
     serializer_class = NurseryAssessmentSerializer
 
@@ -671,18 +750,30 @@ class NurseryAssessmentViewSet(viewsets.ModelViewSet):
         if profile and profile.teacher:
             marker = profile.teacher
 
-        saved = 0
+        allowed_student_ids = None
+        if _role(request) == Role.TEACHER:
+            class_ids = _teacher_class_ids(request)
+            allowed_student_ids = set(
+                Student.objects.filter(class_level_id__in=class_ids or [0]).values_list("id", flat=True)
+            )
+
+        saved, errors = 0, []
         for r in rows:
-            NurseryAssessment.objects.update_or_create(
+            if allowed_student_ids is not None and r.get("student") not in allowed_student_ids:
+                errors.append({"student": r.get("student"), "error": "Student is not in one of your classes."})
+                continue
+            NurseryAssessment.all_objects.update_or_create(
                 student_id=r["student"], term=term, domain=domain,
                 defaults={
                     "rating": r.get("rating", "G"),
                     "remark": r.get("remark", ""),
                     "teacher": marker,
+                    "is_deleted": False,
+                    "deleted_at": None,
                 },
             )
             saved += 1
-        return Response({"saved": saved})
+        return Response({"saved": saved, "errors": errors})
 
 
 # ---------------------------------------------------------------------------
@@ -712,66 +803,7 @@ def report_card(request, student_id):
     if not term:
         return Response({"error": "No current term set."}, status=400)
 
-    attendance_qs = AttendanceRecord.objects.filter(
-        student=student, date__range=[term.start_date, term.end_date]
-    )
-    attendance_total = attendance_qs.count()
-    attendance_present = attendance_qs.filter(status__in=["present", "late"]).count()
-
-    payload = {
-        "student": {
-            "id": student.id,
-            "admission_no": student.admission_no,
-            "full_name": student.full_name,
-            "class_name": student.class_level.name,
-            "section": student.class_level.section,
-            "gender": student.get_gender_display(),
-            "date_of_birth": student.date_of_birth,
-            "guardian_name": student.guardian.full_name if student.guardian else None,
-        },
-        "term": {
-            "id": term.id,
-            "name": term.name,
-            "session": term.session.name,
-            "start_date": term.start_date,
-            "end_date": term.end_date,
-        },
-        "attendance": {
-            "total": attendance_total,
-            "present": attendance_present,
-            "rate": round((attendance_present / attendance_total) * 100) if attendance_total else None,
-        },
-        "is_nursery": student.class_level.section == "nursery",
-    }
-
-    if student.class_level.section == "basic":
-        grades = list(
-            BasicGrade.objects.filter(student=student, term=term)
-            .select_related("subject")
-            .order_by("subject__name")
-        )
-        payload["grades"] = [{
-            "subject": g.subject.name, "ca1": g.ca1, "ca2": g.ca2, "exam": g.exam,
-            "total": g.total, "grade": g.grade, "remark": g.remark,
-        } for g in grades]
-        totals = [g.total for g in grades]
-        payload["summary"] = {
-            "subjects": len(grades),
-            "average": round(sum(totals) / len(totals), 1) if totals else None,
-            "overall_total": sum(totals),
-        }
-    else:
-        rows = list(
-            NurseryAssessment.objects.filter(student=student, term=term)
-            .order_by("domain")
-        )
-        payload["assessments"] = [{
-            "domain": r.get_domain_display(),
-            "rating": r.rating, "rating_display": r.get_rating_display(),
-            "remark": r.remark,
-        } for r in rows]
-
-    return Response(payload)
+    return Response(_build_report_card_payload(student, term))
 
 
 def _build_report_card_payload(student, term):
@@ -781,6 +813,12 @@ def _build_report_card_payload(student, term):
     )
     attendance_total = attendance_qs.count()
     attendance_present = attendance_qs.filter(status__in=["present", "late"]).count()
+    attendance_absent = attendance_qs.filter(status="absent").count()
+
+    # Resumption date: the start of whichever term comes right after this one
+    # (may cross into the next session). None if that term hasn't been
+    # created yet — the frontend shows "To be announced" in that case.
+    next_term = Term.objects.filter(start_date__gt=term.end_date).order_by("start_date").first()
 
     payload = {
         "student": {
@@ -800,8 +838,10 @@ def _build_report_card_payload(student, term):
         "attendance": {
             "total": attendance_total,
             "present": attendance_present,
+            "absent": attendance_absent,
             "rate": round((attendance_present / attendance_total) * 100) if attendance_total else None,
         },
+        "resumption_date": next_term.start_date if next_term else None,
         "is_nursery": student.class_level.section == "nursery",
     }
     if student.class_level.section == "basic":
@@ -857,6 +897,7 @@ def report_card_pdf(request, student_id):
 
     payload = _build_report_card_payload(student, term)
     payload["generated_at"] = datetime.now().strftime("%d %b %Y %H:%M")
+    payload["logo_data_uri"] = logo_data_uri()
 
     html = render_to_string("academics/report_card_pdf.html", payload)
 
@@ -883,7 +924,7 @@ def report_card_pdf(request, student_id):
 # Dashboard summary — single endpoint for the admin KPI cards.
 # ---------------------------------------------------------------------------
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([IsStaff])
 def admin_summary(request):
     total_students = Student.objects.filter(status="active").count()
     total_teachers = Teacher.objects.filter(is_active=True).count()

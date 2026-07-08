@@ -1,18 +1,21 @@
 import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { PencilLine, ArrowRight } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import Field, { Input, Select, Textarea } from '../../components/ui/Field';
 import Reveal from '../../components/ui/Reveal';
 import useTeacherClass from '../../context/useTeacherClass';
+import ClassSwitcher from '../../components/teacher/ClassSwitcher';
+import QuickAddSubject from '../../components/teacher/QuickAddSubject';
 import API_URL from '../../config/api';
 
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 
 const TeacherAssignments = () => {
-    const { teacher, classLevel, loading: tLoading } = useTeacherClass();
+    const { teacher, classes, classLevel, setClassLevel, loading: tLoading } = useTeacherClass();
     const [assignments, setAssignments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [terms, setTerms] = useState([]);
@@ -46,7 +49,10 @@ const TeacherAssignments = () => {
             <Reveal>
                 <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
                     <div>
-                        <Badge tone="warm" dot>{classLevel.name}</Badge>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <Badge tone="warm" dot>{classLevel.name}</Badge>
+                            <ClassSwitcher classes={classes} value={classLevel} onChange={setClassLevel} />
+                        </div>
                         <h1 className="mt-3 text-2xl md:text-3xl font-black text-primary">Assignments</h1>
                         <p className="mt-1 text-sm text-gray-500">Set work, see who's submitted, grade quickly.</p>
                     </div>
@@ -58,7 +64,9 @@ const TeacherAssignments = () => {
                 <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="h-28 rounded-2xl bg-white border border-gray-100 animate-pulse"/>)}</div>
             ) : assignments.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
-                    <div className="w-12 h-12 rounded-full bg-mint text-primary mx-auto flex items-center justify-center text-2xl">📝</div>
+                    <div className="w-12 h-12 rounded-full bg-mint text-primary mx-auto flex items-center justify-center">
+                        <PencilLine className="w-5 h-5" strokeWidth={1.75} />
+                    </div>
                     <h3 className="mt-3 text-lg font-bold text-ink">No assignments yet</h3>
                     <p className="mt-1 text-sm text-gray-500">Click "+ New assignment" to set the first one for {classLevel.name}.</p>
                 </div>
@@ -86,7 +94,7 @@ const TeacherAssignments = () => {
                                     className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white font-semibold text-sm hover:bg-primary-dark transition"
                                 >
                                     Review & grade
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                                    <ArrowRight className="w-4 h-4" strokeWidth={2} />
                                 </button>
                             </div>
                         </motion.li>
@@ -99,6 +107,7 @@ const TeacherAssignments = () => {
                 classLevel={classLevel}
                 terms={terms}
                 subjects={subjects}
+                onSubjectAdded={(s) => setSubjects(subs => [...subs, s])}
                 teacher={teacher}
                 onClose={() => setCreateOpen(false)}
                 onSaved={load}
@@ -113,7 +122,7 @@ const TeacherAssignments = () => {
     );
 };
 
-const CreateModal = ({ open, onClose, onSaved, classLevel, terms, subjects, teacher }) => {
+const CreateModal = ({ open, onClose, onSaved, classLevel, terms, subjects, onSubjectAdded, teacher }) => {
     const initial = {
         title: '', description: '', due_date: '',
         subject: '', term: '', max_score: 100,
@@ -177,7 +186,17 @@ const CreateModal = ({ open, onClose, onSaved, classLevel, terms, subjects, teac
                     <Textarea rows={4} value={form.description} onChange={e => set('description', e.target.value)} placeholder="What should the pupil do?" />
                 </Field>
                 <div className="grid md:grid-cols-2 gap-4">
-                    <Field label="Subject">
+                    <Field
+                        label={
+                            <div className="flex items-center justify-between">
+                                <span>Subject</span>
+                                <QuickAddSubject
+                                    section={classLevel.section}
+                                    onAdded={(s) => { onSubjectAdded?.(s); set('subject', String(s.id)); }}
+                                />
+                            </div>
+                        }
+                    >
                         <Select value={form.subject} onChange={e => set('subject', e.target.value)}>
                             <option value="">— class activity —</option>
                             {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}

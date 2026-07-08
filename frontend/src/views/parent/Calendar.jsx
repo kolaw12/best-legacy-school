@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { MapPin } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import Reveal from '../../components/ui/Reveal';
 import API_URL from '../../config/api';
@@ -146,7 +147,7 @@ const ParentCalendar = () => {
                         {events.length === 0 ? (
                             <p className="text-sm text-gray-400">No events scheduled. Quiet month.</p>
                         ) : (
-                            <ul className="space-y-3 max-h-[480px] overflow-auto pr-1">
+                            <ul className="space-y-3 max-h-[480px] overflow-auto pr-1" data-lenis-prevent>
                                 {events.map(e => (
                                     <li key={e.id} className="border border-gray-100 rounded-xl p-3 hover:border-primary transition">
                                         <div className="flex items-start gap-2 mb-1">
@@ -158,7 +159,7 @@ const ParentCalendar = () => {
                                         </div>
                                         <div className="font-semibold text-ink text-sm">{e.title}</div>
                                         {e.description && <p className="text-xs text-gray-500 mt-1 leading-relaxed">{e.description}</p>}
-                                        {e.location && <div className="text-[11px] text-gray-400 mt-1">📍 {e.location}</div>}
+                                        {e.location && <div className="text-[11px] text-gray-400 mt-1 inline-flex items-center gap-1"><MapPin className="w-3 h-3" strokeWidth={2} /> {e.location}</div>}
                                         {(e.starts_at || e.ends_at) && (
                                             <div className="text-[11px] text-gray-400 mt-0.5">
                                                 {e.starts_at && `from ${e.starts_at.slice(0, 5)}`}

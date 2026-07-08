@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Users, GraduationCap, Clock, CheckCircle2, Inbox, Wallet, ShieldCheck } from 'lucide-react';
 import AdminPageHeader from '../../components/admin/PageHeader';
 import KpiCard from '../../components/admin/KpiCard';
 import DataTable from '../../components/admin/DataTable';
@@ -9,10 +10,10 @@ import WelcomeCard from '../../components/ui/WelcomeCard';
 import adminApi from '../../config/adminApi';
 
 const ICONS = {
-    students: (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 014-4h4a4 4 0 014 4v2M12 12a4 4 0 100-8 4 4 0 000 8z"/></svg>),
-    teachers: (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5zM12 14v7m-7-4l7 4 7-4"/></svg>),
-    pending: (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>),
-    accepted: (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>),
+    students: <Users className="w-5 h-5" strokeWidth={2} />,
+    teachers: <GraduationCap className="w-5 h-5" strokeWidth={2} />,
+    pending: <Clock className="w-5 h-5" strokeWidth={2} />,
+    accepted: <CheckCircle2 className="w-5 h-5" strokeWidth={2} />,
 };
 
 const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
@@ -44,10 +45,10 @@ const AdminDashboard = () => {
                 title="Welcome to the Admin Console"
                 subtitle="What you can do from here — dismiss when you're oriented."
                 steps={[
-                    { icon: '📥', label: 'Review admissions & accept / enrol new pupils' },
-                    { icon: '👥', label: 'Manage students, teachers, classes and subjects' },
-                    { icon: '💰', label: 'Set fees, generate invoices, record payments' },
-                    { icon: '🛡️', label: 'Audit log shows every write across the system' },
+                    { icon: <Inbox className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Review admissions & accept / enrol new pupils' },
+                    { icon: <Users className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Manage students, teachers, classes and subjects' },
+                    { icon: <Wallet className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Set fees, generate invoices, record payments' },
+                    { icon: <ShieldCheck className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Audit log shows every write across the system' },
                 ]}
             />
             <AdminPageHeader

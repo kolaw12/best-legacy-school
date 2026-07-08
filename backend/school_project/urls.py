@@ -21,6 +21,8 @@ from django.conf.urls.static import static
 from django.views.static import serve
 from django.urls import re_path
 
+from core.secure_media import secure_media_view
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('core.urls')),
@@ -30,11 +32,17 @@ urlpatterns = [
     path('api/wellbeing/', include('wellbeing.urls')),
     path('api/operations/', include('operations.urls')),
     path('api/', include('assignments.urls')),
+    # Signed, time-limited access for sensitive uploads — see core/secure_media.py.
+    path('secure-media/', secure_media_view, name='secure-media'),
 ]
 
-# Serve media files in both development and production (for small scale)
+# Only genuinely public marketing photos (school-life gallery, event banners)
+# are served directly. Everything else uploaded — student/staff photos,
+# pickup-authorisation photos, admission passport photos — is safeguarding-
+# relevant data and must go through secure_media_view's signed links instead,
+# never this catch-all.
 urlpatterns += [
-    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    re_path(r'^media/(?P<path>(?:events|gallery)/.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
 
 if settings.DEBUG:

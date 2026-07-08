@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { Bell } from 'lucide-react';
 import API_URL from '../../config/api';
 
 const fmtRelative = (iso) => {
@@ -84,9 +85,7 @@ const NotificationBell = () => {
                 aria-label={`Notifications${unread > 0 ? ` (${unread} unread)` : ''}`}
                 className="relative p-2 rounded-full text-gray-500 hover:text-ink hover:bg-gray-100 transition-colors"
             >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
+                <Bell className="w-5 h-5" strokeWidth={2} />
                 {unread > 0 && (
                     <motion.span
                         initial={{ scale: 0 }}
@@ -115,15 +114,15 @@ const NotificationBell = () => {
                             )}
                         </header>
 
-                        <div className="max-h-[60vh] overflow-y-auto">
+                        <div className="max-h-[60vh] overflow-y-auto" data-lenis-prevent>
                             {loading ? (
                                 <div className="p-6 space-y-3">
                                     {[...Array(3)].map((_, i) => <div key={i} className="h-12 bg-gray-50 rounded-lg animate-shimmer" />)}
                                 </div>
                             ) : items.length === 0 ? (
                                 <div className="p-10 text-center">
-                                    <div className="text-3xl">🔔</div>
-                                    <p className="mt-2 text-sm text-gray-500">You're all caught up.</p>
+                                    <Bell className="w-7 h-7 mx-auto text-gray-300" strokeWidth={1.5} />
+                                    <p className="mt-3 text-sm text-gray-500">You're all caught up.</p>
                                 </div>
                             ) : (
                                 <ul className="divide-y divide-gray-50">

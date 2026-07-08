@@ -11,8 +11,10 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from accounts.models import Role
-from accounts.permissions import IsAdminOrReadOnly
+from accounts.permissions import IsAdminOrReadOnly, IsStaff
 from academics.models import Student
+from core.branding import logo_data_uri
+from core.mixins import SoftDeleteViewSetMixin
 from rest_framework.permissions import IsAuthenticated
 
 
@@ -32,7 +34,7 @@ from .serializers import (
 )
 
 
-class FeeScheduleViewSet(viewsets.ModelViewSet):
+class FeeScheduleViewSet(SoftDeleteViewSetMixin, viewsets.ModelViewSet):
     queryset = FeeSchedule.objects.select_related("class_level", "term", "term__session").all()
     serializer_class = FeeScheduleSerializer
     permission_classes = [IsAdminOrReadOnly]
@@ -56,7 +58,11 @@ class FeeScheduleViewSet(viewsets.ModelViewSet):
         )
         created, existing = 0, 0
         for s in students:
-            inv, was_created = Invoice.objects.get_or_create(
+            # all_objects, not objects: a previously-trashed invoice for this
+            # exact (student, fee_schedule) still holds the unique slot, so
+            # the filtered manager would try to INSERT a duplicate and hit
+            # an IntegrityError instead of reviving it.
+            inv, was_created = Invoice.all_objects.get_or_create(
                 student=s, fee_schedule=fee,
                 defaults={
                     "term": fee.term,
@@ -64,6 +70,11 @@ class FeeScheduleViewSet(viewsets.ModelViewSet):
                 },
             )
             if was_created:
+                created += 1
+            elif inv.is_deleted:
+                inv.is_deleted = False
+                inv.deleted_at = None
+                inv.save(update_fields=["is_deleted", "deleted_at"])
                 created += 1
             else:
                 existing += 1
@@ -77,7 +88,7 @@ class FeeScheduleViewSet(viewsets.ModelViewSet):
         })
 
 
-class InvoiceViewSet(viewsets.ModelViewSet):
+class InvoiceViewSet(SoftDeleteViewSetMixin, viewsets.ModelViewSet):
     queryset = Invoice.objects.select_related(
         "student", "student__class_level", "fee_schedule", "term", "term__session"
     ).prefetch_related("payments").all()
@@ -106,7 +117,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         return qs
 
 
-class PaymentPlanViewSet(viewsets.ModelViewSet):
+class PaymentPlanViewSet(SoftDeleteViewSetMixin, viewsets.ModelViewSet):
     queryset = PaymentPlan.objects.select_related("invoice", "invoice__student").prefetch_related("schedule").all()
     serializer_class = PaymentPlanSerializer
     permission_classes = [IsAuthenticated]
@@ -127,7 +138,22 @@ class PaymentPlanViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Create the plan + auto-generate evenly-spaced instalments."""
-        plan = serializer.save()
+        # `invoice` is a OneToOneField — a previously-trashed plan for this
+        # invoice still holds that unique slot, so a plain create() would hit
+        # an IntegrityError instead of reviving it (same class of bug as
+        # class_teacher_of/staff_id fixed earlier).
+        invoice = serializer.validated_data.get("invoice")
+        existing = PaymentPlan.all_objects.filter(invoice=invoice, is_deleted=True).first()
+        if existing:
+            existing.is_deleted = False
+            existing.deleted_at = None
+            existing.instalments = serializer.validated_data.get("instalments", existing.instalments)
+            existing.status = "active"
+            existing.note = serializer.validated_data.get("note", existing.note)
+            existing.save()
+            plan = existing
+        else:
+            plan = serializer.save()
         # Build N equal instalments, due monthly starting today.
         if plan.schedule.exists():
             return
@@ -146,7 +172,7 @@ class PaymentPlanViewSet(viewsets.ModelViewSet):
             )
 
 
-class PaymentViewSet(viewsets.ModelViewSet):
+class PaymentViewSet(SoftDeleteViewSetMixin, viewsets.ModelViewSet):
     queryset = Payment.objects.select_related("invoice", "invoice__student").all()
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
@@ -403,6 +429,7 @@ def payment_receipt_pdf(request, pk):
         "balance_str": f"{invoice.balance:,.2f}",
         "invoice_status": invoice.get_status_display(),
         "generated_at": datetime.now().strftime("%d %b %Y %H:%M"),
+        "logo_data_uri": logo_data_uri(),
     }
 
     html = render_to_string("finance/receipt_pdf.html", payload)
@@ -424,7 +451,7 @@ def payment_receipt_pdf(request, pk):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])  # dashboard summary — lock down later
+@permission_classes([IsStaff])
 def finance_summary(request):
     totals = Invoice.objects.aggregate(
         due=Sum("amount_due"), paid=Sum("amount_paid"),

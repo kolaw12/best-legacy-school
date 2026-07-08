@@ -1,15 +1,29 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
+import Logo from '../../components/ui/Logo';
 import API_URL from '../../config/api';
+
+const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
+
+const BACK_LINKS = {
+    '/admin':   { to: '/admin/students', label: '← Back to students' },
+    '/teacher': { to: '/teacher/class',  label: '← Back to my class' },
+    '/parent':  { to: '/parent/dashboard', label: '← Back to dashboard' },
+};
 
 const ReportCardView = () => {
     const { studentId } = useParams();
+    const { pathname } = useLocation();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [downloading, setDownloading] = useState(false);
+
+    const portal = Object.keys(BACK_LINKS).find(p => pathname.startsWith(p));
+    const backLink = BACK_LINKS[portal] || BACK_LINKS['/admin'];
 
     useEffect(() => {
         setLoading(true);
@@ -19,28 +33,44 @@ const ReportCardView = () => {
             .finally(() => setLoading(false));
     }, [studentId]);
 
+    const downloadPdf = async () => {
+        setDownloading(true);
+        try {
+            // A plain <a href> won't carry the auth token (it's only ever set
+            // as an axios default header, not a cookie) — fetch as a blob
+            // through axios instead, then trigger the download from that.
+            const res = await axios.get(`${API_URL}/api/academics/report-card/${studentId}/pdf/`, { responseType: 'blob' });
+            const url = URL.createObjectURL(res.data);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `report-card-${data?.student?.full_name || studentId}-${data?.term?.name || ''}.pdf`.replace(/\s+/g, '-');
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            alert(e.response?.data?.error || 'Could not download the PDF.');
+        } finally {
+            setDownloading(false);
+        }
+    };
+
     if (loading) return <div className="py-16 text-center text-gray-400 text-sm">Loading report card…</div>;
     if (error)   return <div className="py-16 text-center text-rose-600 text-sm">{error}</div>;
     if (!data)   return null;
 
-    const { student, term, attendance, is_nursery, grades, assessments, summary } = data;
+    const { student, term, attendance, resumption_date, is_nursery, grades, assessments, summary } = data;
 
     return (
         <>
             {/* Toolbar — hidden on print */}
             <div className="no-print print:hidden flex items-center justify-between mb-6">
                 <div>
-                    <Link to="/admin/students" className="text-xs font-semibold text-primary hover:underline">← Back to students</Link>
+                    <Link to={backLink.to} className="text-xs font-semibold text-primary hover:underline">{backLink.label}</Link>
                 </div>
                 <div className="flex gap-2">
-                    <Button
-                        size="sm"
-                        variant="primary"
-                        href={`${API_URL}/api/academics/report-card/${studentId}/pdf/`}
-                        target="_blank"
-                        rel="noreferrer"
-                    >
-                        Download PDF
+                    <Button size="sm" variant="primary" onClick={downloadPdf} disabled={downloading}>
+                        {downloading ? 'Preparing…' : 'Download PDF'}
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => window.print()}>Print this page</Button>
                 </div>
@@ -50,7 +80,7 @@ const ReportCardView = () => {
             <article className="bg-white rounded-3xl shadow-card-lg print:shadow-none print:rounded-none border border-gray-100 print:border-0 max-w-4xl mx-auto">
                 <header className="p-8 pb-0 flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                        <span className="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center font-black text-xl">BL</span>
+                        <Logo size="lg" />
                         <div>
                             <div className="font-black text-ink text-lg leading-tight">Best Legacy Divine School</div>
                             <div className="text-xs text-gray-500">8, Kolawole Street, Mowe, Ogun State</div>
@@ -80,9 +110,10 @@ const ReportCardView = () => {
                 </section>
 
                 {/* Attendance */}
-                <section className="grid grid-cols-3 gap-4 p-8 border-b border-gray-100 bg-gray-50/50">
+                <section className="grid grid-cols-4 gap-4 p-8 border-b border-gray-100 bg-gray-50/50">
                     <InfoCell label="Days Marked"   value={attendance.total} />
                     <InfoCell label="Days Present"  value={attendance.present} />
+                    <InfoCell label="Days Absent"   value={attendance.absent} />
                     <InfoCell label="Attendance %"  value={attendance.rate != null ? `${attendance.rate}%` : '—'} />
                 </section>
 
@@ -155,6 +186,11 @@ const ReportCardView = () => {
                         )}
                     </section>
                 )}
+
+                {/* Resumption */}
+                <section className="px-8 pb-8">
+                    <InfoCell label="Resumption Date" value={fmtDate(resumption_date) || 'To be announced'} />
+                </section>
 
                 {/* Signatures */}
                 <footer className="p-8 pt-0 grid md:grid-cols-2 gap-10 text-xs">

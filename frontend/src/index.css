@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  /* Core brand — Friendly Periwinkle (primary) + Soft Violet (secondary)
-     60% neutral · 30% periwinkle · 10% violet — WCAG AA verified. */
-  --color-primary: #5B6CF5;        /* friendly periwinkle — trustworthy & warm */
-  --color-primary-dark: #4351D0;   /* deeper periwinkle — stability */
-  --color-primary-soft: #EEF1FF;   /* pale periwinkle — surface accents */
+  /* Core brand — School Blue (primary) + Soft Violet (secondary)
+     60% neutral · 30% blue · 10% violet — WCAG AA verified. */
+  --color-primary: #0E86D4;        /* standard school blue — trustworthy & warm */
+  --color-primary-dark: #0A6BAB;   /* deeper blue — stability */
+  --color-primary-soft: #E8F4FC;   /* pale blue — surface accents */
 
   /* Soft Violet — creative and approachable pop */
   --color-secondary: #8B5CF6;      /* soft violet — creative accent */
@@ -15,6 +15,7 @@
   /* Surfaces & text */
   --color-bg: #F9FAFF;             /* clean white with a very soft periwinkle tint */
   --color-surface: #FFFFFF;
+  --color-paper: #F6F2EA;          /* warm ivory — alternates with white for rhythm & depth */
   --color-ink: #1B1F3B;            /* deep indigo-charcoal — softer than black */
   --color-muted: #64748B;          /* muted slate text */
   --color-line: #E2E8F0;           /* borders */
@@ -32,10 +33,12 @@
   --color-gold: #F59E0B;           /* kept as a small warning/success pop */
   --color-rose: #EF4444;
 
-  /* Typography — Adding Fraunces for "Legacy" prestige */
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Fraunces", serif;
+  /* Typography — Montserrat is the standard face site-wide, full stop.
+     --font-serif is kept only so any leftover `font-serif` class still
+     resolves to Montserrat rather than silently falling back to a serif. */
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Montserrat", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
   /* Champagne Gold Accent — subtle luxury pop */
   --color-gold: #D4AF37;

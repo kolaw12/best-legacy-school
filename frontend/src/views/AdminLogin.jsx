@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -24,7 +24,6 @@ const AdminLogin = () => {
 
         try {
             const profile = await login(username, password);
-            localStorage.setItem('isAdmin', 'true'); // keep legacy AdminDashboard happy
             if (['super_admin', 'school_admin'].includes(profile.role)) {
                 let target = from.startsWith('/admin') ? from : '/admin/dashboard';
                 if (target === '/admin-dashboard') target = '/admin/dashboard';
@@ -36,28 +35,7 @@ const AdminLogin = () => {
             } else {
                 setError(`Your role (${profile.role_display}) doesn't have a workspace yet.`);
             }
-            return;
         } catch (err) {
-            // Fallback: legacy localStorage mock (dev convenience if backend down)
-            const storedUser = JSON.parse(localStorage.getItem('customAdminUser') || 'null');
-            const legacyOk =
-                (username === 'admin' && password === 'admin123') ||
-                (username === 'teacher' && password === 'teacher123') ||
-                (username === 'parent' && password === 'parent123') ||
-                (storedUser && storedUser.username === username && storedUser.password === password);
-            if (legacyOk) {
-                if (username === 'teacher') {
-                    localStorage.setItem('isTeacher', 'true');
-                    navigate('/teacher/dashboard');
-                } else if (username === 'parent') {
-                    localStorage.setItem('isParent', 'true');
-                    navigate('/parent/dashboard');
-                } else {
-                    localStorage.setItem('isAdmin', 'true');
-                    navigate('/admin-dashboard');
-                }
-                return;
-            }
             setError(err.response?.data?.non_field_errors?.[0] || 'Invalid username or password.');
         } finally {
             setLoading(false);
@@ -93,12 +71,7 @@ const AdminLogin = () => {
                 </form>
 
                 <div className="mt-6 text-center text-xs text-gray-500">
-                    Need an account? <Link to="/admin-signup" className="text-primary font-semibold hover:underline">Create one</Link>
-                </div>
-
-                <div className="mt-6 pt-6 border-t border-gray-100 text-[11px] text-gray-400 leading-relaxed">
-                    <p className="font-semibold text-gray-500 mb-1">Demo credentials</p>
-                    <p>admin / admin123 · teacher / teacher123 · parent / parent123</p>
+                    Need an account? Ask a school admin to set one up for you.
                 </div>
             </div>
         </div>

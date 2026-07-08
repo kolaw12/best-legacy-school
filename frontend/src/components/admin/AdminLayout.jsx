@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { NavLink, Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
+import {
+    Home, Inbox, Users, Upload, ArrowUp, Briefcase, Layers, BookOpen,
+    CheckCircle2, Car, Clock, GraduationCap, Banknote, Bell, Shield, LogOut,
+    Menu, X, Trash2, CalendarRange,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Breadcrumbs from '../ui/Breadcrumbs';
 import NotificationBell from '../ui/NotificationBell';
@@ -12,8 +17,10 @@ const NAV = [
     { to: '/admin/bulk-import', label: 'Bulk Import', icon: 'upload' },
     { to: '/admin/promotion',  label: 'Promotion',   icon: 'arrow-up' },
     { to: '/admin/teachers',   label: 'Teachers',    icon: 'briefcase' },
+    { to: '/admin/guardians',  label: 'Guardians',   icon: 'users' },
     { to: '/admin/classes',    label: 'Classes',     icon: 'layers' },
     { to: '/admin/subjects',   label: 'Subjects',    icon: 'book' },
+    { to: '/admin/terms',      label: 'Sessions & Terms', icon: 'calendar' },
     { to: '/admin/attendance', label: 'Attendance',  icon: 'check' },
     { to: '/admin/pickups',    label: 'Pickups',     icon: 'pickup' },
     { to: '/admin/late-pickup', label: 'Late pickup', icon: 'clock' },
@@ -21,42 +28,27 @@ const NAV = [
     { to: '/admin/finance',    label: 'Finance',     icon: 'cash' },
     { to: '/admin/announcements', label: 'Announcements', icon: 'bell' },
     { to: '/admin/audit',         label: 'Audit Log',     icon: 'shield' },
+    { to: '/admin/trash',         label: 'Trash',         icon: 'trash' },
 ];
 
 const LEGACY = [
     { to: '/admin-dashboard', label: 'Legacy Console', hint: 'Inquiries • Gallery • Results' },
 ];
 
+const ICONS = {
+    home: Home, inbox: Inbox, users: Users, briefcase: Briefcase, layers: Layers,
+    book: BookOpen, check: CheckCircle2, grade: GraduationCap, cash: Banknote,
+    shield: Shield, bell: Bell, upload: Upload, 'arrow-up': ArrowUp, pickup: Car,
+    clock: Clock, logout: LogOut, trash: Trash2, calendar: CalendarRange,
+};
+
 const Icon = ({ name }) => {
-    const paths = {
-        home: "M3 11.5L12 4l9 7.5M5 10v9a1 1 0 001 1h3v-5h6v5h3a1 1 0 001-1v-9",
-        inbox: "M3 8l4-5h10l4 5M3 8v11a1 1 0 001 1h16a1 1 0 001-1V8M3 8h18M8 14h8",
-        users: "M9 11a4 4 0 100-8 4 4 0 000 8zM15 14a3 3 0 100-6 3 3 0 000 6zM2 20v-2a5 5 0 015-5h4a5 5 0 015 5v2M17 20v-1a4 4 0 00-3-3.87",
-        briefcase: "M6 7V5a2 2 0 012-2h8a2 2 0 012 2v2m-12 0h12m-12 0a2 2 0 00-2 2v9a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2",
-        layers: "M12 3l9 4.5-9 4.5-9-4.5L12 3zM3 13.5l9 4.5 9-4.5M3 18l9 4.5L21 18",
-        book: "M4 19V5a2 2 0 012-2h12v14H6a2 2 0 00-2 2zM4 19a2 2 0 002 2h12M10 7h4",
-        check: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-        grade: "M9 2l3 7 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-7z",
-        cash: "M12 8c-1.66 0-3 .9-3 2s1.34 2 3 2 3 .9 3 2-1.34 2-3 2m0-8c1.11 0 2.08.4 2.83 1M12 4v2m0 10v2m9-6a9 9 0 11-18 0 9 9 0 0118 0z",
-        shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
-        bell: "M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3C7.7 6.2 6 8.4 6 11v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9",
-        upload: "M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 8l-4-4-4 4M12 4v12",
-        'arrow-up': "M5 10l7-7 7 7M12 3v18",
-        pickup: "M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM12 14v3m-2-1.5h4",
-        clock: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
-        settings: "M12 15a3 3 0 100-6 3 3 0 000 6zM19 12a7 7 0 00-.1-1.2l2-1.5-2-3.5-2.3.9a7 7 0 00-2-1.2L14 3h-4l-.6 2.5a7 7 0 00-2 1.2L5 5.8l-2 3.5 2 1.5A7 7 0 005 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.5 2.3-.9a7 7 0 002 1.2L10 21h4l.6-2.5a7 7 0 002-1.2l2.4.9 2-3.5-2-1.5c.1-.4.1-.8.1-1.2z",
-        logout: "M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1",
-    };
-    return (
-        <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={paths[name] || paths.home}/>
-        </svg>
-    );
+    const Cmp = ICONS[name] || Home;
+    return <Cmp className="w-5 h-5 shrink-0" strokeWidth={2} />;
 };
 
 const AdminLayout = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
-    const location = useLocation();
     const { profile, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -104,7 +96,7 @@ const AdminLayout = () => {
                         </div>
                     </Link>
                 </div>
-                <div className="flex-1 h-0 min-h-0 overflow-y-auto custom-scrollbar overscroll-contain">
+                <div className="flex-1 h-0 min-h-0 overflow-y-auto custom-scrollbar overscroll-contain" data-lenis-prevent>
                     <NavList />
                 </div>
                 <div className="p-4 border-t border-gray-100 space-y-2">
@@ -138,10 +130,10 @@ const AdminLayout = () => {
                                 <span className="font-extrabold text-ink text-sm">BLDS</span>
                             </Link>
                             <button onClick={() => setMobileOpen(false)} className="text-gray-400 p-2 -mr-2">
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                <X className="w-6 h-6" strokeWidth={2} />
                             </button>
                         </div>
-                        <div className="flex-1 h-0 min-h-0 overflow-y-auto custom-scrollbar overscroll-contain">
+                        <div className="flex-1 h-0 min-h-0 overflow-y-auto custom-scrollbar overscroll-contain" data-lenis-prevent>
                             <NavList onClickLink={() => setMobileOpen(false)} />
                         </div>
                     </aside>
@@ -155,7 +147,7 @@ const AdminLayout = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <button onClick={() => setMobileOpen(true)} className="lg:hidden p-2 text-ink">
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                                <Menu className="w-6 h-6" strokeWidth={2} />
                             </button>
                             <Breadcrumbs />
                         </div>

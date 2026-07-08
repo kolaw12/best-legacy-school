@@ -25,6 +25,12 @@ const TiltCard = ({ children, max = 6, highlight = true, className = '', ...rest
     // Highlight gradient that follows the pointer
     const hlX = useTransform(sx, v => `${(v + 0.5) * 100}%`);
     const hlY = useTransform(sy, v => `${(v + 0.5) * 100}%`);
+    // Hoisted above the `reduced` early return and out of the `highlight &&`
+    // JSX branch below — calling useTransform conditionally would violate the
+    // Rules of Hooks the moment `highlight` isn't constant across renders.
+    const highlightBg = useTransform([hlX, hlY], ([hx, hy]) =>
+        `radial-gradient(220px circle at ${hx} ${hy}, rgba(91,108,245,0.28), transparent 60%)`
+    );
 
     if (reduced) {
         return <div className={className} {...rest}>{children}</div>;
@@ -54,11 +60,7 @@ const TiltCard = ({ children, max = 6, highlight = true, className = '', ...rest
                 <motion.div
                     aria-hidden="true"
                     className="absolute inset-0 rounded-[inherit] pointer-events-none mix-blend-overlay opacity-60"
-                    style={{
-                        background: useTransform([hlX, hlY], ([hx, hy]) =>
-                            `radial-gradient(220px circle at ${hx} ${hy}, rgba(91,108,245,0.28), transparent 60%)`
-                        ),
-                    }}
+                    style={{ background: highlightBg }}
                 />
             )}
         </motion.div>

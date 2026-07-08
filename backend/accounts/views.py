@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.decorators import api_view, permission_classes, throttle_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
@@ -11,6 +11,7 @@ from .models import (
     MessageThread, Message, MessageRead,
 )
 from .permissions import IsAdmin
+from .throttles import LoginRateThrottle
 from .serializers import (
     LoginSerializer, UserProfileSerializer, AuditLogSerializer, AnnouncementSerializer,
     MessageThreadSerializer, MessageSerializer,
@@ -20,6 +21,7 @@ from rest_framework import viewsets, filters
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([LoginRateThrottle])
 def login_view(request):
     serializer = LoginSerializer(data=request.data, context={"request": request})
     serializer.is_valid(raise_exception=True)

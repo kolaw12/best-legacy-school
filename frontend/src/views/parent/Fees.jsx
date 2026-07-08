@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CreditCard, FileText } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Reveal from '../../components/ui/Reveal';
@@ -10,6 +11,7 @@ import CopyButton from '../../components/ui/CopyButton';
 import { payInvoice, isPaystackConfigured } from '../../config/paystack';
 import { useToast } from '../../components/ui/ToastProvider';
 import { useAuth } from '../../context/AuthContext';
+import useMyChildren from '../../context/useMyChildren';
 import API_URL from '../../config/api';
 
 const naira = (v) => `₦${Number(v || 0).toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
@@ -25,6 +27,7 @@ const ParentFees = () => {
     const [paystackBusy, setPaystackBusy] = useState(null);
     const toast = useToast();
     const { profile } = useAuth();
+    const { children } = useMyChildren();
     const paystackOn = isPaystackConfigured();
 
     const handlePaystack = async (invoice) => {
@@ -59,8 +62,14 @@ const ParentFees = () => {
 
     useEffect(load, []);
 
-    const totalDue   = invoices.reduce((acc, i) => acc + Number(i.amount_due || 0), 0);
-    const totalPaid  = invoices.reduce((acc, i) => acc + Number(i.amount_paid || 0), 0);
+    // Same guardian-scoping gap as the dashboard: an admin previewing the
+    // parent portal isn't guardian-scoped server-side on this endpoint, so
+    // filter to the resolved children ourselves rather than trusting the
+    // raw response is already "my" invoices.
+    const childIds = new Set(children.map(c => c.id));
+    const myInvoices = invoices.filter(i => childIds.has(i.student));
+    const totalDue   = myInvoices.reduce((acc, i) => acc + Number(i.amount_due || 0), 0);
+    const totalPaid  = myInvoices.reduce((acc, i) => acc + Number(i.amount_paid || 0), 0);
     const outstanding = totalDue - totalPaid;
 
     return (
@@ -91,11 +100,11 @@ const ParentFees = () => {
 
             {loading ? (
                 <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="h-24 rounded-2xl bg-white border border-gray-100 animate-pulse"/>)}</div>
-            ) : invoices.length === 0 ? (
+            ) : myInvoices.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center text-sm text-gray-500">No invoices yet.</div>
             ) : (
                 <ul className="space-y-3">
-                    {invoices.map(i => (
+                    {myInvoices.map(i => (
                         <motion.li
                             key={i.id}
                             whileHover={{ y: -2 }}
@@ -134,7 +143,7 @@ const ParentFees = () => {
                                             title={paystackOn ? 'Pay online via Paystack (card / transfer / USSD)' : 'Online card payment will be enabled when the school finishes Paystack onboarding.'}
                                             className="text-xs font-semibold px-3 py-1.5 rounded-full bg-primary text-white hover:bg-primary-dark transition disabled:opacity-60 inline-flex items-center gap-1.5"
                                         >
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z"/></svg>
+                                            <CreditCard className="w-3.5 h-3.5" strokeWidth={2} />
                                             {paystackBusy === i.id
                                                 ? 'Opening…'
                                                 : <>Pay with card{!paystackOn && <span className="ml-1 text-[9px] uppercase tracking-widest font-bold opacity-70">soon</span>}</>}
@@ -161,7 +170,7 @@ const ParentFees = () => {
                                                     target="_blank" rel="noreferrer"
                                                     className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary-soft text-primary-dark hover:bg-primary hover:text-white transition"
                                                 >
-                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                    <FileText className="w-3.5 h-3.5" strokeWidth={2} />
                                                     <span className="font-mono">{p.receipt_no}</span>
                                                     <span className="opacity-70">· {naira(p.amount)}</span>
                                                 </a>

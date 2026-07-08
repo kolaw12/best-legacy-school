@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Check, Copy } from 'lucide-react';
 import { useToast } from './ToastProvider';
 
 /**
@@ -36,12 +37,12 @@ const CopyButton = ({ value, label = 'value', children, className = '', size = '
             <AnimatePresence mode="wait" initial={false}>
                 {copied ? (
                     <motion.span key="ok" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="inline-flex items-center gap-1 text-primary">
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/></svg>
+                        <Check className="w-3 h-3" strokeWidth={3} />
                         Copied
                     </motion.span>
                 ) : (
                     <motion.span key="copy" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="inline-flex items-center gap-1">
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        <Copy className="w-3 h-3" strokeWidth={2} />
                         {children || 'Copy'}
                     </motion.span>
                 )}

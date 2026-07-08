@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import { PartyPopper } from 'lucide-react';
 import PageHero from '../components/PageHero';
 import API_URL from '../config/api';
+import Seo from '../components/Seo';
 
 const SLOTS = ['09:00', '10:00', '11:00', '14:00', '15:00'];
 const CLASSES = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
@@ -40,11 +42,11 @@ const TourBooking = () => {
     if (done) {
         return (
             <>
-                <PageHero eyebrow="TOUR BOOKED" title="Thank you — see you soon." subtitle="We'll confirm via WhatsApp + email shortly." bgImage="/school_hero_Section.png" />
+                <PageHero eyebrow="TOUR BOOKED" title="Thank you. See you soon." subtitle="We'll confirm via WhatsApp + email shortly." bgImage="/school_hero_Section.jpg" />
                 <section className="max-w-2xl mx-auto px-4 py-16 text-center">
                     <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                                 className="bg-mint border-2 border-primary/20 rounded-3xl p-8">
-                        <div className="text-5xl mb-3">🎉</div>
+                        <PartyPopper className="w-10 h-10 mx-auto mb-3 text-primary" strokeWidth={1.75} />
                         <h2 className="text-2xl font-black text-primary-dark">Booking received</h2>
                         <p className="mt-2 text-sm text-gray-600">
                             <strong>{done.parent_name}</strong>, you're on for{' '}
@@ -62,9 +64,14 @@ const TourBooking = () => {
 
     return (
         <>
+            <Seo
+                title="Book a Campus Tour"
+                description="Pick a day, pick a time, walk the halls. Book a 15-minute campus tour at Best Legacy Divine School, Mowe."
+                path="/book-tour"
+            />
             <PageHero eyebrow="VISIT THE SCHOOL" title="Book a campus tour"
                       subtitle="Pick a day, pick a time, walk the halls. Fifteen minutes is enough to know."
-                      bgImage="/school_hero_Section.png" />
+                      bgImage="/school_hero_Section.jpg" />
             <section className="max-w-2xl mx-auto px-4 py-16">
                 {error && <div className="mb-4 bg-rose-50 border border-rose-200 rounded-xl p-3 text-sm text-rose-700 whitespace-pre-wrap">{error}</div>}
                 <form onSubmit={submit} className="bg-white rounded-3xl shadow-card-lg p-6 md:p-8 space-y-4">

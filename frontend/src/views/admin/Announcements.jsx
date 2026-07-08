@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { Megaphone, Pin } from 'lucide-react';
 import AdminPageHeader from '../../components/admin/PageHeader';
+import BulkActionBar from '../../components/admin/BulkActionBar';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Modal from '../../components/ui/Modal';
 import Field, { Input, Select, Textarea } from '../../components/ui/Field';
 import EmptyState from '../../components/ui/EmptyState';
 import Skeleton from '../../components/ui/Skeleton';
 import { useToast } from '../../components/ui/ToastProvider';
+import useRowSelection from '../../hooks/useRowSelection';
 import API_URL from '../../config/api';
 
 const fmt = (iso) => iso ? new Date(iso).toLocaleString('en-NG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
@@ -21,13 +25,15 @@ const AUDIENCE_TONE = {
 };
 
 const buildWaLink = (item) =>
-    `https://wa.me/?text=${encodeURIComponent(`📣 ${item.title}\n\n${item.body}\n\n— Best Legacy Divine School`)}`;
+    `https://wa.me/?text=${encodeURIComponent(`${item.title}\n\n${item.body}\n\n— Best Legacy Divine School`)}`;
 
 const AdminAnnouncements = () => {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [composeOpen, setComposeOpen] = useState(false);
     const [editing, setEditing] = useState(null);
+    const [confirm, setConfirm] = useState(null); // { items: [...] } | null
+    const [busy, setBusy] = useState(false);
     const toast = useToast();
 
     const load = useCallback(() => {
@@ -50,15 +56,24 @@ const AdminAnnouncements = () => {
         }
     };
 
-    const remove = async (item) => {
-        if (!window.confirm(`Delete "${item.title}"? This cannot be undone.`)) return;
-        try {
-            await axios.delete(`${API_URL}/api/auth/announcements/${item.id}/`);
-            setItems(prev => prev.filter(x => x.id !== item.id));
-            toast.success('Announcement removed.');
-        } catch {
-            toast.error('Could not delete.');
+    const selection = useRowSelection(items);
+
+    const removeMany = async (toRemove) => {
+        setBusy(true);
+        const failed = [];
+        for (const item of toRemove) {
+            try {
+                await axios.delete(`${API_URL}/api/auth/announcements/${item.id}/`);
+                setItems(prev => prev.filter(x => x.id !== item.id));
+            } catch {
+                failed.push(item.title);
+            }
         }
+        selection.clear();
+        setBusy(false);
+        setConfirm(null);
+        if (failed.length) toast.error(`Couldn't delete: ${failed.join(', ')}`);
+        else toast.success(toRemove.length > 1 ? 'Announcements removed.' : 'Announcement removed.');
     };
 
     return (
@@ -67,6 +82,12 @@ const AdminAnnouncements = () => {
                 title="Announcements"
                 subtitle="Broadcast to parents, teachers or everyone. Pinned items show first; expired items hide automatically."
                 actions={[
+                    <BulkActionBar
+                        key="bulk"
+                        count={selection.selectedRows.length}
+                        label="Delete"
+                        onAction={() => setConfirm({ items: selection.selectedRows })}
+                    />,
                     <Button key="new" size="sm" onClick={() => { setEditing(null); setComposeOpen(true); }}>
                         + New announcement
                     </Button>,
@@ -79,7 +100,7 @@ const AdminAnnouncements = () => {
                 </div>
             ) : items.length === 0 ? (
                 <EmptyState
-                    icon="📣"
+                    icon={<Megaphone className="w-6 h-6" strokeWidth={1.75} />}
                     title="No announcements yet"
                     body="Send the first one — a welcome note, a closure date, a reminder. Parents see them in the bell icon, top right."
                     action={<Button size="sm" onClick={() => setComposeOpen(true)}>Compose the first one</Button>}
@@ -96,15 +117,23 @@ const AdminAnnouncements = () => {
                                 className={`bg-white rounded-2xl border p-5 shadow-card ${item.pinned ? 'border-primary/30 ring-1 ring-primary/10' : 'border-gray-100'}`}
                             >
                                 <div className="flex items-start justify-between gap-4 flex-wrap">
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                                            {item.pinned && <Badge tone="mint">📌 Pinned</Badge>}
-                                            <Badge tone={tone.tone}>{tone.label}</Badge>
-                                            <span className="text-xs text-gray-400">posted {fmt(item.created_at)}{item.created_by_name && ` by ${item.created_by_name}`}</span>
-                                            {item.expires_at && <span className="text-xs text-secondary-dark">expires {fmt(item.expires_at)}</span>}
+                                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                                        <input
+                                            type="checkbox"
+                                            checked={selection.isSelected(item)}
+                                            onChange={() => selection.toggle(item)}
+                                            className="mt-1 w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary-soft shrink-0"
+                                        />
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                                                {item.pinned && <Badge tone="mint"><Pin className="w-3 h-3" strokeWidth={2.5} /> Pinned</Badge>}
+                                                <Badge tone={tone.tone}>{tone.label}</Badge>
+                                                <span className="text-xs text-gray-400">posted {fmt(item.created_at)}{item.created_by_name && ` by ${item.created_by_name}`}</span>
+                                                {item.expires_at && <span className="text-xs text-secondary-dark">expires {fmt(item.expires_at)}</span>}
+                                            </div>
+                                            <h3 className="font-bold text-ink">{item.title}</h3>
+                                            <p className="mt-1 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{item.body}</p>
                                         </div>
-                                        <h3 className="font-bold text-ink">{item.title}</h3>
-                                        <p className="mt-1 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{item.body}</p>
                                     </div>
                                 </div>
 
@@ -131,7 +160,7 @@ const AdminAnnouncements = () => {
                                         Edit
                                     </button>
                                     <button
-                                        onClick={() => remove(item)}
+                                        onClick={() => setConfirm({ items: [item] })}
                                         className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-rose-400 hover:text-rose-600 transition ml-auto"
                                     >
                                         Delete
@@ -155,6 +184,17 @@ const AdminAnnouncements = () => {
                     });
                     toast.success(editing ? 'Announcement updated.' : 'Announcement published.');
                 }}
+            />
+
+            <ConfirmDialog
+                open={!!confirm}
+                onClose={() => setConfirm(null)}
+                onConfirm={() => removeMany(confirm.items)}
+                busy={busy}
+                title={confirm?.items.length > 1 ? `Delete ${confirm.items.length} announcements?` : `Delete "${confirm?.items[0]?.title}"?`}
+                body="This cannot be undone."
+                confirmLabel={confirm?.items.length > 1 ? `Delete ${confirm.items.length}` : 'Delete'}
+                tone="danger"
             />
         </>
     );

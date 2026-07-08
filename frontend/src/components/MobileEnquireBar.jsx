@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Phone, ArrowRight } from 'lucide-react';
 
 /**
  * Sticky bottom-of-viewport bar for mobile only.
@@ -42,7 +43,7 @@ const MobileEnquireBar = () => {
                             href="tel:+2348067663966"
                             className="pulse-ring flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-secondary text-ink font-semibold text-sm shadow-sm"
                         >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h2a1 1 0 011 .76l1 4a1 1 0 01-.55 1.13L7.6 9.5a12 12 0 006.9 6.9l.6-1.85a1 1 0 011.13-.55l4 1A1 1 0 0121 16v2a2 2 0 01-2 2 16 16 0 01-16-16z"/></svg>
+                            <Phone className="w-4 h-4" strokeWidth={2} />
                             Call Us
                         </a>
                         <Link
@@ -50,7 +51,7 @@ const MobileEnquireBar = () => {
                             className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-mint text-primary-dark font-semibold text-sm"
                         >
                             Apply
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                            <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
                         </Link>
                     </div>
                 </motion.div>

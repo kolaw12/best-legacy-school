@@ -1,6 +1,7 @@
 import Navbar from './Navbar';
 import Footer from './Footer';
 import MobileEnquireBar from './MobileEnquireBar';
+import ScrollToTop from './ui/ScrollToTop';
 
 const Layout = ({ children }) => {
     return (
@@ -15,11 +16,12 @@ const Layout = ({ children }) => {
                 Skip to main content
             </a>
             <Navbar />
-            <main id="main-content" className="flex-grow pt-16" tabIndex={-1}>
+            <main id="main-content" className="flex-grow pt-16 md:pt-[4.5rem]" tabIndex={-1}>
                 {children}
             </main>
             <Footer />
             <MobileEnquireBar />
+            <ScrollToTop />
         </div>
     );
 };

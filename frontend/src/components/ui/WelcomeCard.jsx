@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
 
 /**
  * Dismissable, role-specific welcome card with a 3-4 step checklist.
@@ -10,8 +11,8 @@ import { motion, AnimatePresence } from 'framer-motion';
  *   title="Welcome to your Parent Portal"
  *   subtitle="A 30-second tour of what you can do here."
  *   steps={[
- *     { icon: '👶', label: 'View each child\'s report card' },
- *     { icon: '📅', label: 'See attendance day by day' },
+ *     { icon: <Baby className="w-4 h-4" />, label: 'View each child\'s report card' },
+ *     { icon: <Calendar className="w-4 h-4" />, label: 'See attendance day by day' },
  *     ...
  *   ]}
  * />
@@ -52,7 +53,7 @@ const WelcomeCard = ({ storageKey, title, subtitle, steps = [], tone = 'primary'
                         aria-label="Dismiss welcome"
                         className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-400 hover:text-ink flex items-center justify-center transition"
                     >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        <X className="w-4 h-4" strokeWidth={2} />
                     </button>
                     <h2 className="text-xl md:text-2xl font-black text-primary leading-tight pr-10">{title}</h2>
                     {subtitle && <p className="mt-1 text-sm text-gray-600">{subtitle}</p>}

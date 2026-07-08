@@ -1,20 +1,21 @@
 import { motion, useReducedMotion } from 'framer-motion';
 
 /**
- * Scroll-reveal wrapper with kid-friendly spring motion.
- * Respects the user's reduced-motion preference.
+ * Fade/slide-in wrapper. Animates on mount rather than on scroll-into-view:
+ * this site uses Lenis smooth-scroll (see main.jsx), which can leave
+ * whileInView-based reveals stuck at their hidden initial state — native
+ * IntersectionObserver timing doesn't always line up with Lenis-driven
+ * scroll updates. Mount-triggered animation is slightly less "reveals as
+ * you scroll" but is guaranteed to actually show the content.
  *
  * Usage:
  *   <Reveal><h2>Hello</h2></Reveal>
- *   <Reveal delay={0.1} y={24}>...</Reveal>
+ *   <Reveal delay={0.1}>...</Reveal>
  *   <Reveal stagger gap={0.08}> {items.map(...)} </Reveal>
  */
 const Reveal = ({
     children,
     delay = 0,
-    y = 18,
-    duration = 0.6,
-    once = true,
     stagger = false,
     gap = 0.08,
     className,
@@ -31,8 +32,7 @@ const Reveal = ({
             <motion.div
                 className={className}
                 initial="hidden"
-                whileInView="visible"
-                viewport={{ once, amount: 0.2 }}
+                animate="visible"
                 variants={{
                     hidden: {},
                     visible: { transition: { staggerChildren: gap, delayChildren: delay } },
@@ -60,8 +60,7 @@ const Reveal = ({
         <MotionTag
             className={className}
             initial={{ opacity: 0, y: 40, filter: 'blur(10px)', scale: 0.95 }}
-            whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)', scale: 1 }}
-            viewport={{ once, amount: 0.2 }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)', scale: 1 }}
             transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
         >
             {children}

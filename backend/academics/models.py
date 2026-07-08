@@ -8,6 +8,8 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+from core.soft_delete import SoftDeleteModel
+
 
 # ---------------------------------------------------------------------------
 # Canonical class levels (seed-only; use DB-backed ClassLevel for FKs)
@@ -81,7 +83,7 @@ class Term(models.Model):
 # ---------------------------------------------------------------------------
 # Academic structure
 # ---------------------------------------------------------------------------
-class ClassLevel(models.Model):
+class ClassLevel(SoftDeleteModel):
     """One of the 8 allowed class levels. Seeded once; never add JSS/SSS."""
     name = models.CharField(max_length=20, unique=True)
     section = models.CharField(max_length=10, choices=SECTION_CHOICES)
@@ -89,6 +91,7 @@ class ClassLevel(models.Model):
 
     class Meta:
         ordering = ["order"]
+        base_manager_name = "all_objects"
 
     def __str__(self):
         return self.name
@@ -105,7 +108,7 @@ class ClassLevel(models.Model):
         return self.section == SECTION_NURSERY
 
 
-class Subject(models.Model):
+class Subject(SoftDeleteModel):
     name = models.CharField(max_length=100)
     section = models.CharField(max_length=10, choices=SECTION_CHOICES)
     code = models.CharField(max_length=20, blank=True, help_text="Short code e.g. ENG, MTH")
@@ -113,6 +116,7 @@ class Subject(models.Model):
     class Meta:
         unique_together = [("name", "section")]
         ordering = ["section", "name"]
+        base_manager_name = "all_objects"
 
     def __str__(self):
         return f"{self.name} ({self.get_section_display()})"
@@ -121,7 +125,7 @@ class Subject(models.Model):
 # ---------------------------------------------------------------------------
 # People
 # ---------------------------------------------------------------------------
-class Guardian(models.Model):
+class Guardian(SoftDeleteModel):
     RELATIONSHIP_CHOICES = [
         ("father", "Father"),
         ("mother", "Mother"),
@@ -139,6 +143,7 @@ class Guardian(models.Model):
 
     class Meta:
         ordering = ["last_name", "first_name"]
+        base_manager_name = "all_objects"
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -148,7 +153,7 @@ class Guardian(models.Model):
         return f"{self.first_name} {self.last_name}".strip()
 
 
-class Teacher(models.Model):
+class Teacher(SoftDeleteModel):
     staff_id = models.CharField(max_length=20, unique=True, blank=True)
     first_name = models.CharField(max_length=60)
     last_name = models.CharField(max_length=60)
@@ -173,6 +178,7 @@ class Teacher(models.Model):
 
     class Meta:
         ordering = ["last_name", "first_name"]
+        base_manager_name = "all_objects"
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -186,12 +192,22 @@ class Teacher(models.Model):
             self.staff_id = self._generate_staff_id()
         super().save(*args, **kwargs)
 
+    def soft_delete(self):
+        # class_teacher_of is a OneToOneField, so its uniqueness is enforced
+        # at the DB level even for trashed rows — a trashed teacher left
+        # holding a homeroom would permanently block anyone else from being
+        # assigned that class. Release it on the way to the trash.
+        self.class_teacher_of = None
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save(update_fields=["class_teacher_of", "is_deleted", "deleted_at"])
+
     @staticmethod
     def _generate_staff_id():
         year = timezone.now().year
         prefix = f"BLS/T/{year}/"
         last = (
-            Teacher.objects.filter(staff_id__startswith=prefix)
+            Teacher.all_objects.filter(staff_id__startswith=prefix)
             .order_by("-staff_id").first()
         )
         next_num = 1
@@ -203,7 +219,7 @@ class Teacher(models.Model):
         return f"{prefix}{next_num:03d}"
 
 
-class Student(models.Model):
+class Student(SoftDeleteModel):
     GENDER_CHOICES = [("M", "Male"), ("F", "Female")]
     STATUS_CHOICES = [
         ("active", "Active"),
@@ -229,7 +245,7 @@ class Student(models.Model):
         Guardian, on_delete=models.SET_NULL, null=True, blank=True, related_name="children"
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
-    enrollment_date = models.DateField(default=timezone.now)
+    enrollment_date = models.DateField(default=timezone.localdate)
 
     # --- Health, dietary & pickup info -------------------------------------
     # Plain text fields rather than structured allergens because every school
@@ -248,6 +264,7 @@ class Student(models.Model):
 
     class Meta:
         ordering = ["class_level__order", "last_name", "first_name"]
+        base_manager_name = "all_objects"
 
     def __str__(self):
         return f"{self.admission_no} — {self.full_name}"
@@ -266,7 +283,7 @@ class Student(models.Model):
         year = timezone.now().year
         prefix = f"BLS/S/{year}/"
         last = (
-            Student.objects.filter(admission_no__startswith=prefix)
+            Student.all_objects.filter(admission_no__startswith=prefix)
             .order_by("-admission_no").first()
         )
         next_num = 1
@@ -304,7 +321,7 @@ class AttendanceRecord(models.Model):
         return f"{self.student.full_name} · {self.date} · {self.status}"
 
 
-class BasicGrade(models.Model):
+class BasicGrade(SoftDeleteModel):
     """One subject grade per student per term. Totals and letter grade are auto-computed."""
     GRADE_SCALE = [
         ("A", 75), ("B", 65), ("C", 50), ("D", 40), ("E", 30), ("F", 0),
@@ -324,6 +341,7 @@ class BasicGrade(models.Model):
     class Meta:
         unique_together = [("student", "subject", "term")]
         ordering = ["student__last_name", "subject__name"]
+        base_manager_name = "all_objects"
 
     def __str__(self):
         return f"{self.student.full_name} · {self.subject.name} · {self.term}: {self.total}"
@@ -344,10 +362,20 @@ class BasicGrade(models.Model):
         }
         if not self.remark:
             self.remark = remark_map.get(self.grade, "")
+
+        # QuerySet.update_or_create()'s update path (as used by bulk_save)
+        # calls save(update_fields=<only the keys in `defaults`>) — ca1/ca2/
+        # exam are in there, but total/grade/remark (computed just above)
+        # aren't, so without this the recomputed values are silently dropped
+        # from the UPDATE statement and the row goes stale on every re-save.
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            kwargs["update_fields"] = set(update_fields) | {"ca1", "ca2", "exam", "total", "grade", "remark"}
+
         super().save(*args, **kwargs)
 
 
-class NurseryAssessment(models.Model):
+class NurseryAssessment(SoftDeleteModel):
     """Developmental-domain rating for nursery pupils, per term."""
     DOMAIN_CHOICES = [
         ("literacy",      "Literacy Readiness"),
@@ -377,6 +405,7 @@ class NurseryAssessment(models.Model):
     class Meta:
         unique_together = [("student", "term", "domain")]
         ordering = ["student__last_name", "domain"]
+        base_manager_name = "all_objects"
 
     def __str__(self):
         return f"{self.student.full_name} · {self.get_domain_display()}: {self.rating}"

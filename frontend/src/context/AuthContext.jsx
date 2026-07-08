@@ -24,12 +24,10 @@ export const AuthProvider = ({ children }) => {
     const [booting, setBooting] = useState(!!token);
 
     // On mount, if we have a stored token, verify it against /auth/me/
+    // (also catches a stale demo-token-* left over from before the client-side
+    // demo shortcut was removed — it'll fail verification and get purged below).
     useEffect(() => {
         if (!token) { setBooting(false); return; }
-        if (token.startsWith('demo-token-')) {
-            setBooting(false);
-            return;
-        }
         setAxiosAuth(token);
         axios.get(`${API_URL}/api/auth/me/`)
             .then(r => {
@@ -48,30 +46,6 @@ export const AuthProvider = ({ children }) => {
     }, [token]);
 
     const login = async (username, password) => {
-        // Fallback for demo users without a backend
-        if (username === 'admin' && password === 'admin123') {
-            const data = { token: 'demo-token-admin', profile: { role: 'super_admin', role_display: 'Super Admin', username: 'admin' } };
-            setToken(data.token);
-            setProfile(data.profile);
-            localStorage.setItem(TOKEN_KEY, data.token);
-            localStorage.setItem(PROFILE_KEY, JSON.stringify(data.profile));
-            return data.profile;
-        } else if (username === 'teacher' && password === 'teacher123') {
-            const data = { token: 'demo-token-teacher', profile: { role: 'teacher', role_display: 'Teacher', username: 'teacher' } };
-            setToken(data.token);
-            setProfile(data.profile);
-            localStorage.setItem(TOKEN_KEY, data.token);
-            localStorage.setItem(PROFILE_KEY, JSON.stringify(data.profile));
-            return data.profile;
-        } else if (username === 'parent' && password === 'parent123') {
-            const data = { token: 'demo-token-parent', profile: { role: 'parent', role_display: 'Parent', username: 'parent' } };
-            setToken(data.token);
-            setProfile(data.profile);
-            localStorage.setItem(TOKEN_KEY, data.token);
-            localStorage.setItem(PROFILE_KEY, JSON.stringify(data.profile));
-            return data.profile;
-        }
-
         const { data } = await axios.post(`${API_URL}/api/auth/login/`, { username, password });
         setToken(data.token);
         setProfile(data.profile);
@@ -82,7 +56,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = async () => {
-        try { if (!token?.startsWith('demo-token-')) await axios.post(`${API_URL}/api/auth/logout/`); } catch { /* ignore */ }
+        try { await axios.post(`${API_URL}/api/auth/logout/`); } catch { /* ignore */ }
         setToken(null);
         setProfile(null);
         localStorage.removeItem(TOKEN_KEY);

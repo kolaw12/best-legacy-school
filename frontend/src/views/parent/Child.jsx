@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { ArrowRight, Award, Star, AlertTriangle } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Reveal from '../../components/ui/Reveal';
@@ -149,7 +150,7 @@ const Child = () => {
                             <BasicReport data={report} />
                         )}
                         <div className="mt-6 flex justify-end">
-                            <Link to={`/admin/report-cards/${child.id}`} target="_blank" rel="noreferrer" className="text-sm font-semibold text-primary hover:underline">
+                            <Link to={`/parent/report-cards/${child.id}`} target="_blank" rel="noreferrer" className="text-sm font-semibold text-primary hover:underline">
                                 Open printable view →
                             </Link>
                         </div>
@@ -395,7 +396,7 @@ const ChildFees = ({ invoices, child }) => {
                             ) : (
                                 <Link to="/parent/fees" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-ink font-semibold text-sm hover:bg-secondary-dark transition">
                                     Pay
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                                    <ArrowRight className="w-4 h-4" strokeWidth={2} />
                                 </Link>
                             )}
                         </div>
@@ -444,7 +445,7 @@ const Wellbeing = ({ health, behaviour, badges, child }) => {
                     <ul className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
                         {badges.map(b => (
                             <li key={b.id} className="bg-primary-soft rounded-2xl p-3 text-center">
-                                <div className="text-3xl mb-1">{b.icon || '🏅'}</div>
+                                <div className="flex justify-center mb-1">{b.icon || <Award className="w-7 h-7 text-primary" strokeWidth={1.75} />}</div>
                                 <div className="text-[10px] font-bold text-primary-dark uppercase tracking-widest leading-tight">{b.label}</div>
                                 <div className="text-[9px] text-gray-500 mt-1">{fmtDate(b.awarded_on)}</div>
                             </li>
@@ -471,12 +472,14 @@ const Wellbeing = ({ health, behaviour, badges, child }) => {
                     <ul className="divide-y divide-gray-100">
                         {behaviour.slice(0, 20).map(b => (
                             <li key={b.id} className="py-3 flex items-start gap-3">
-                                <div className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-lg ${
+                                <div className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${
                                     b.kind === 'merit' ? 'bg-emerald-50 text-emerald-700'
                                   : b.kind === 'demerit' ? 'bg-rose-50 text-rose-700'
                                   : 'bg-gray-100 text-gray-600'
                                 }`}>
-                                    {b.kind === 'merit' ? '★' : b.kind === 'demerit' ? '⚠' : '·'}
+                                    {b.kind === 'merit' ? <Star className="w-4 h-4" strokeWidth={2} />
+                                        : b.kind === 'demerit' ? <AlertTriangle className="w-4 h-4" strokeWidth={2} />
+                                        : <span className="text-lg">·</span>}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
@@ -586,7 +589,7 @@ const SafetyAndPickup = ({ child, pickups, onReload }) => {
             <div className={`rounded-3xl shadow-card p-6 md:p-8 ${hasNotes ? 'bg-amber-50 border border-amber-200' : 'bg-white'}`}>
                 <div className="flex items-center gap-3 mb-4">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${hasNotes ? 'bg-amber-200 text-amber-900' : 'bg-gray-100 text-gray-500'}`}>
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z"/></svg>
+                        <AlertTriangle className="w-5 h-5" strokeWidth={2} />
                     </div>
                     <div>
                         <h3 className="font-black text-ink">Safety & dietary notes</h3>

@@ -2,7 +2,7 @@
  * Continuously scrolling horizontal band — pure CSS marquee, pauses on hover.
  *
  * <MarqueeStrip
- *   items={['Nurturing minds since 2008', 'Nursery 1 → Basic 6', 'Mowe, Ogun State']}
+ *   items={['Nurturing minds since 2009', 'Nursery 1 → Basic 6', 'Mowe, Ogun State']}
  *   tone="primary"
  * />
  */

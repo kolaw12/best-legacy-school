@@ -1,8 +1,10 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.core.mail import send_mail
+from accounts.permissions import IsAdminOrReadOnly, IsStaff, IsAdmin
+from .mixins import SoftDeleteViewSetMixin
 from .models import (
     Event, GalleryImage, Inquiry, Admission, StudentResult,
     TourBooking, ApplicationStage,
@@ -14,20 +16,40 @@ from .serializers import (
 )
 
 class EventViewSet(viewsets.ModelViewSet):
+    """Public site calendar — reads are open, writes are admin-only."""
     queryset = Event.objects.all()
     serializer_class = EventSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 class GalleryImageViewSet(viewsets.ModelViewSet):
+    """Public gallery — reads are open, writes are admin-only."""
     queryset = GalleryImage.objects.all()
     serializer_class = GalleryImageSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 class InquiryViewSet(viewsets.ModelViewSet):
+    """Anyone can submit the contact form; only staff can read/manage inquiries."""
     queryset = Inquiry.objects.all()
     serializer_class = InquirySerializer
 
-class AdmissionViewSet(viewsets.ModelViewSet):
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [IsStaff()]
+
+class AdmissionViewSet(SoftDeleteViewSetMixin, viewsets.ModelViewSet):
+    """Anyone can submit an application; only staff can list/review/enroll.
+    Applicants track status via the separate, verification-gated
+    `application_status` endpoint below — not by reading this viewset."""
     queryset = Admission.objects.all()
     serializer_class = AdmissionSerializer
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        if self.action in ('test_email', 'destroy', 'restore', 'purge'):
+            return [IsAdmin()]
+        return [IsStaff()]
 
     def _send_email_async(self, subject, message, recipient_list):
         from django.conf import settings
@@ -70,7 +92,7 @@ class AdmissionViewSet(viewsets.ModelViewSet):
         prefix = f"BLS/{year}/"
         
         # Find the highest sequence number for this year to avoid collisions
-        latest_admission = Admission.objects.filter(student_id__startswith=prefix).order_by('-student_id').first()
+        latest_admission = Admission.all_objects.filter(student_id__startswith=prefix).order_by('-student_id').first()
         
         if latest_admission and latest_admission.student_id:
             try:
@@ -79,7 +101,7 @@ class AdmissionViewSet(viewsets.ModelViewSet):
                 last_num = int(parts[-1])
                 next_num = last_num + 1
             except (ValueError, IndexError):
-                next_num = Admission.objects.filter(created_at__year=year).count() + 1
+                next_num = Admission.all_objects.filter(created_at__year=year).count() + 1
         else:
             next_num = 1
 
@@ -174,9 +196,12 @@ Best Legacy Divine School"""
                 status=200,
             )
 
-        # Resolve class level (must be one of the 8)
+        # Resolve class level (must be one of the 8). Matched case/whitespace-
+        # insensitively — the admission's class_applying_for is free text and
+        # older submissions have been seen stored as "nursery 1" instead of
+        # the canonical "Nursery 1", which used to hard-fail enrollment here.
         try:
-            class_level = ClassLevel.objects.get(name=admission.class_applying_for)
+            class_level = ClassLevel.objects.get(name__iexact=admission.class_applying_for.strip())
         except ClassLevel.DoesNotExist:
             return Response(
                 {"error": f"'{admission.class_applying_for}' is not a recognised class level."},
@@ -188,7 +213,7 @@ Best Legacy Divine School"""
         g_first = parts[0] or "Parent"
         g_last = parts[1] if len(parts) > 1 else ""
 
-        guardian, _ = Guardian.objects.get_or_create(
+        guardian, guardian_created = Guardian.objects.get_or_create(
             phone=admission.phone_number,
             defaults={
                 "first_name": g_first,
@@ -198,6 +223,13 @@ Best Legacy Divine School"""
                 "relationship": "guardian",
             },
         )
+        if guardian_created and guardian.email:
+            from accounts.models import Role
+            from accounts.provisioning import provision_login
+            provision_login(
+                email=guardian.email, first_name=guardian.first_name, last_name=guardian.last_name,
+                role=Role.PARENT, guardian=guardian,
+            )
 
         # Split child name
         cparts = (admission.student_name or "").strip().split(" ", 1)
@@ -242,8 +274,14 @@ Best Legacy Divine School"""
         return Response({'message': f'Test email triggered for {email}. Please check your inbox (and spam folder) in a few seconds.'})
 
 class StudentResultViewSet(viewsets.ModelViewSet):
+    """Staff-only. This is the legacy flat results table, not the RBAC'd
+    academics.BasicGrade pipeline — there is no verified public lookup for
+    it (unlike admissions' application_status), so it cannot be exposed
+    for anonymous reads without leaking any child's grades to anyone who
+    guesses a student_id."""
     queryset = StudentResult.objects.all()
     serializer_class = StudentResultSerializer
+    permission_classes = [IsStaff]
 
     def get_queryset(self):
         queryset = StudentResult.objects.all()

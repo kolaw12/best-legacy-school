@@ -80,6 +80,17 @@ class SubmissionViewSet(viewsets.ModelViewSet):
     serializer_class = SubmissionSerializer
     permission_classes = [IsAuthenticated]
 
+    # Fields a parent must never be able to set themselves — grading only
+    # ever happens through the dedicated `grade` action below (teacher/admin
+    # only). Without this, a parent's plain PATCH could set score/status/
+    # graded_by directly and forge a grade for their own child.
+    GRADING_FIELDS = ("score", "feedback", "status", "graded_by", "graded_at")
+
+    def get_permissions(self):
+        if self.action == "destroy":
+            return [IsTeacherOrAdmin()]
+        return [IsAuthenticated()]
+
     def get_queryset(self):
         qs = super().get_queryset()
         p = self.request.query_params
@@ -111,6 +122,12 @@ class SubmissionViewSet(viewsets.ModelViewSet):
             if not student or student.guardian_id != guardian_id:
                 raise PermissionError("You can only submit for your own children.")
         serializer.save(status="submitted")
+
+    def perform_update(self, serializer):
+        if _role(self.request) == Role.PARENT:
+            for field in self.GRADING_FIELDS:
+                serializer.validated_data.pop(field, None)
+        serializer.save()
 
     @action(detail=True, methods=["post"], url_path="grade", permission_classes=[IsTeacherOrAdmin])
     def grade(self, request, pk=None):

@@ -2,17 +2,19 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import { FileEdit, ClipboardCheck, Mail, PartyPopper, CircleX, Undo2, GraduationCap } from 'lucide-react';
 import PageHero from '../components/PageHero';
 import API_URL from '../config/api';
+import Seo from '../components/Seo';
 
 const STAGE_ICONS = {
-    applied:   '📝',
-    assessed:  '📋',
-    offered:   '✉️',
-    accepted:  '🎉',
-    rejected:  '✋',
-    withdrawn: '↩',
-    enrolled:  '🎓',
+    applied:   FileEdit,
+    assessed:  ClipboardCheck,
+    offered:   Mail,
+    accepted:  PartyPopper,
+    rejected:  CircleX,
+    withdrawn: Undo2,
+    enrolled:  GraduationCap,
 };
 
 const ApplicationStatus = () => {
@@ -39,9 +41,14 @@ const ApplicationStatus = () => {
 
     return (
         <>
+            <Seo
+                title="Track Your Application"
+                description="Check the status of your Best Legacy Divine School admission application — enter your reference and phone number to see exactly where you are."
+                path="/application-status"
+            />
             <PageHero eyebrow="ADMISSIONS" title="Track your application"
                       subtitle="Enter your reference and phone — see exactly where you are."
-                      bgImage="/school_hero_Section.png" />
+                      bgImage="/school_hero_Section.jpg" />
             <section className="max-w-2xl mx-auto px-4 py-16">
                 <form onSubmit={lookup} className="bg-white rounded-3xl shadow-card-lg p-6 md:p-8 space-y-4 mb-8">
                     <Field label="Application reference" required>
@@ -74,9 +81,11 @@ const ApplicationStatus = () => {
                                 <p className="text-sm text-gray-400">Application received — awaiting next step.</p>
                             ) : (
                                 <ol className="space-y-3">
-                                    {data.stages.map((s, i) => (
+                                    {data.stages.map((s, i) => {
+                                        const StageIcon = STAGE_ICONS[s.stage];
+                                        return (
                                         <li key={i} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
-                                            <div className="text-2xl">{STAGE_ICONS[s.stage] || '·'}</div>
+                                            <div className="text-primary">{StageIcon ? <StageIcon className="w-5 h-5" strokeWidth={2} /> : <span className="text-2xl">·</span>}</div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-semibold text-ink text-sm capitalize">{s.stage.replace('_', ' ')}</div>
                                                 {s.note && <div className="text-xs text-gray-500 mt-0.5">{s.note}</div>}
@@ -88,7 +97,8 @@ const ApplicationStatus = () => {
                                                 </div>
                                             </div>
                                         </li>
-                                    ))}
+                                        );
+                                    })}
                                 </ol>
                             )}
                         </div>
