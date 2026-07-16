@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from accounts.models import Role, ADMIN_ROLES
 from accounts.permissions import IsAdminOrReadOnly, IsTeacherOrAdmin, IsStaff
 from accounts.provisioning import provision_login
-from core.branding import logo_data_uri
+from core.branding import letterhead_bg_data_uri, logo_data_uri
 from core.mixins import SoftDeleteViewSetMixin, ProvisionCredentialsMixin
 
 
@@ -898,6 +898,7 @@ def report_card_pdf(request, student_id):
     payload = _build_report_card_payload(student, term)
     payload["generated_at"] = datetime.now().strftime("%d %b %Y %H:%M")
     payload["logo_data_uri"] = logo_data_uri()
+    payload["letterhead_bg_data_uri"] = letterhead_bg_data_uri()
 
     html = render_to_string("academics/report_card_pdf.html", payload)
 

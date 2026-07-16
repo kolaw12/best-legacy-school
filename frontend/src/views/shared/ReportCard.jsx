@@ -77,8 +77,8 @@ const ReportCardView = () => {
             </div>
 
             {/* Report card body */}
-            <article className="bg-white rounded-3xl shadow-card-lg print:shadow-none print:rounded-none border border-gray-100 print:border-0 max-w-4xl mx-auto">
-                <header className="p-8 pb-0 flex items-start justify-between">
+            <article className="report-card-article bg-white rounded-3xl shadow-card-lg print:shadow-none print:rounded-none border border-gray-100 print:border-0 max-w-4xl mx-auto">
+                <header className="no-print print:hidden p-8 pb-0 flex items-start justify-between">
                     <div className="flex items-center gap-3">
                         <Logo size="lg" />
                         <div>
@@ -96,7 +96,18 @@ const ReportCardView = () => {
                     </div>
                 </header>
 
-                <div className="px-8 pt-6 pb-4 border-b border-gray-100">
+                {/* Print-only letterhead spacer + badge — the letterhead background
+                    already carries the crest/name/address, so print just needs the
+                    badge and enough clearance to sit below the printed header. */}
+                <div className="report-print-head hidden print:block px-8 pt-6">
+                    <div className="text-right">
+                        <Badge tone={is_nursery ? 'warm' : 'mint'}>
+                            {is_nursery ? 'Nursery Report' : 'Basic Report'}
+                        </Badge>
+                    </div>
+                </div>
+
+                <div className="px-8 pt-6 pb-4 border-b border-gray-100 print:border-0">
                     <h1 className="text-2xl md:text-3xl font-black text-ink">Report Card</h1>
                     <p className="text-xs text-gray-500">Issued for the {term.name.toLowerCase()} term of {term.session}.</p>
                 </div>
@@ -208,7 +219,25 @@ const ReportCardView = () => {
             <style>{`
                 @media print {
                     body { background: white !important; }
-                    .bg-bg, .bg-gray-50\\/50 { background: white !important; }
+                    .bg-gray-50\\/50 { background: white !important; }
+                    .report-card-article {
+                        background-image: url('/schoolcustomized.jpeg');
+                        background-repeat: no-repeat;
+                        background-position: top center;
+                        background-size: 100% auto;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                        color-adjust: exact;
+                    }
+                    /* padding-top, not margin-top: a top margin here would collapse
+                       straight through into the article's own top (no border/padding
+                       sits between them), dragging the background image down by the
+                       same amount and cancelling the clearance out. Percentage
+                       padding resolves against the containing block's WIDTH (a CSS
+                       quirk) — the same basis the background-image is sized to — so
+                       this stays proportional to the letterhead's header band
+                       regardless of the width the browser prints at. */
+                    .report-print-head { padding-top: 27%; }
                 }
             `}</style>
         </>

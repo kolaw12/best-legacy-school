@@ -126,13 +126,13 @@ const AdmissionsPage = () => {
                 <div className="flex-1">
                     <Input placeholder="Search by student, parent, email, or App ID…" value={q} onChange={e => setQ(e.target.value)} />
                 </div>
-                <Select value={status} onChange={e => setStatus(e.target.value)}>
+                <Select value={status} onChange={e => setStatus(e.target.value)} className="max-w-xs">
                     <option value="">All statuses</option>
                     <option value="pending">Pending</option>
                     <option value="accepted">Accepted</option>
                     <option value="rejected">Rejected</option>
                 </Select>
-                <Select value={classFilter} onChange={e => setClassFilter(e.target.value)}>
+                <Select value={classFilter} onChange={e => setClassFilter(e.target.value)} className="max-w-xs">
                     <option value="">All classes</option>
                     {CLASS_LEVELS.map(c => <option key={c} value={c}>{c}</option>)}
                 </Select>

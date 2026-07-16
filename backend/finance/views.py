@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from accounts.models import Role
 from accounts.permissions import IsAdminOrReadOnly, IsStaff
 from academics.models import Student
-from core.branding import logo_data_uri
+from core.branding import letterhead_bg_data_uri, logo_data_uri
 from core.mixins import SoftDeleteViewSetMixin
 from rest_framework.permissions import IsAuthenticated
 
@@ -430,6 +430,7 @@ def payment_receipt_pdf(request, pk):
         "invoice_status": invoice.get_status_display(),
         "generated_at": datetime.now().strftime("%d %b %Y %H:%M"),
         "logo_data_uri": logo_data_uri(),
+        "letterhead_bg_data_uri": letterhead_bg_data_uri(),
     }
 
     html = render_to_string("finance/receipt_pdf.html", payload)

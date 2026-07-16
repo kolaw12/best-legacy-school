@@ -64,7 +64,7 @@ const TeacherLayout = () => {
 
     return (
         <div className="min-h-screen bg-bg">
-            <aside className="fixed inset-y-0 left-0 hidden lg:flex w-64 bg-white border-r border-gray-100 flex-col z-30">
+            <aside className="print:hidden fixed inset-y-0 left-0 hidden lg:flex w-64 bg-white border-r border-gray-100 flex-col z-30">
                 <div className="px-5 py-5 border-b border-gray-100">
                     <Link to="/" className="flex items-center gap-2">
                         <Logo size="md" />
@@ -110,8 +110,8 @@ const TeacherLayout = () => {
                 </div>
             )}
 
-            <div className="lg:pl-64">
-                <div className="sticky top-0 z-20 bg-bg/80 backdrop-blur-md border-b border-gray-100">
+            <div className="lg:pl-64 print:pl-0">
+                <div className="print:hidden sticky top-0 z-20 bg-bg/80 backdrop-blur-md border-b border-gray-100">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <button onClick={() => setMobileOpen(true)} className="lg:hidden p-2 text-ink">
@@ -128,7 +128,7 @@ const TeacherLayout = () => {
                     </div>
                 </div>
 
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 print:p-0 print:max-w-none">
                     <Outlet />
                 </main>
             </div>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Pencil } from 'lucide-react';
 import AdminPageHeader from '../../components/admin/PageHeader';
 import DataTable from '../../components/admin/DataTable';
 import BulkActionBar from '../../components/admin/BulkActionBar';
@@ -19,6 +19,7 @@ import { CLASS_LEVELS } from '../../config/school';
 const statusTone = { active: 'mint', graduated: 'neutral', withdrawn: 'warm', suspended: 'warm' };
 
 const StudentsPage = () => {
+    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -93,12 +94,12 @@ const StudentsPage = () => {
                 <div className="flex-1">
                     <Input placeholder="Search by name, admission no, or guardian…" value={q} onChange={e => setQ(e.target.value)} />
                 </div>
-                <Select value={sectionFilter} onChange={e => setSectionFilter(e.target.value)}>
+                <Select value={sectionFilter} onChange={e => setSectionFilter(e.target.value)} className="max-w-xs">
                     <option value="">All sections</option>
                     <option value="nursery">Nursery</option>
                     <option value="basic">Basic</option>
                 </Select>
-                <Select value={classFilter} onChange={e => setClassFilter(e.target.value)}>
+                <Select value={classFilter} onChange={e => setClassFilter(e.target.value)} className="max-w-xs">
                     <option value="">All classes</option>
                     {CLASS_LEVELS.map((_, i) => (
                         <option key={i + 1} value={i + 1}>{CLASS_LEVELS[i]}</option>
@@ -115,7 +116,7 @@ const StudentsPage = () => {
                 loading={loading}
                 rows={filtered}
                 empty="No students match your filters."
-                onRowClick={(row) => { setEditing(row); setFormOpen(true); }}
+                onRowClick={(row) => navigate(`/admin/students/${row.id}`)}
                 columns={[
                     selectionColumn(selection),
                     {
@@ -140,13 +141,22 @@ const StudentsPage = () => {
                     {
                         key: 'actions', label: '',
                         render: r => (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); setConfirm({ rows: [r] }); }}
-                                title="Move to trash"
-                                className="p-2 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                            >
-                                <Trash2 className="w-4 h-4" strokeWidth={2} />
-                            </button>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setEditing(r); setFormOpen(true); }}
+                                    title="Edit student"
+                                    className="p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-primary-soft transition"
+                                >
+                                    <Pencil className="w-4 h-4" strokeWidth={2} />
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setConfirm({ rows: [r] }); }}
+                                    title="Move to trash"
+                                    className="p-2 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                                >
+                                    <Trash2 className="w-4 h-4" strokeWidth={2} />
+                                </button>
+                            </div>
                         ),
                     },
                 ]}

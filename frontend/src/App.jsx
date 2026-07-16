@@ -17,6 +17,7 @@ import AdminLogin from './views/AdminLogin';
 import AdminLayout from './components/admin/AdminLayout';
 import NewAdminDashboard from './views/admin/Dashboard';
 import AdminStudents from './views/admin/Students';
+import AdminStudentProfile from './views/admin/StudentProfile';
 import AdminTeachers from './views/admin/Teachers';
 import AdminGuardians from './views/admin/Guardians';
 import AdminClasses from './views/admin/Classes';
@@ -92,6 +93,7 @@ const AnimatedRoutes = () => {
           <Route path="dashboard"               element={<PageTransition><NewAdminDashboard /></PageTransition>} />
           <Route path="admissions"              element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminAdmissions /></PageTransition></RequireRole>} />
           <Route path="students"                element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminStudents /></PageTransition></RequireRole>} />
+          <Route path="students/:studentId"     element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminStudentProfile /></PageTransition></RequireRole>} />
           <Route path="teachers"                element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminTeachers /></PageTransition></RequireRole>} />
           <Route path="guardians"               element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminGuardians /></PageTransition></RequireRole>} />
           <Route path="classes"                 element={<PageTransition><AdminClasses /></PageTransition>} />

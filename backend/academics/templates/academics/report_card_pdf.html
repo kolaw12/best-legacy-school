@@ -6,7 +6,8 @@
 <style>
     @page {
         size: A4;
-        margin: 18mm 16mm;
+        margin: 56mm 16mm 18mm 16mm;
+        background-image: url("{{ letterhead_bg_data_uri }}");
         @frame footer {
             -pdf-frame-content: footerContent;
             bottom: 8mm; left: 16mm; right: 16mm; height: 12mm;
@@ -14,13 +15,7 @@
     }
     body { font-family: Helvetica, Arial, sans-serif; color: #1B1F3B; font-size: 10pt; }
     h1, h2, h3 { color: #5B6CF5; margin: 0; }
-    .head { border-bottom: 2px solid #5B6CF5; padding-bottom: 8mm; margin-bottom: 8mm; }
-    .head table { width: 100%; }
-    .head .logo-cell { width: 20mm; vertical-align: top; }
-    .head .logo { height: 16mm; width: 16mm; }
-    .head .school { font-size: 14pt; font-weight: bold; color: #1B1F3B; }
-    .head .addr { font-size: 8pt; color: #6B7280; }
-    .head .tag-cell { width: 30mm; vertical-align: top; text-align: right; }
+    .head { text-align: right; margin-bottom: 4mm; }
     .head .tag { background: #EEF0FF; color: #3D3B8E; padding: 2pt 8pt; border-radius: 999px; font-size: 8pt; font-weight: bold; }
     h1 { font-size: 22pt; margin-top: 4mm; }
     .sub { color: #6B7280; font-size: 9pt; }
@@ -61,20 +56,7 @@
 <body>
 
 <div class="head">
-    <table>
-        <tr>
-            <td class="logo-cell">
-                {% if logo_data_uri %}<img class="logo" src="{{ logo_data_uri }}">{% endif %}
-            </td>
-            <td>
-                <div class="school">Best Legacy Divine School</div>
-                <div class="addr">8, Kolawole Street · Mowe, Ogun State · Nigeria</div>
-            </td>
-            <td class="tag-cell">
-                <span class="tag">{% if is_nursery %}Nursery report{% else %}Basic report{% endif %}</span>
-            </td>
-        </tr>
-    </table>
+    <span class="tag">{% if is_nursery %}Nursery report{% else %}Basic report{% endif %}</span>
 </div>
 
 <h1>Report Card</h1>
