@@ -157,6 +157,31 @@ class GuardianViewSet(ProvisionCredentialsMixin, SoftDeleteViewSetMixin, viewset
                 email=guardian.email, first_name=guardian.first_name, last_name=guardian.last_name,
                 role=Role.PARENT, guardian=guardian,
             )
+        elif not guardian.email:
+            # No email — check if admin provided a temp password
+            temp_password = (self.request.data.get("temp_password") or "").strip()
+            if temp_password:
+                from django.contrib.auth.models import User
+                from accounts.models import UserProfile
+                from accounts.provisioning import _unique_username
+
+                username = _unique_username(guardian.phone or guardian.first_name.lower())
+                user = User.objects.create_user(
+                    username=username,
+                    email="",
+                    password=temp_password,
+                    first_name=guardian.first_name,
+                    last_name=guardian.last_name,
+                )
+                UserProfile.objects.create(
+                    user=user, role=Role.PARENT, guardian=guardian,
+                )
+                self._provisioned = {
+                    "profile": UserProfile.objects.get(user=user),
+                    "username": username,
+                    "password": temp_password,
+                    "invite_url": None,
+                }
 
     @action(detail=True, methods=["post", "delete"])
     def purge(self, request, pk=None):
@@ -176,7 +201,7 @@ class GuardianViewSet(ProvisionCredentialsMixin, SoftDeleteViewSetMixin, viewset
 class TeacherViewSet(ProvisionCredentialsMixin, SoftDeleteViewSetMixin, viewsets.ModelViewSet):
     queryset = (
         Teacher.objects
-        .select_related("class_teacher_of")
+        .select_related("class_teacher_of", "user_profile")
         .prefetch_related("subjects", "classes")
         .all()
     )
@@ -249,18 +274,23 @@ def promote_students(request):
             }
         except (KeyError, ValueError, TypeError):
             continue
-    default_action = request.data.get("default_action", "promote")
 
     levels = list(ClassLevel.objects.order_by("order"))
     next_by_id = {}
     for i, lvl in enumerate(levels):
         next_by_id[lvl.id] = levels[i + 1] if i + 1 < len(levels) else None  # None = past Basic 6
 
-    pupils = Student.objects.filter(status="active").select_related("class_level")
+    # Only process students that are explicitly in the actions list.
+    # If no actions are sent, process nothing (frontend should always send actions).
+    if not actions_by_student:
+        return Response({"error": "No student actions provided."}, status=400)
+
+    pupil_ids = list(actions_by_student.keys())
+    pupils = Student.objects.filter(id__in=pupil_ids, status="active").select_related("class_level")
     promoted, repeated, graduated, withdrawn, errors = 0, 0, 0, 0, []
 
     for s in pupils:
-        spec = actions_by_student.get(s.id) or {"action": default_action, "note": ""}
+        spec = actions_by_student.get(s.id, {"action": "promote", "note": ""})
         action_kind = spec["action"]
         note = spec["note"]
         try:
@@ -610,6 +640,61 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             "class_level": class_level.name,
         }, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=["post"], url_path="single")
+    def single_mark(self, request):
+        """Mark attendance for a single student. Used to add one-by-one."""
+        class_level_id = request.data.get("class_level")
+        student_id = request.data.get("student")
+        day = parse_date(request.data.get("date") or "") or date_cls.today()
+        status_val = request.data.get("status") or "present"
+        note = request.data.get("note") or ""
+
+        if not class_level_id or not student_id:
+            return Response({"error": "class_level and student are required."}, status=400)
+
+        try:
+            student = Student.objects.get(pk=student_id, class_level_id=class_level_id)
+        except Student.DoesNotExist:
+            return Response({"error": "Student not found in this class."}, status=404)
+
+        marker = None
+        profile = getattr(request.user, "profile", None)
+        if profile and profile.teacher:
+            marker = profile.teacher
+
+        rec, created = AttendanceRecord.objects.update_or_create(
+            student=student, date=day,
+            defaults={
+                "class_level_id": class_level_id,
+                "status": status_val,
+                "note": note,
+                "marked_by": marker,
+            },
+        )
+
+        return Response({
+            "student": student_id,
+            "status": status_val,
+            "created": created,
+            "date": str(day),
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="marked-dates")
+    def marked_dates(self, request):
+        """Return the list of dates that have attendance records for a given class."""
+        class_level_id = request.query_params.get("class_level")
+        if not class_level_id:
+            return Response({"error": "class_level is required."}, status=400)
+
+        dates = (
+            AttendanceRecord.objects
+            .filter(class_level_id=class_level_id)
+            .values_list("date", flat=True)
+            .distinct()
+            .order_by("-date")[:60]
+        )
+        return Response([str(d) for d in dates])
+
 
 class BasicGradeViewSet(SoftDeleteViewSetMixin, viewsets.ModelViewSet):
     queryset = BasicGrade.objects.select_related("student", "subject", "term", "term__session", "teacher").all()
@@ -690,6 +775,7 @@ class BasicGradeViewSet(SoftDeleteViewSetMixin, viewsets.ModelViewSet):
                         "ca2":  r.get("ca2", 0),
                         "exam": r.get("exam", 0),
                         "remark": r.get("remark", ""),
+                        "teacher_comment": r.get("teacher_comment", ""),
                         "teacher": marker,
                         "is_deleted": False,
                         "deleted_at": None,
@@ -852,6 +938,7 @@ def _build_report_card_payload(student, term):
         payload["grades"] = [{
             "subject": g.subject.name, "ca1": g.ca1, "ca2": g.ca2, "exam": g.exam,
             "total": g.total, "grade": g.grade, "remark": g.remark,
+            "teacher_comment": g.teacher_comment,
         } for g in grades]
         totals = [g.total for g in grades]
         payload["summary"] = {

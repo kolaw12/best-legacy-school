@@ -5,8 +5,11 @@ We extend Django's built-in User with a one-to-one UserProfile that carries
 the role (RBAC) and optional links to a Teacher or Student record. This keeps
 the default auth stack intact while adding a single authoritative role field.
 """
+import secrets
+
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class Role(models.TextChoices):
@@ -201,3 +204,66 @@ class MessageRead(models.Model):
 
     class Meta:
         unique_together = [("user", "thread")]
+
+
+class Invitation(models.Model):
+    """One-time invite token sent to a prospective user.
+
+    Admin triggers the invite → email goes out with a link containing the
+    token → user clicks and sets their own password. Token expires after
+    7 days. Each token is single-use.
+    """
+    ROLE_CHOICES = [
+        ("teacher", "Teacher"),
+        ("student", "Student"),
+        ("parent", "Parent / Guardian"),
+        ("accountant", "Accountant"),
+        ("content_manager", "Content Manager"),
+    ]
+
+    email = models.EmailField()
+    role = models.CharField(max_length=30, choices=ROLE_CHOICES)
+    token = models.CharField(max_length=64, unique=True, db_index=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+
+    # Optional links — set when the invite is for a specific record
+    teacher = models.ForeignKey(
+        "academics.Teacher", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="invitations",
+    )
+    student = models.ForeignKey(
+        "academics.Student", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="invitations",
+    )
+    guardian = models.ForeignKey(
+        "academics.Guardian", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="invitations",
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="invitations_sent",
+    )
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        status = "accepted" if self.accepted_at else "pending"
+        return f"Invite {self.email} ({self.get_role_display()}) — {status}"
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    @property
+    def is_valid(self):
+        return not self.accepted_at and not self.is_expired
+
+    @staticmethod
+    def generate_token():
+        return secrets.token_urlsafe(48)

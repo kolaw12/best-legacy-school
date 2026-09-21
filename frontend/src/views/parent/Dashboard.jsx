@@ -50,10 +50,10 @@ const ParentDashboard = () => {
                 title="Welcome to your Parent Portal"
                 subtitle="A 30-second tour of what you can do here."
                 steps={[
-                    { icon: <Baby className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'View each child\'s class, attendance and report card' },
-                    { icon: <CalendarDays className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'See homework set by their class teacher' },
-                    { icon: <Wallet className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Pay fees by transfer; the bursary verifies within 24 hours' },
-                    { icon: <Phone className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Mrs Kolawole answers her phone — 0806 766 3966' },
+                    { icon: <Baby className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Your Children', description: 'View each child\'s class, attendance record, and report card.' },
+                    { icon: <CalendarDays className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Homework', description: 'See assignments set by their class teacher.' },
+                    { icon: <Wallet className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Fees & Payments', description: 'Pay school fees via transfer; the bursary verifies within 24 hours.' },
+                    { icon: <Phone className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Contact Us', description: 'Mrs Kolawole answers her phone — 0806 766 3966' },
                 ]}
             />
 
@@ -130,7 +130,7 @@ const ParentDashboard = () => {
                                 </div>
 
                                 <Link
-                                    to={`/parent/child/${c.id}`}
+                                    to={`/portal/child/${c.id}`}
                                     className="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-primary text-white font-semibold text-sm hover:bg-primary-dark transition"
                                 >
                                     View {c.first_name}'s portal
@@ -148,7 +148,7 @@ const ParentDashboard = () => {
                         <h3 className="text-xl md:text-2xl font-black leading-tight">Pay this term's fees from here.</h3>
                         <p className="mt-2 text-white/80 text-sm">Self-report a transfer or visit the bursary. Receipts arrive within 24 hours.</p>
                     </div>
-                    <Button to="/parent/fees" variant="dark" size="md">View invoices →</Button>
+                    <Button to="/portal/fees" variant="dark" size="md">View invoices →</Button>
                 </div>
             </Reveal>
         </>

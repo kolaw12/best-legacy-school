@@ -45,7 +45,7 @@ const FeeDueChip = () => {
     if (outstanding <= 0) {
         return (
             <Link
-                to="/parent/fees"
+                to="/portal/fees"
                 className="hidden md:inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary-soft text-primary-dark hover:bg-primary hover:text-white transition"
             >
                 <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
@@ -61,7 +61,7 @@ const FeeDueChip = () => {
 
     return (
         <Link
-            to="/parent/fees"
+            to="/portal/fees"
             className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full transition ${
                 urgent
                     ? 'bg-secondary text-ink hover:bg-secondary-dark shadow-sm'

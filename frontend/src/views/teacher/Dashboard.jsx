@@ -68,10 +68,10 @@ const TeacherDashboard = () => {
                 title={`Welcome, ${teacher?.first_name || 'teacher'}`}
                 subtitle="Four things this portal does — once you've used each, this card disappears."
                 steps={[
-                    { icon: <CheckSquare className="w-4 h-4 text-secondary-dark" strokeWidth={2} />, label: 'Mark attendance for your class each morning' },
-                    { icon: <NotebookPen className="w-4 h-4 text-secondary-dark" strokeWidth={2} />, label: 'Enter CA / exam scores; totals + grades compute for you' },
-                    { icon: <PencilLine className="w-4 h-4 text-secondary-dark" strokeWidth={2} />, label: 'Set assignments and grade what comes back' },
-                    { icon: <Users className="w-4 h-4 text-secondary-dark" strokeWidth={2} />, label: 'Class roster shows guardian phone numbers when you need them' },
+                    { icon: <CheckSquare className="w-4 h-4 text-secondary-dark" strokeWidth={2} />, label: 'Attendance', description: 'Mark each pupil present, absent, or late every morning.' },
+                    { icon: <NotebookPen className="w-4 h-4 text-secondary-dark" strokeWidth={2} />, label: 'Grade Entry', description: 'Enter CA1, CA2, and Exam scores. Totals and grades compute automatically.' },
+                    { icon: <PencilLine className="w-4 h-4 text-secondary-dark" strokeWidth={2} />, label: 'Assignments', description: 'Set homework and grade submissions from pupils.' },
+                    { icon: <Users className="w-4 h-4 text-secondary-dark" strokeWidth={2} />, label: 'Class Roster', description: 'View your class list with guardian contact details.' },
                 ]}
             />
             <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
@@ -88,10 +88,10 @@ const TeacherDashboard = () => {
                     </p>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                    <Button to="/teacher/attendance" size="sm">
+                    <Button to="/admin/teacher/attendance" size="sm">
                         {attendanceMarked ? 'Update attendance' : "Mark today's attendance"}
                     </Button>
-                    <Button to="/teacher/grades" variant="outline" size="sm">Enter grades</Button>
+                    <Button to="/admin/teacher/grades" variant="outline" size="sm">Enter grades</Button>
                 </div>
             </header>
 
@@ -110,7 +110,7 @@ const TeacherDashboard = () => {
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-card">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-ink">Your pupils</h3>
-                    <Link to="/teacher/class" className="text-xs font-semibold text-primary hover:underline">Full roster →</Link>
+                    <Link to="/admin/teacher/class" className="text-xs font-semibold text-primary hover:underline">Full roster →</Link>
                 </div>
                 {loading ? (
                     <div className="grid sm:grid-cols-2 gap-3">

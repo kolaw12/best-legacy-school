@@ -1,0 +1,25 @@
+# Media uploads (owner will have their own)
+backend/media/gallery/WhatsApp*
+backend/media/gallery/school_bill*
+backend/media/gallery/list_of_book*
+backend/media/students/
+backend/media/passports/
+backend/media/profiles/
+backend/media/staff/
+
+# Research docs (local only)
+research/
+
+# Python
+*.pyc
+__pycache__/
+venv/
+.env
+
+# Node
+node_modules/
+dist/
+.vercel
+
+# OS
+.DS_Store

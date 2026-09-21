@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 import AdminPageHeader from '../../components/admin/PageHeader';
 import BulkActionBar from '../../components/admin/BulkActionBar';
 import Badge from '../../components/ui/Badge';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import Modal from '../../components/ui/Modal';
+import Button from '../../components/ui/Button';
+import Field, { Input, Select } from '../../components/ui/Field';
 import useRowSelection from '../../hooks/useRowSelection';
 import adminApi from '../../config/adminApi';
 import API_URL from '../../config/api';
@@ -14,12 +17,16 @@ const SubjectsPage = () => {
     const [loading, setLoading] = useState(true);
     const [confirm, setConfirm] = useState(null); // { rows: [...] } | null
     const [busy, setBusy] = useState(false);
+    const [showForm, setShowForm] = useState(false);
 
-    useEffect(() => {
+    const load = () => {
+        setLoading(true);
         adminApi.subjects()
             .then(r => setRows(Array.isArray(r.data) ? r.data : r.data.results || []))
             .finally(() => setLoading(false));
-    }, []);
+    };
+
+    useEffect(() => { load(); }, []);
 
     const selection = useRowSelection(rows);
 
@@ -55,6 +62,10 @@ const SubjectsPage = () => {
                         label="Move to trash"
                         onAction={() => setConfirm({ rows: selection.selectedRows })}
                     />,
+                    <Button key="add" size="sm" onClick={() => setShowForm(true)}>
+                        <Plus className="w-4 h-4 mr-1.5" strokeWidth={2.5} />
+                        Add subject
+                    </Button>,
                 ]}
             />
 
@@ -67,6 +78,8 @@ const SubjectsPage = () => {
                        selection={selection} onDelete={(row) => setConfirm({ rows: [row] })} />
             </div>
 
+            <SubjectForm open={showForm} onClose={() => setShowForm(false)} onCreated={() => { load(); setShowForm(false); }} />
+
             <ConfirmDialog
                 open={!!confirm}
                 onClose={() => setConfirm(null)}
@@ -78,6 +91,79 @@ const SubjectsPage = () => {
                 tone="danger"
             />
         </>
+    );
+};
+
+const SubjectForm = ({ open, onClose, onCreated }) => {
+    const [name, setName] = useState('');
+    const [section, setSection] = useState('basic');
+    const [code, setCode] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState(null);
+
+    const submit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setError(null);
+        try {
+            await axios.post(`${API_URL}/api/academics/subjects/`, { name, section, code });
+            onCreated?.();
+            setName('');
+            setSection('basic');
+            setCode('');
+        } catch (err) {
+            const data = err.response?.data;
+            if (data && typeof data === 'object') {
+                setError(Object.entries(data).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join('\n'));
+            } else {
+                setError(err.message || 'Failed to create subject.');
+            }
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <Modal
+            open={open}
+            onClose={onClose}
+            title="Add a subject"
+            subtitle="Create a nursery or basic subject."
+            size="sm"
+            footer={[
+                <Button key="cancel" variant="outline" size="sm" onClick={onClose} type="button">Cancel</Button>,
+                <Button key="save" size="sm" onClick={submit} disabled={saving}>
+                    {saving ? 'Creating…' : 'Create subject'}
+                </Button>,
+            ]}
+        >
+            {error && <div className="mb-4 bg-rose-50 border border-rose-200 rounded-xl p-3 text-sm text-rose-700 whitespace-pre-wrap">{error}</div>}
+
+            <form onSubmit={submit} className="space-y-4">
+                <Field label="Subject name" required>
+                    <Input
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        required
+                        placeholder="e.g. Mathematics, Phonics"
+                    />
+                </Field>
+                <Field label="Section" required>
+                    <Select value={section} onChange={e => setSection(e.target.value)}>
+                        <option value="nursery">Nursery</option>
+                        <option value="basic">Basic</option>
+                    </Select>
+                </Field>
+                <Field label="Short code" hint="Optional — e.g. MTH, ENG, PHY">
+                    <Input
+                        value={code}
+                        onChange={e => setCode(e.target.value)}
+                        placeholder="e.g. MTH"
+                        maxLength={20}
+                    />
+                </Field>
+            </form>
+        </Modal>
     );
 };
 
@@ -116,6 +202,9 @@ const Panel = ({ title, rows, loading, tone, hint, selection, onDelete }) => (
                         </button>
                     </li>
                 ))}
+                {rows.length === 0 && (
+                    <li className="py-6 text-center text-sm text-gray-400">No subjects yet.</li>
+                )}
             </ul>
         )}
     </div>

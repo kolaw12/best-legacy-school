@@ -48,7 +48,7 @@ const ApplicationStatus = () => {
             />
             <PageHero eyebrow="ADMISSIONS" title="Track your application"
                       subtitle="Enter your reference and phone — see exactly where you are."
-                      bgImage="/school_hero_Section.jpg" />
+                      bgImage="/school_ceremony.jpg" />
             <section className="max-w-2xl mx-auto px-4 py-16">
                 <form onSubmit={lookup} className="bg-white rounded-3xl shadow-card-lg p-6 md:p-8 space-y-4 mb-8">
                     <Field label="Application reference" required>

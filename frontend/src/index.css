@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Core brand — School Blue (primary) + Soft Violet (secondary)
      60% neutral · 30% blue · 10% violet — WCAG AA verified. */
@@ -398,4 +400,16 @@
     table, figure, article { break-inside: avoid; page-break-inside: avoid; }
     a[href]:after { content: ''; }   /* don't print clutter URLs after links */
   }
+}
+
+/* ---- Dark mode overrides ---- */
+.dark {
+  --color-bg: #0F1117;
+  --color-surface: #1A1D2B;
+  --color-paper: #22253A;
+  --color-ink: #E8ECF4;
+  --color-muted: #94A3B8;
+  --color-line: #2D3348;
+  --color-primary-soft: #0E3A5C;
+  --color-secondary-soft: #2D1B69;
 }

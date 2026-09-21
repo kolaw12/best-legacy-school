@@ -64,11 +64,20 @@ export const AuthProvider = ({ children }) => {
         setAxiosAuth(null);
     };
 
+    const updateProfile = async (formData) => {
+        const { data } = await axios.patch(`${API_URL}/api/auth/me/`, formData, {
+            headers: formData instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {},
+        });
+        setProfile(data);
+        localStorage.setItem(PROFILE_KEY, JSON.stringify(data));
+        return data;
+    };
+
     const value = useMemo(() => ({
         token, profile, booting,
         isAuthenticated: !!token,
         role: profile?.role,
-        login, logout,
+        login, logout, updateProfile,
     }), [token, profile, booting]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

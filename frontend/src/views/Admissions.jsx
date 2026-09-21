@@ -8,6 +8,27 @@ import API_URL from '../config/api';
 import { CLASS_LEVELS, NURSERY_LEVELS } from '../config/school';
 import ConfettiBurst from '../components/ui/ConfettiBurst';
 import CopyButton from '../components/ui/CopyButton';
+
+const COUNTRY_CODES = [
+    { code: '+234', country: 'Nigeria', flag: '🇳🇬' },
+    { code: '+233', country: 'Ghana', flag: '🇬🇭' },
+    { code: '+231', country: 'Liberia', flag: '🇱🇷' },
+    { code: '+232', country: 'Sierra Leone', flag: '🇸🇱' },
+    { code: '+220', country: 'Gambia', flag: '🇬🇲' },
+    { code: '+221', country: 'Senegal', flag: '🇸🇳' },
+    { code: '+225', country: "Côte d'Ivoire", flag: '🇨🇮' },
+    { code: '+226', country: 'Burkina Faso', flag: '🇧🇫' },
+    { code: '+227', country: 'Niger', flag: '🇳🇪' },
+    { code: '+228', country: 'Togo', flag: '🇹🇬' },
+    { code: '+229', country: 'Benin', flag: '🇧🇯' },
+    { code: '+243', country: 'DR Congo', flag: '🇨🇩' },
+    { code: '+240', country: 'Equatorial Guinea', flag: '🇬🇶' },
+    { code: '+241', country: 'Gabon', flag: '🇬🇦' },
+    { code: '+1',   country: 'USA / Canada', flag: '🇺🇸' },
+    { code: '+44',  country: 'United Kingdom', flag: '🇬🇧' },
+    { code: '+971', country: 'UAE', flag: '🇦🇪' },
+    { code: '+27',  country: 'South Africa', flag: '🇿🇦' },
+];
 import Seo from '../components/Seo';
 import { useToast } from '../components/ui/ToastProvider';
 import { motion, useReducedMotion } from 'framer-motion';
@@ -68,12 +89,11 @@ const validators = {
     phone_number: (v) => {
         if (!v) return 'A phone number we can call is required.';
         const digits = v.replace(/\D/g, '');
-        if (digits.length < 10) return 'That doesn\'t look like a complete number.';
+        if (digits.length < 7) return 'That doesn\'t look like a complete number.';
         return '';
     },
     email: (v) => {
-        if (!v) return 'An email we can write to is required.';
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return 'That email address doesn\'t look quite right.';
+        if (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return 'That email address doesn\'t look quite right.';
         return '';
     },
     address: (v) => !v?.trim() ? 'A residential address helps us with school-runs.' : '',
@@ -145,8 +165,9 @@ const Admissions = () => {
         phone_number: '',
         email: '',
         address: '',
-        nationality: 'Nigerian', // Added for international support
+        nationality: 'Nigerian',
     });
+    const [phoneCountryCode, setPhoneCountryCode] = useState('+234');
     const [passport_photo, setPassportPhoto] = useState(null);
     const [status, setStatus] = useState({ type: '', message: '' });
     const [touched, setTouched] = useState({});
@@ -214,7 +235,14 @@ const Admissions = () => {
         setStatus({ type: 'sending', message: 'Submitting application...' });
 
         const data = new FormData();
-        Object.keys(formData).forEach(key => data.append(key, formData[key]));
+        Object.keys(formData).forEach(key => {
+            if (key === 'phone_number') {
+                // Combine country code + phone number
+                data.append(key, `${phoneCountryCode} ${formData[key]}`);
+            } else {
+                data.append(key, formData[key]);
+            }
+        });
         if (passport_photo) data.append('passport_photo', passport_photo);
 
         try {
@@ -272,7 +300,7 @@ const Admissions = () => {
                 centered copy, and an admissions-facts ticker underneath. */}
             <section className="relative min-h-[62vh] flex items-center bg-ink overflow-hidden pt-16 md:pt-[4.5rem]">
                 <div className="absolute inset-0">
-                    <img src="/school_hero_Section.jpg" alt="Pupils celebrating at Best Legacy Divine School" className="w-full h-full object-cover" />
+                    <img src="/school_ceremony.jpg" alt="Pupils celebrating at Best Legacy Divine School" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/75 to-ink/40" />
                     <div className="absolute inset-0 grain-dot opacity-20 mix-blend-overlay" />
                 </div>
@@ -645,11 +673,33 @@ const Admissions = () => {
                                         <Field label="Parent / Guardian Full Name" required error={touched.parent_name && errors.parent_name}>
                                             <Input name="parent_name" required value={formData.parent_name} onChange={handleChange} onBlur={handleBlur} error={!!(touched.parent_name && errors.parent_name)} />
                                         </Field>
-                                        <Field label="Phone Number (Include Country Code)" required error={touched.phone_number && errors.phone_number}>
-                                            <Input type="tel" name="phone_number" required value={formData.phone_number} onChange={handleChange} onBlur={handleBlur} error={!!(touched.phone_number && errors.phone_number)} placeholder="+234 803 000 0000" />
+                                        <Field label="Phone Number" required error={touched.phone_number && errors.phone_number}>
+                                            <div className="flex">
+                                                <select
+                                                    value={phoneCountryCode}
+                                                    onChange={e => setPhoneCountryCode(e.target.value)}
+                                                    className="shrink-0 w-28 bg-white border border-gray-200 border-r-0 rounded-l-xl px-2 py-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary-soft focus:border-primary"
+                                                >
+                                                    {COUNTRY_CODES.map(c => (
+                                                        <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+                                                    ))}
+                                                </select>
+                                                <Input
+                                                    type="tel"
+                                                    name="phone_number"
+                                                    required
+                                                    value={formData.phone_number}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    error={!!(touched.phone_number && errors.phone_number)}
+                                                    placeholder="803 000 0000"
+                                                    className="rounded-l-none flex-1"
+                                                />
+                                            </div>
+                                            <p className="mt-1 text-[11px] text-gray-400">Select your country code, then enter the number without the code.</p>
                                         </Field>
-                                        <Field label="Email Address" required error={touched.email && errors.email}>
-                                            <Input type="email" name="email" required value={formData.email} onChange={handleChange} onBlur={handleBlur} error={!!(touched.email && errors.email)} placeholder="you@example.com" />
+                                        <Field label="Email Address" hint="Optional — needed for portal login invite" error={touched.email && errors.email}>
+                                            <Input type="email" name="email" value={formData.email} onChange={handleChange} onBlur={handleBlur} error={!!(touched.email && errors.email)} placeholder="you@example.com (optional)" />
                                         </Field>
                                         <Field label="Residential Address" required error={touched.address && errors.address}>
                                             <Textarea name="address" required value={formData.address} onChange={handleChange} onBlur={handleBlur} error={!!(touched.address && errors.address)} rows={3} placeholder="Full address (Street, City, Country)" />

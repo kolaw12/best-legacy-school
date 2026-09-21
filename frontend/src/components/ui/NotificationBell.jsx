@@ -33,8 +33,11 @@ const NotificationBell = () => {
     const [loading, setLoading] = useState(false);
     const ref = useRef(null);
 
-    // Initial unread count + 60s poll.
+    // Initial unread count + 60s poll. Skip entirely if no token (public pages).
     useEffect(() => {
+        const token = localStorage.getItem('bls_auth_token');
+        if (!token) return;
+
         const fetchUnread = () =>
             axios.get(`${API_URL}/api/auth/announcements/unread-count/`)
                 .then(r => setUnread(r.data?.unread || 0))

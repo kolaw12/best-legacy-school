@@ -44,13 +44,13 @@ const TOUR_STOPS = [
         id: 'library',
         title: 'The Discovery Library',
         description: 'Stocked with over 5,000 titles, from classic literature to modern encyclopedias, fostering a deep love for reading.',
-        image: '/school_library.jpg'
+        image: '/group_celebration.jpg'
     },
     {
         id: 'tech',
         title: 'Tech & Science Hub',
         description: 'Our modern computer and science labs prepare pupils for the digital age and hands-on discovery.',
-        image: '/school_hero_Section.jpg'
+        image: '/school_ceremony.jpg'
     },
     {
         id: 'playground',
@@ -160,7 +160,7 @@ const VirtualTour = () => {
                         aria-label="Jump to the campus tour stops"
                         className="group relative block rounded-2xl overflow-hidden aspect-video border border-white/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)]"
                     >
-                        <img src="/school_hero_Section.jpg" alt="Preview of the Best Legacy campus tour" className="w-full h-full object-cover" />
+                        <img src="/school_ceremony.jpg" alt="Preview of the Best Legacy campus tour" className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-ink/35 group-hover:bg-ink/25 transition-colors" />
                         <div className="absolute inset-0 flex items-center justify-center">
                             <span className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/95 flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform">

@@ -3,7 +3,7 @@ import axios from 'axios';
 import Modal from '../../ui/Modal';
 import Button from '../../ui/Button';
 import Field, { Input, Select } from '../../ui/Field';
-import CredentialsReveal from '../CredentialsReveal';
+import CopyButton from '../../ui/CopyButton';
 import API_URL from '../../../config/api';
 import adminApi from '../../../config/adminApi';
 
@@ -20,6 +20,10 @@ const TeacherForm = ({ open, onClose, initial, onSaved }) => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [justCreated, setJustCreated] = useState(null);
+    const [photoFile, setPhotoFile] = useState(null);
+    const [photoPreview, setPhotoPreview] = useState(null);
+    const [inviteResult, setInviteResult] = useState(null);
+    const [inviting, setInviting] = useState(false);
 
     useEffect(() => {
         if (!open) return;
@@ -38,11 +42,16 @@ const TeacherForm = ({ open, onClose, initial, onSaved }) => {
                 subjects: initial.subjects || [],
                 classes: initial.classes || [],
             });
+            setPhotoFile(null);
+            setPhotoPreview(initial.photo || null);
         } else {
             setForm(EMPTY);
+            setPhotoFile(null);
+            setPhotoPreview(null);
         }
         setError(null);
         setJustCreated(null);
+        setInviteResult(null);
     }, [open, initial]);
 
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -60,17 +69,34 @@ const TeacherForm = ({ open, onClose, initial, onSaved }) => {
             if (!payload.hire_date) delete payload.hire_date;
             if (!payload.class_teacher_of) payload.class_teacher_of = null;
 
+            const isMultipart = photoFile;
+            const body = isMultipart ? (() => {
+                const fd = new FormData();
+                for (const [k, v] of Object.entries(payload)) {
+                    if (v === null || v === undefined) continue;
+                    if (Array.isArray(v)) {
+                        v.forEach(item => fd.append(k, item));
+                    } else {
+                        fd.append(k, v);
+                    }
+                }
+                fd.append('photo', photoFile);
+                return fd;
+            })() : payload;
+
+            const config = isMultipart ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+
             if (initial?.id) {
-                await axios.patch(`${API_URL}/api/academics/teachers/${initial.id}/`, payload);
+                await axios.patch(`${API_URL}/api/academics/teachers/${initial.id}/`, body, config);
                 onSaved?.();
                 onClose?.();
             } else {
-                const res = await axios.post(`${API_URL}/api/academics/teachers/`, payload);
+                const res = await axios.post(`${API_URL}/api/academics/teachers/`, body, config);
                 onSaved?.();
-                // A login is auto-provisioned server-side (email is required
-                // above) — surface it since the credentials email has no
+                // An invite link is auto-provisioned server-side (email is
+                // required above) — surface it since the invite email has no
                 // delivery guarantee.
-                setJustCreated({ email: payload.email, credentials: res.data.provisioned_login || null });
+                setJustCreated({ email: payload.email, login: res.data.provisioned_login || null });
             }
         } catch (err) {
             const data = err.response?.data;
@@ -84,16 +110,60 @@ const TeacherForm = ({ open, onClose, initial, onSaved }) => {
         }
     };
 
+    const sendInvite = async () => {
+        if (!initial?.email) return;
+        setInviting(true);
+        try {
+            const res = await axios.post(`${API_URL}/api/auth/invite/`, {
+                email: initial.email,
+                role: 'teacher',
+                first_name: initial.first_name,
+                last_name: initial.last_name,
+            });
+            setInviteResult(res.data);
+        } catch (err) {
+            setError(err.response?.data?.error || 'Failed to send invite.');
+        } finally {
+            setInviting(false);
+        }
+    };
+
+    if (inviteResult) {
+        return (
+            <Modal open={open} onClose={() => { setInviteResult(null); onClose?.(); }} title="Invitation sent" size="sm"
+                   footer={[<Button key="done" size="sm" onClick={() => { setInviteResult(null); onClose?.(); }}>Done</Button>]}>
+                <p className="text-sm text-gray-600 leading-relaxed mb-4">
+                    An invitation email has been sent to <strong>{inviteResult.email}</strong>.
+                    They'll set their own password via the link. If the email doesn't arrive,
+                    copy the link below and share it manually.
+                </p>
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+                    <div className="min-w-0 flex-1">
+                        <div className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold">Invite link</div>
+                        <div className="font-mono text-xs text-ink truncate">{inviteResult.invite_url}</div>
+                    </div>
+                    <CopyButton value={inviteResult.invite_url} label="invite link" />
+                </div>
+            </Modal>
+        );
+    }
+
     if (justCreated) {
         return (
             <Modal open={open} onClose={onClose} title="Teacher added" size="sm"
                    footer={[<Button key="done" size="sm" onClick={onClose}>Done</Button>]}>
                 <p className="text-sm text-gray-600 leading-relaxed mb-4">
-                    A staff-portal login has been created for <strong>{justCreated.email}</strong>. An email with these
-                    credentials was attempted too, but delivery isn't guaranteed — copy them now just in case.
+                    A staff-portal login has been created for <strong>{justCreated.email}</strong>. An invitation
+                    email was attempted, but delivery isn't guaranteed — copy the link below just in case.
                 </p>
-                {justCreated.credentials ? (
-                    <CredentialsReveal username={justCreated.credentials.username} password={justCreated.credentials.password} />
+                {justCreated.login ? (
+                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+                        <div className="min-w-0 flex-1">
+                            <div className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold">Invite link</div>
+                            <div className="font-mono text-xs text-ink truncate">{justCreated.login.invite_url}</div>
+                        </div>
+                        <CopyButton value={justCreated.login.invite_url} label="invite link" />
+                    </div>
                 ) : (
                     <p className="text-sm text-gray-500">Sign in at <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">/admin-login</span>.</p>
                 )}
@@ -110,6 +180,11 @@ const TeacherForm = ({ open, onClose, initial, onSaved }) => {
             size="lg"
             footer={[
                 <Button key="cancel" variant="outline" size="sm" onClick={onClose} type="button">Cancel</Button>,
+                initial?.email && (
+                    <Button key="invite" variant="outline" size="sm" onClick={sendInvite} disabled={inviting} type="button">
+                        {inviting ? 'Sending…' : 'Send Invite'}
+                    </Button>
+                ),
                 <Button key="save" size="sm" onClick={submit} disabled={saving}>
                     {saving ? 'Saving…' : (initial ? 'Save changes' : 'Create teacher')}
                 </Button>,
@@ -123,6 +198,25 @@ const TeacherForm = ({ open, onClose, initial, onSaved }) => {
                 <Field label="Email" required><Input type="email" value={form.email} onChange={e => set('email', e.target.value)} required /></Field>
                 <Field label="Phone"><Input value={form.phone} onChange={e => set('phone', e.target.value)} /></Field>
                 <Field label="Qualification" className="md:col-span-2"><Input value={form.qualification} onChange={e => set('qualification', e.target.value)} placeholder="e.g. B.Ed Early Childhood" /></Field>
+                <Field label="Photo" hint="Staff ID photo" className="md:col-span-2">
+                    <div className="flex items-center gap-4">
+                        {photoPreview && (
+                            <img src={photoPreview} alt="Staff photo" className="w-16 h-16 rounded-full object-cover border border-gray-200" />
+                        )}
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                    setPhotoFile(file);
+                                    setPhotoPreview(URL.createObjectURL(file));
+                                }
+                            }}
+                            className="block w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-secondary-soft file:text-secondary-dark hover:file:bg-secondary/20 cursor-pointer"
+                        />
+                    </div>
+                </Field>
                 <Field label="Hire date"><Input type="date" value={form.hire_date} onChange={e => set('hire_date', e.target.value)} /></Field>
                 <Field label="Class teacher of">
                     <Select value={form.class_teacher_of} onChange={e => set('class_teacher_of', e.target.value)}>

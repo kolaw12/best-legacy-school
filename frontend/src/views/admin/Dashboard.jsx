@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, GraduationCap, Clock, CheckCircle2, Inbox, Wallet, ShieldCheck } from 'lucide-react';
 import AdminPageHeader from '../../components/admin/PageHeader';
 import KpiCard from '../../components/admin/KpiCard';
+const Charts = lazy(() => import('../../components/admin/Charts'));
 import DataTable from '../../components/admin/DataTable';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
@@ -45,10 +46,10 @@ const AdminDashboard = () => {
                 title="Welcome to the Admin Console"
                 subtitle="What you can do from here — dismiss when you're oriented."
                 steps={[
-                    { icon: <Inbox className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Review admissions & accept / enrol new pupils' },
-                    { icon: <Users className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Manage students, teachers, classes and subjects' },
-                    { icon: <Wallet className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Set fees, generate invoices, record payments' },
-                    { icon: <ShieldCheck className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Audit log shows every write across the system' },
+                    { icon: <Inbox className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Admissions', description: 'Review applications and enrol new pupils into classes.' },
+                    { icon: <Users className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'People', description: 'Manage students, teachers, guardians, and class assignments.' },
+                    { icon: <Wallet className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Finance', description: 'Set fees, generate invoices, record payments, and print receipts.' },
+                    { icon: <ShieldCheck className="w-4 h-4 text-primary" strokeWidth={2} />, label: 'Audit Log', description: 'Every write action across the system is recorded here.' },
                 ]}
             />
             <AdminPageHeader
@@ -77,67 +78,29 @@ const AdminDashboard = () => {
                              : "New enrolments"} />
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-6">
-                {/* Section breakdown */}
-                <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 shadow-card">
-                    <div className="flex items-end justify-between mb-5">
-                        <div>
-                            <h3 className="font-bold text-ink">Students by Class</h3>
-                            <p className="text-xs text-gray-500">Active students only, this session.</p>
-                        </div>
-                        <Link to="/admin/classes" className="text-xs font-semibold text-primary hover:underline">View all →</Link>
-                    </div>
-                    <div className="space-y-3">
-                        {(data?.per_class || []).map(c => {
-                            const pct = totalActive ? Math.round((c.count / totalActive) * 100) : 0;
-                            return (
-                                <div key={c.name}>
-                                    <div className="flex justify-between text-sm mb-1">
-                                        <span className="font-medium text-ink flex items-center gap-2">
-                                            <span className={`w-2 h-2 rounded-full ${c.section === 'nursery' ? 'bg-secondary' : 'bg-primary'}`}></span>
-                                            {c.name}
-                                        </span>
-                                        <span className="text-gray-500 tabular-nums">{c.count} · {pct}%</span>
-                                    </div>
-                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                        <div className={`h-full ${c.section === 'nursery' ? 'bg-secondary' : 'bg-primary'} transition-all`} style={{ width: `${pct}%` }}></div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                        {!loading && !(data?.per_class || []).length && (
-                            <div className="text-sm text-gray-400 text-center py-6">No class data yet. Run the seed command.</div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Gender split + quick actions */}
-                <div className="space-y-6">
-                    <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-card">
-                        <h3 className="font-bold text-ink mb-4">Gender Split</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-xl bg-primary-soft p-4">
-                                <div className="text-xs font-semibold text-primary-dark">Boys</div>
-                                <div className="text-2xl font-black text-ink mt-1">{data?.gender_split?.male ?? 0}</div>
-                            </div>
-                            <div className="rounded-xl bg-secondary-soft p-4">
-                                <div className="text-xs font-semibold text-secondary-dark">Girls</div>
-                                <div className="text-2xl font-black text-ink mt-1">{data?.gender_split?.female ?? 0}</div>
-                            </div>
-                        </div>
+            <Suspense fallback={<div className="h-64 bg-gray-50 rounded-2xl animate-pulse" />}>
+                <div className="grid lg:grid-cols-3 gap-6">
+                    {/* Students by Class chart */}
+                    <div className="lg:col-span-2">
+                        <Charts.StudentsByClassChart data={data?.per_class || []} />
                     </div>
 
-                    <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-card">
+                    {/* Gender chart + quick actions */}
+                    <div className="space-y-6">
+                        <Charts.GenderPieChart male={data?.gender_split?.male || 0} female={data?.gender_split?.female || 0} />
+
+                    <div className="bg-white dark:bg-[#1A1D2B] rounded-2xl border border-gray-100 dark:border-[#2D3348] p-6 shadow-card">
                         <h3 className="font-bold text-ink mb-4">Quick Actions</h3>
                         <div className="space-y-2">
-                            <Link to="/admin/students" className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-50 text-sm text-ink">Add a student <span className="text-gray-300">→</span></Link>
-                            <Link to="/admin/teachers" className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-50 text-sm text-ink">Add a teacher <span className="text-gray-300">→</span></Link>
-                            <Link to="/admin/admissions" className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-50 text-sm text-ink">Review applications <span className="text-gray-300">→</span></Link>
-                            <Link to="/admin/classes" className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-50 text-sm text-ink">Manage classes <span className="text-gray-300">→</span></Link>
+                            <Link to="/admin/students" className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-[#22253A] text-sm text-ink">Add a student <span className="text-gray-300">→</span></Link>
+                            <Link to="/admin/teachers" className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-[#22253A] text-sm text-ink">Add a teacher <span className="text-gray-300">→</span></Link>
+                            <Link to="/admin/admissions" className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-[#22253A] text-sm text-ink">Review applications <span className="text-gray-300">→</span></Link>
+                            <Link to="/admin/classes" className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-[#22253A] text-sm text-ink">Manage classes <span className="text-gray-300">→</span></Link>
                         </div>
                     </div>
                 </div>
-            </div>
+                </div>
+            </Suspense>
 
             {/* Recent admissions */}
             <div className="mt-8">

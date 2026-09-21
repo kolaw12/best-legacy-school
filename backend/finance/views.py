@@ -27,10 +27,10 @@ def _role(request):
     return p.role if p else None
 
 from datetime import date as date_cls, timedelta
-from .models import FeeSchedule, Invoice, Payment, PaymentPlan, PaymentPlanInstalment
+from .models import FeeSchedule, Invoice, Payment, PaymentPlan, PaymentPlanInstalment, BillItem, BookItem
 from .serializers import (
     FeeScheduleSerializer, InvoiceSerializer, PaymentSerializer,
-    PaymentPlanSerializer,
+    PaymentPlanSerializer, BillItemSerializer, BookItemSerializer,
 )
 
 
@@ -490,4 +490,77 @@ def finance_summary(request):
             "invoice_no": r["invoice__invoice_no"],
             "student_name": f"{r['invoice__student__first_name']} {r['invoice__student__last_name']}",
         } for r in recent],
+    })
+
+
+class BillItemViewSet(SoftDeleteViewSetMixin, viewsets.ModelViewSet):
+    """CRUD for itemized bill breakdown per class level."""
+    queryset = BillItem.objects.select_related("class_level").all()
+    serializer_class = BillItemSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        class_level = self.request.query_params.get("class_level")
+        if class_level:
+            qs = qs.filter(class_level_id=class_level)
+        return qs
+
+
+class BookItemViewSet(SoftDeleteViewSetMixin, viewsets.ModelViewSet):
+    """CRUD for required books/stationery per section."""
+    queryset = BookItem.objects.all()
+    serializer_class = BookItemSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        section = self.request.query_params.get("section")
+        if section:
+            qs = qs.filter(section=section)
+        return qs
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def child_bill(request, student_id):
+    """Return itemized bill breakdown and book list for a student's class.
+    Parents can only view their own child's bill."""
+    from academics.models import Student
+
+    try:
+        student = Student.objects.select_related("class_level").get(pk=student_id)
+    except Student.DoesNotExist:
+        return Response({"error": "Student not found."}, status=404)
+
+    role = _role(request)
+    if role == "parent":
+        gid = _profile(request).guardian_id
+        if not gid or student.guardian_id != gid:
+            return Response({"error": "You can only view your own child's bill."}, status=403)
+
+    section = student.class_level.section
+    bill_items = BillItem.objects.filter(
+        class_level=student.class_level, is_active=True
+    ).order_by("sn").values("name", "amount")
+
+    book_items = BookItem.objects.filter(
+        section=section, is_active=True
+    ).order_by("sn").values("name", "price", "note")
+
+    total_bill = sum(item["amount"] for item in bill_items)
+    total_books = sum(item["price"] for item in book_items)
+
+    return Response({
+        "student": {
+            "id": student.id,
+            "name": student.full_name,
+            "class": student.class_level.name,
+            "section": section,
+        },
+        "bill_items": list(bill_items),
+        "total_bill": total_bill,
+        "book_items": list(book_items),
+        "total_books": total_books,
+        "grand_total": total_bill + total_books,
     })

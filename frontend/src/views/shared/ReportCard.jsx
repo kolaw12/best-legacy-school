@@ -10,8 +10,8 @@ const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-NG', { day: 
 
 const BACK_LINKS = {
     '/admin':   { to: '/admin/students', label: '← Back to students' },
-    '/teacher': { to: '/teacher/class',  label: '← Back to my class' },
-    '/parent':  { to: '/parent/dashboard', label: '← Back to dashboard' },
+    '/admin/teacher': { to: '/admin/teacher/class',  label: '← Back to my class' },
+    '/portal':  { to: '/portal/dashboard', label: '← Back to dashboard' },
 };
 
 const ReportCardView = () => {
@@ -21,25 +21,48 @@ const ReportCardView = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [downloading, setDownloading] = useState(false);
+    const [terms, setTerms] = useState([]);
+    const [selectedTerm, setSelectedTerm] = useState('');
 
     const portal = Object.keys(BACK_LINKS).find(p => pathname.startsWith(p));
     const backLink = BACK_LINKS[portal] || BACK_LINKS['/admin'];
 
+    // Fetch available terms
+    useEffect(() => {
+        axios.get(`${API_URL}/api/academics/terms/`)
+            .then(r => {
+                const list = Array.isArray(r.data) ? r.data : r.data.results || [];
+                setTerms(list);
+            })
+            .catch(() => {});
+    }, []);
+
+    // Fetch report card
     useEffect(() => {
         setLoading(true);
-        axios.get(`${API_URL}/api/academics/report-card/${studentId}/`)
+        setError(null);
+        const params = selectedTerm ? { term: selectedTerm } : {};
+        axios.get(`${API_URL}/api/academics/report-card/${studentId}/`, { params })
             .then(r => setData(r.data))
             .catch(e => setError(e.response?.data?.error || e.message))
             .finally(() => setLoading(false));
-    }, [studentId]);
+    }, [studentId, selectedTerm]);
+
+    // When data loads, sync the dropdown to the actual term shown
+    useEffect(() => {
+        if (data?.term?.id && !selectedTerm) {
+            setSelectedTerm(String(data.term.id));
+        }
+    }, [data]);
 
     const downloadPdf = async () => {
         setDownloading(true);
         try {
-            // A plain <a href> won't carry the auth token (it's only ever set
-            // as an axios default header, not a cookie) — fetch as a blob
-            // through axios instead, then trigger the download from that.
-            const res = await axios.get(`${API_URL}/api/academics/report-card/${studentId}/pdf/`, { responseType: 'blob' });
+            const params = selectedTerm ? { term: selectedTerm } : {};
+            const res = await axios.get(`${API_URL}/api/academics/report-card/${studentId}/pdf/`, {
+                params,
+                responseType: 'blob',
+            });
             const url = URL.createObjectURL(res.data);
             const a = document.createElement('a');
             a.href = url;
@@ -64,15 +87,31 @@ const ReportCardView = () => {
     return (
         <>
             {/* Toolbar — hidden on print */}
-            <div className="no-print print:hidden flex items-center justify-between mb-6">
+            <div className="no-print print:hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
                 <div>
                     <Link to={backLink.to} className="text-xs font-semibold text-primary hover:underline">{backLink.label}</Link>
                 </div>
-                <div className="flex gap-2">
-                    <Button size="sm" variant="primary" onClick={downloadPdf} disabled={downloading}>
-                        {downloading ? 'Preparing…' : 'Download PDF'}
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => window.print()}>Print this page</Button>
+                <div className="flex items-center gap-3 flex-wrap">
+                    {/* Term selector */}
+                    {terms.length > 1 && (
+                        <select
+                            value={selectedTerm}
+                            onChange={e => setSelectedTerm(e.target.value)}
+                            className="text-xs font-semibold px-3 py-2 rounded-xl border border-gray-200 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-primary-soft focus:border-primary"
+                        >
+                            {terms.map(t => (
+                                <option key={t.id} value={t.id}>
+                                    {t.name} Term — {t.session_name || t.session}
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                    <div className="flex gap-2">
+                        <Button size="sm" variant="primary" onClick={downloadPdf} disabled={downloading}>
+                            {downloading ? 'Preparing…' : 'Download PDF'}
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => window.print()}>Print this page</Button>
+                    </div>
                 </div>
             </div>
 
@@ -96,9 +135,7 @@ const ReportCardView = () => {
                     </div>
                 </header>
 
-                {/* Print-only letterhead spacer + badge — the letterhead background
-                    already carries the crest/name/address, so print just needs the
-                    badge and enough clearance to sit below the printed header. */}
+                {/* Print-only letterhead spacer + badge */}
                 <div className="report-print-head hidden print:block px-8 pt-6">
                     <div className="text-right">
                         <Badge tone={is_nursery ? 'warm' : 'mint'}>
@@ -181,7 +218,10 @@ const ReportCardView = () => {
                                                 <td className="py-2.5 text-center tabular-nums">{g.exam}</td>
                                                 <td className="py-2.5 text-center font-bold">{g.total}</td>
                                                 <td className="py-2.5 text-center"><Badge tone={['A','B'].includes(g.grade) ? 'mint' : ['C','D'].includes(g.grade) ? 'neutral' : 'warm'}>{g.grade}</Badge></td>
-                                                <td className="py-2.5 text-sm text-gray-600">{g.remark || <span className="text-gray-300">—</span>}</td>
+                                                <td className="py-2.5 text-sm text-gray-600">
+                                                    {g.remark || <span className="text-gray-300">—</span>}
+                                                    {g.teacher_comment && <div className="text-xs text-gray-400 italic mt-0.5">{g.teacher_comment}</div>}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -229,14 +269,6 @@ const ReportCardView = () => {
                         print-color-adjust: exact;
                         color-adjust: exact;
                     }
-                    /* padding-top, not margin-top: a top margin here would collapse
-                       straight through into the article's own top (no border/padding
-                       sits between them), dragging the background image down by the
-                       same amount and cancelling the clearance out. Percentage
-                       padding resolves against the containing block's WIDTH (a CSS
-                       quirk) — the same basis the background-image is sized to — so
-                       this stays proportional to the letterhead's header band
-                       regardless of the width the browser prints at. */
                     .report-print-head { padding-top: 27%; }
                 }
             `}</style>

@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
  * to `row.id`) so it stays correct across re-fetches/filtering.
  */
 export default function useRowSelection(rows, keyFn = (r) => r.id) {
+    const safeRows = rows || [];
     const [selectedKeys, setSelectedKeys] = useState(() => new Set());
 
     const toggle = (row) => {
@@ -16,13 +17,13 @@ export default function useRowSelection(rows, keyFn = (r) => r.id) {
         });
     };
 
-    const allSelected = rows.length > 0 && rows.every(r => selectedKeys.has(keyFn(r)));
-    const toggleAll = () => setSelectedKeys(allSelected ? new Set() : new Set(rows.map(keyFn)));
+    const allSelected = safeRows.length > 0 && safeRows.every(r => selectedKeys.has(keyFn(r)));
+    const toggleAll = () => setSelectedKeys(allSelected ? new Set() : new Set(safeRows.map(keyFn)));
     const clear = () => setSelectedKeys(new Set());
 
     const selectedRows = useMemo(
-        () => rows.filter(r => selectedKeys.has(keyFn(r))),
-        [rows, selectedKeys], // eslint-disable-line react-hooks/exhaustive-deps
+        () => safeRows.filter(r => selectedKeys.has(keyFn(r))),
+        [safeRows, selectedKeys], // eslint-disable-line react-hooks/exhaustive-deps
     );
 
     return {

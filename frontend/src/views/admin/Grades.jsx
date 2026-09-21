@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { Download } from 'lucide-react';
 import AdminPageHeader from '../../components/admin/PageHeader';
 import DataTable from '../../components/admin/DataTable';
 import Badge from '../../components/ui/Badge';
 import { Select } from '../../components/ui/Field';
+import { exportCsv } from '../../utils/exportCsv';
 import adminApi from '../../config/adminApi';
 import API_URL from '../../config/api';
 
@@ -30,6 +32,44 @@ const AdminGrades = () => {
 
     const selectedClass = classes.find(c => String(c.id) === String(classId));
     const isNursery = selectedClass?.section === 'nursery';
+
+    const getGrade = (avg) => {
+        if (avg >= 80) return 'A';
+        if (avg >= 70) return 'B';
+        if (avg >= 60) return 'C';
+        if (avg >= 50) return 'D';
+        if (avg >= 40) return 'E';
+        return 'F';
+    };
+
+    // When "All subjects" is selected (no subjectId), aggregate per student
+    const aggregated = useMemo(() => {
+        if (subjectId || isNursery || !rows.length) return null;
+        const byStudent = {};
+        rows.forEach(r => {
+            if (!byStudent[r.student]) {
+                byStudent[r.student] = {
+                    student: r.student,
+                    student_name: r.student_name,
+                    admission_no: r.admission_no,
+                    subjects: 0,
+                    totalScore: 0,
+                    totalMax: 0,
+                };
+            }
+            const s = byStudent[r.student];
+            s.subjects++;
+            s.totalScore += Number(r.total || 0);
+            s.totalMax += 100; // each subject is out of 100
+        });
+        return Object.values(byStudent).map(s => ({
+            ...s,
+            average: s.subjects ? Math.round(s.totalScore / s.subjects) : 0,
+            grade: s.subjects ? getGrade(Math.round(s.totalScore / s.subjects)) : '—',
+        }));
+    }, [rows, subjectId, isNursery]);
+
+    const displayRows = aggregated || rows;
 
     useEffect(() => {
         if (!selectedClass) return;
@@ -85,6 +125,43 @@ const AdminGrades = () => {
                 )}
             </div>
 
+            {rows.length > 0 && (
+                <div className="flex justify-end mb-3">
+                    <button onClick={() => {
+                        const cols = isNursery
+                            ? [
+                                { key: 'admission_no', label: 'Admission No' },
+                                { key: 'student_name', label: 'Pupil' },
+                                { key: 'domain_display', label: 'Domain' },
+                                { key: 'rating_display', label: 'Rating' },
+                                { key: 'remark', label: 'Remark' },
+                              ]
+                            : aggregated
+                            ? [
+                                { key: 'admission_no', label: 'Admission No' },
+                                { key: 'student_name', label: 'Pupil' },
+                                { key: 'subjects', label: 'Subjects' },
+                                { key: 'totalScore', label: 'Total Score' },
+                                { key: 'average', label: 'Average' },
+                                { key: 'grade', label: 'Grade' },
+                              ]
+                            : [
+                                { key: 'admission_no', label: 'Admission No' },
+                                { key: 'student_name', label: 'Pupil' },
+                                { key: 'subject_name', label: 'Subject' },
+                                { key: 'ca1', label: 'CA1' },
+                                { key: 'ca2', label: 'CA2' },
+                                { key: 'exam', label: 'Exam' },
+                                { key: 'total', label: 'Total' },
+                                { key: 'grade', label: 'Grade' },
+                              ];
+                        exportCsv(displayRows, cols, 'grades');
+                    }} className="text-xs font-semibold px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition inline-flex items-center gap-1.5">
+                        <Download className="w-3.5 h-3.5" /> Export CSV
+                    </button>
+                </div>
+            )}
+
             {!classId ? (
                 <div className="bg-white rounded-2xl border border-dashed border-gray-200 py-16 text-center text-sm text-gray-500">Pick a class to view entries.</div>
             ) : isNursery ? (
@@ -100,8 +177,15 @@ const AdminGrades = () => {
                 />
             ) : (
                 <DataTable
-                    loading={loading} rows={rows} empty="No grades entered for this selection yet."
-                    columns={[
+                    loading={loading} rows={displayRows} empty="No grades entered for this selection yet."
+                    columns={aggregated ? [
+                        { key: 'student_name', label: 'Pupil', render: r => <Link to={`/admin/report-cards/${r.student}`} className="font-semibold text-ink hover:text-primary">{r.student_name}</Link> },
+                        { key: 'admission_no', label: 'Admission #', render: r => <span className="font-mono text-xs">{r.admission_no}</span> },
+                        { key: 'subjects', label: 'Subjects', className: 'text-center' },
+                        { key: 'totalScore', label: 'Total Score', className: 'text-center font-bold tabular-nums' },
+                        { key: 'average', label: 'Average', className: 'text-center font-bold tabular-nums' },
+                        { key: 'grade', label: 'Grade', render: r => <Badge tone={['A','B'].includes(r.grade) ? 'mint' : ['C','D'].includes(r.grade) ? 'neutral' : 'warm'}>{r.grade}</Badge> },
+                    ] : [
                         { key: 'student_name', label: 'Pupil', render: r => <Link to={`/admin/report-cards/${r.student}`} className="font-semibold text-ink hover:text-primary">{r.student_name}</Link> },
                         { key: 'admission_no', label: 'Admission #', render: r => <span className="font-mono text-xs">{r.admission_no}</span> },
                         { key: 'subject_name', label: 'Subject' },

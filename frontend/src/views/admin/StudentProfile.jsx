@@ -111,9 +111,13 @@ const AdminStudentProfile = () => {
 
             <Reveal>
                 <header className="bg-white rounded-3xl shadow-card p-6 md:p-8 mb-6 flex flex-col md:flex-row md:items-center gap-5">
-                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-primary-soft text-primary-dark flex items-center justify-center font-black text-2xl shrink-0">
-                        {(student.first_name?.[0] || '') + (student.last_name?.[0] || '')}
-                    </div>
+                    {student.photo ? (
+                        <img src={student.photo} alt={student.full_name} className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover shrink-0" />
+                    ) : (
+                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-primary-soft text-primary-dark flex items-center justify-center font-black text-2xl shrink-0">
+                            {(student.first_name?.[0] || '') + (student.last_name?.[0] || '')}
+                        </div>
+                    )}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                             <Badge tone={student.class_section === 'nursery' ? 'warm' : 'mint'}>{student.class_name}</Badge>
@@ -202,25 +206,70 @@ const AdminStudentProfile = () => {
 
             {tab === 'attendance' && (
                 <Reveal>
-                    <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-card">
-                        <h3 className="font-bold text-ink mb-4">Attendance record</h3>
-                        {attendance.length === 0 ? (
-                            <p className="text-sm text-gray-400">No attendance marked for this pupil yet.</p>
-                        ) : (
-                            <ul className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-2">
-                                {attendance.slice(0, 40).map(a => (
-                                    <li key={a.id} className={`p-2 rounded-xl text-center text-xs ${
-                                        a.status === 'present' ? 'bg-primary-soft text-primary-dark' :
-                                        a.status === 'absent' ? 'bg-rose-50 text-rose-700' :
-                                        a.status === 'late' ? 'bg-amber-50 text-amber-700' :
-                                        'bg-gray-50 text-gray-600'
-                                    }`}>
-                                        <div className="font-bold">{new Date(a.date).getDate()}</div>
-                                        <div className="text-[10px] uppercase">{a.status}</div>
-                                    </li>
+                    <div className="space-y-4">
+                        {/* Summary stats */}
+                        {attendance.length > 0 && (
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                {[
+                                    { label: 'Total days', value: attendance.length, tone: 'bg-white border border-gray-100', accent: 'text-ink' },
+                                    { label: 'Present', value: attendance.filter(a => a.status === 'present').length, tone: 'bg-primary-soft', accent: 'text-primary-dark' },
+                                    { label: 'Absent', value: attendance.filter(a => a.status === 'absent').length, tone: 'bg-rose-50', accent: 'text-rose-700' },
+                                    { label: 'Late', value: attendance.filter(a => a.status === 'late').length, tone: 'bg-amber-50', accent: 'text-amber-700' },
+                                    { label: 'Rate', value: attendance.length ? `${Math.round(((attendance.filter(a => a.status === 'present' || a.status === 'late').length) / attendance.length) * 100)}%` : '—', tone: 'bg-ink', accent: 'text-white', whiteLabel: true },
+                                ].map(s => (
+                                    <div key={s.label} className={`rounded-xl p-3 ${s.tone}`}>
+                                        <div className={`text-[10px] font-semibold uppercase tracking-widest ${s.whiteLabel ? 'text-white/70' : 'text-gray-500'}`}>{s.label}</div>
+                                        <div className={`text-xl font-black mt-0.5 ${s.accent}`}>{s.value}</div>
+                                    </div>
                                 ))}
-                            </ul>
+                            </div>
                         )}
+
+                        {/* Attendance table */}
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-card overflow-hidden">
+                            {attendance.length === 0 ? (
+                                <p className="p-6 text-sm text-gray-400 text-center">No attendance marked for this pupil yet.</p>
+                            ) : (
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-gray-100 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                                            <th className="text-left px-4 py-2.5">Date</th>
+                                            <th className="text-left px-4 py-2.5">Day</th>
+                                            <th className="text-left px-4 py-2.5">Status</th>
+                                            <th className="text-left px-4 py-2.5">Note</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {attendance.map(a => {
+                                            const d = new Date(a.date);
+                                            return (
+                                                <tr key={a.id} className="hover:bg-gray-50/50 transition">
+                                                    <td className="px-4 py-2.5 font-medium text-ink">{d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                                                    <td className="px-4 py-2.5 text-gray-500">{d.toLocaleDateString('en-NG', { weekday: 'short' })}</td>
+                                                    <td className="px-4 py-2.5">
+                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                                                            a.status === 'present' ? 'bg-primary-soft text-primary-dark' :
+                                                            a.status === 'absent' ? 'bg-rose-50 text-rose-700' :
+                                                            a.status === 'late' ? 'bg-amber-50 text-amber-700' :
+                                                            'bg-gray-100 text-gray-600'
+                                                        }`}>
+                                                            <span className={`w-1.5 h-1.5 rounded-full ${
+                                                                a.status === 'present' ? 'bg-primary' :
+                                                                a.status === 'absent' ? 'bg-rose-500' :
+                                                                a.status === 'late' ? 'bg-amber-500' :
+                                                                'bg-gray-400'
+                                                            }`} />
+                                                            {a.status.charAt(0).toUpperCase() + a.status.slice(1)}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-2.5 text-xs text-gray-500">{a.note || <span className="text-gray-300">—</span>}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
                     </div>
                 </Reveal>
             )}

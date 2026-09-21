@@ -1,13 +1,11 @@
 import { Component } from 'react';
-import { Link } from 'react-router-dom';
 
 /**
  * Catches uncaught render errors anywhere in the tree and shows a friendly
  * fallback instead of a blank white screen.
  *
- * <ErrorBoundary>
- *   <App />
- * </ErrorBoundary>
+ * Uses a plain <a> tag instead of react-router-dom <Link> because the
+ * ErrorBoundary may be mounted outside the Router context.
  */
 class ErrorBoundary extends Component {
     constructor(props) {
@@ -20,8 +18,6 @@ class ErrorBoundary extends Component {
     }
 
     componentDidCatch(error, info) {
-        // In production this would ship to Sentry / similar.
-        // eslint-disable-next-line no-console
         console.error('[ErrorBoundary]', error, info?.componentStack);
     }
 
@@ -52,12 +48,12 @@ class ErrorBoundary extends Component {
                         >
                             Try again
                         </button>
-                        <Link
-                            to="/"
+                        <a
+                            href="/"
                             className="bg-white text-ink border border-gray-200 hover:border-primary hover:text-primary font-semibold px-5 py-2.5 rounded-full transition"
                         >
                             ← Back to home
-                        </Link>
+                        </a>
                     </div>
                 </div>
             </div>

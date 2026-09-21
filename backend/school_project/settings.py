@@ -51,6 +51,8 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(','
 
 # CSRF Trusted Origins for production
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://*.vercel.app,https://*.onrender.com').split(',')
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS += ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:8000', 'http://127.0.0.1:8000']
 
 # Error monitoring — mirrors the frontend's config/sentry.js: a complete
 # no-op unless SENTRY_DSN is set, and fails soft if sentry-sdk isn't

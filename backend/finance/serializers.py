@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import FeeSchedule, Invoice, Payment, PaymentPlan, PaymentPlanInstalment
+from .models import FeeSchedule, Invoice, Payment, PaymentPlan, PaymentPlanInstalment, BillItem, BookItem
 
 
 class FeeScheduleSerializer(serializers.ModelSerializer):
@@ -74,3 +74,21 @@ class PaymentPlanSerializer(serializers.ModelSerializer):
         fields = ["id", "invoice", "invoice_no", "student_name",
                   "instalments", "status", "status_label",
                   "schedule", "note", "created_at"]
+
+
+class BillItemSerializer(serializers.ModelSerializer):
+    class_name = serializers.CharField(source="class_level.name", read_only=True)
+
+    class Meta:
+        model = BillItem
+        fields = ["id", "class_level", "class_name", "name", "amount", "sn", "is_active", "created_at"]
+        read_only_fields = ["created_at"]
+
+
+class BookItemSerializer(serializers.ModelSerializer):
+    section_display = serializers.CharField(source="get_section_display", read_only=True)
+
+    class Meta:
+        model = BookItem
+        fields = ["id", "section", "section_display", "name", "price", "note", "sn", "is_active", "created_at"]
+        read_only_fields = ["created_at"]

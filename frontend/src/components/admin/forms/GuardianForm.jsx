@@ -3,7 +3,7 @@ import axios from 'axios';
 import Modal from '../../ui/Modal';
 import Button from '../../ui/Button';
 import Field, { Input, Select, Textarea } from '../../ui/Field';
-import CredentialsReveal from '../CredentialsReveal';
+import CopyButton from '../../ui/CopyButton';
 import API_URL from '../../../config/api';
 
 const EMPTY = {
@@ -51,10 +51,10 @@ const GuardianForm = ({ open, onClose, initial, onSaved }) => {
                 const res = await axios.post(`${API_URL}/api/academics/guardians/`, form);
                 onSaved?.();
                 if (form.email) {
-                    // A login is auto-provisioned server-side when an email is
-                    // given — let the admin know rather than silently closing,
-                    // since the credentials email has no delivery guarantee.
-                    setJustCreated({ email: form.email, credentials: res.data.provisioned_login || null });
+                    // An invite link is auto-provisioned server-side when an
+                    // email is given — surface it since the invite email has no
+                    // delivery guarantee.
+                    setJustCreated({ email: form.email, login: res.data.provisioned_login || null });
                 } else {
                     onClose?.();
                 }
@@ -76,11 +76,17 @@ const GuardianForm = ({ open, onClose, initial, onSaved }) => {
             <Modal open={open} onClose={onClose} title="Guardian added" size="sm"
                    footer={[<Button key="done" size="sm" onClick={onClose}>Done</Button>]}>
                 <p className="text-sm text-gray-600 leading-relaxed mb-4">
-                    A parent-portal login has been created for <strong>{justCreated.email}</strong>. An email with these
-                    credentials was attempted too, but delivery isn't guaranteed — copy them now just in case.
+                    A parent-portal login has been created for <strong>{justCreated.email}</strong>. An invitation
+                    email was attempted, but delivery isn't guaranteed — copy the link below just in case.
                 </p>
-                {justCreated.credentials ? (
-                    <CredentialsReveal username={justCreated.credentials.username} password={justCreated.credentials.password} />
+                {justCreated.login ? (
+                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+                        <div className="min-w-0 flex-1">
+                            <div className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold">Invite link</div>
+                            <div className="font-mono text-xs text-ink truncate">{justCreated.login.invite_url}</div>
+                        </div>
+                        <CopyButton value={justCreated.login.invite_url} label="invite link" />
+                    </div>
                 ) : (
                     <p className="text-sm text-gray-500">Sign in at <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">/admin-login</span>.</p>
                 )}

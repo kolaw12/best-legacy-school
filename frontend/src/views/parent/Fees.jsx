@@ -12,6 +12,7 @@ import { payInvoice, isPaystackConfigured } from '../../config/paystack';
 import { useToast } from '../../components/ui/ToastProvider';
 import { useAuth } from '../../context/AuthContext';
 import useMyChildren from '../../context/useMyChildren';
+import { openReceiptPdf } from '../../utils/openReceiptPdf';
 import API_URL from '../../config/api';
 
 const naira = (v) => `₦${Number(v || 0).toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
@@ -165,15 +166,14 @@ const ParentFees = () => {
                                     <ul className="flex flex-wrap gap-2">
                                         {i.payments.map(p => (
                                             <li key={p.id}>
-                                                <a
-                                                    href={`${API_URL}/api/finance/payments/${p.id}/receipt/`}
-                                                    target="_blank" rel="noreferrer"
+                                                <button
+                                                    onClick={() => openReceiptPdf(p.id)}
                                                     className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary-soft text-primary-dark hover:bg-primary hover:text-white transition"
                                                 >
                                                     <FileText className="w-3.5 h-3.5" strokeWidth={2} />
                                                     <span className="font-mono">{p.receipt_no}</span>
                                                     <span className="opacity-70">· {naira(p.amount)}</span>
-                                                </a>
+                                                </button>
                                             </li>
                                         ))}
                                     </ul>

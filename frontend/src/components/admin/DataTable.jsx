@@ -33,7 +33,9 @@ const DataTable = ({
         );
     }
 
-    if (!rows.length) {
+    const safeRows = rows || [];
+
+    if (!safeRows.length) {
         return (
             <EmptyState
                 icon={emptyIcon || <ClipboardList className="w-6 h-6" strokeWidth={1.75} />}
@@ -59,7 +61,7 @@ const DataTable = ({
                         </tr>
                     </thead>
                     <tbody>
-                        {rows.map((row, i) => (
+                        {safeRows.filter(Boolean).map((row, i) => (
                             <tr
                                 key={row.id ?? i}
                                 onClick={onRowClick ? () => onRowClick(row) : undefined}

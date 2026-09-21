@@ -6,51 +6,58 @@
 <style>
     @page {
         size: A4;
-        margin: 56mm 16mm 18mm 16mm;
+        margin: 68mm 14mm 14mm 14mm;
         background-image: url("{{ letterhead_bg_data_uri }}");
         @frame footer {
             -pdf-frame-content: footerContent;
-            bottom: 8mm; left: 16mm; right: 16mm; height: 12mm;
+            bottom: 5mm; left: 14mm; right: 14mm; height: 10mm;
         }
     }
-    body { font-family: Helvetica, Arial, sans-serif; color: #1B1F3B; font-size: 10pt; }
+    body { font-family: Helvetica, Arial, sans-serif; color: #1B1F3B; font-size: 8.5pt; line-height: 1.2; }
     h1, h2, h3 { color: #5B6CF5; margin: 0; }
-    .head { text-align: right; margin-bottom: 4mm; }
-    .head .tag { background: #EEF0FF; color: #3D3B8E; padding: 2pt 8pt; border-radius: 999px; font-size: 8pt; font-weight: bold; }
-    h1 { font-size: 22pt; margin-top: 4mm; }
-    .sub { color: #6B7280; font-size: 9pt; }
+    .head { text-align: right; margin-bottom: 1.5mm; }
+    .head .tag { background: #EEF0FF; color: #3D3B8E; padding: 1pt 5pt; border-radius: 999px; font-size: 6.5pt; font-weight: bold; }
+    h1 { font-size: 16pt; margin-top: 1.5mm; }
+    h3 { font-size: 9pt; margin-top: 3mm; margin-bottom: 1.5mm; }
+    .sub { color: #6B7280; font-size: 7.5pt; }
 
-    .info-grid { width: 100%; margin: 8mm 0; }
-    .info-grid td { padding: 3mm 4mm; vertical-align: top; }
-    .info-grid .lbl { font-size: 7pt; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5pt; font-weight: bold; }
-    .info-grid .val { font-size: 11pt; color: #1B1F3B; font-weight: bold; }
+    .info-grid { width: 100%; margin: 2mm 0; border-collapse: collapse; }
+    .info-grid td { padding: 1.5mm 2.5mm; vertical-align: top; border-bottom: 0.5pt solid #E5E7EB; }
+    .info-grid .lbl { font-size: 5.5pt; color: #6B7280; text-transform: uppercase; letter-spacing: 0.3pt; font-weight: bold; margin-bottom: 0.3mm; }
+    .info-grid .val { font-size: 8.5pt; color: #1B1F3B; font-weight: bold; }
 
-    .att-band { background: #F8F8FC; padding: 5mm; margin-bottom: 8mm; border-radius: 4pt; }
-    .att-band table { width: 100%; }
-    .att-band td { width: 25%; text-align: center; }
+    .att-band { background: #F8F8FC; padding: 2mm 3mm; margin-bottom: 3mm; border-radius: 2pt; }
+    .att-band table { width: 100%; border-collapse: collapse; }
+    .att-band td { width: 25%; text-align: center; padding: 0.5mm 0; }
+    .att-band .lbl { font-size: 5.5pt; color: #6B7280; text-transform: uppercase; font-weight: bold; }
+    .att-band .val { font-size: 8pt; font-weight: bold; color: #1B1F3B; }
 
-    table.results { width: 100%; border-collapse: collapse; margin-top: 4mm; }
-    table.results th { background: #EEF0FF; color: #3D3B8E; font-size: 8pt; font-weight: bold; padding: 3mm; border: 1px solid #ddd; text-align: left; text-transform: uppercase; }
-    table.results td { padding: 3mm; border: 1px solid #eee; font-size: 10pt; }
+    table.results { width: 100%; border-collapse: collapse; margin-top: 1.5mm; }
+    table.results th { background: #EEF0FF; color: #3D3B8E; font-size: 6.5pt; font-weight: bold; padding: 1.5mm; border: 0.5pt solid #ddd; text-align: left; text-transform: uppercase; }
+    table.results td { padding: 1.5mm; border: 0.5pt solid #eee; font-size: 8pt; }
     table.results td.num { text-align: center; font-variant-numeric: tabular-nums; }
     table.results td.grade { text-align: center; font-weight: bold; }
     .grade-A, .grade-B { color: #3D3B8E; }
     .grade-C, .grade-D { color: #6B7280; }
     .grade-E, .grade-F { color: #C1432B; }
 
-    .summary { margin-top: 6mm; }
-    .summary table { width: 100%; }
-    .summary td { width: 33%; padding: 4mm; background: #F8F8FC; border-radius: 4pt; text-align: center; }
-    .summary .lbl { font-size: 7pt; color: #6B7280; text-transform: uppercase; }
-    .summary .val { font-size: 14pt; font-weight: bold; color: #1B1F3B; }
+    .summary { margin-top: 2mm; }
+    .summary table { width: 100%; border-collapse: collapse; }
+    .summary td { width: 33%; padding: 2mm; background: #F8F8FC; border-radius: 2pt; text-align: center; }
+    .summary .lbl { font-size: 5.5pt; color: #6B7280; text-transform: uppercase; }
+    .summary .val { font-size: 10pt; font-weight: bold; color: #1B1F3B; }
 
-    .signatures { margin-top: 18mm; }
+    .resumption { margin-top: 2mm; padding: 2mm 3mm; background: #F8F8FC; border-radius: 2pt; }
+    .resumption .lbl { font-size: 5.5pt; color: #6B7280; text-transform: uppercase; font-weight: bold; }
+    .resumption .val { font-size: 8pt; font-weight: bold; color: #1B1F3B; }
+
+    .signatures { margin-top: 8mm; }
     .signatures table { width: 100%; }
-    .signatures td { width: 50%; padding: 0 8mm; }
-    .signatures .line { border-bottom: 1px dashed #999; height: 12mm; }
-    .signatures .label { font-size: 8pt; color: #6B7280; margin-top: 2mm; }
+    .signatures td { width: 50%; padding: 0 5mm; }
+    .signatures .line { border-bottom: 1px dashed #999; height: 8mm; }
+    .signatures .label { font-size: 6.5pt; color: #6B7280; margin-top: 1mm; }
 
-    #footerContent { font-size: 7pt; color: #9CA3AF; text-align: center; }
+    #footerContent { font-size: 6pt; color: #9CA3AF; text-align: center; }
 </style>
 </head>
 <body>
@@ -154,7 +161,7 @@
                 <td class="num">{{ g.exam }}</td>
                 <td class="num">{{ g.total }}</td>
                 <td class="grade grade-{{ g.grade }}">{{ g.grade }}</td>
-                <td>{{ g.remark|default:"—" }}</td>
+                <td>{{ g.remark|default:"—" }}{% if g.teacher_comment %}<br/><small style="color:#666;font-style:italic">{{ g.teacher_comment }}</small>{% endif %}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -185,15 +192,9 @@
     {% endif %}
 {% endif %}
 
-<div class="att-band" style="margin-top: 6mm;">
-    <table>
-        <tr>
-            <td style="width:100%; text-align:left;">
-                <div class="lbl">Resumption Date</div>
-                <div class="val">{% if resumption_date %}{{ resumption_date|date:"j F Y" }}{% else %}To be announced{% endif %}</div>
-            </td>
-        </tr>
-    </table>
+<div class="resumption">
+    <div class="lbl">Resumption Date</div>
+    <div class="val">{% if resumption_date %}{{ resumption_date|date:"j F Y" }}{% else %}To be announced{% endif %}</div>
 </div>
 
 <div class="signatures">

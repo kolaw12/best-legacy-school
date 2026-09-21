@@ -59,13 +59,13 @@ class SoftDeleteViewSetMixin:
 class ProvisionCredentialsMixin:
     """
     Surfaces a freshly auto-provisioned login (see accounts.provisioning) in
-    the create response, once, as `provisioned_login: {username, password}`.
+    the create response, once, as `provisioned_login: {username, invite_url}`.
 
-    The credentials email has no delivery guarantee — nothing here fails if
-    SMTP isn't configured — so this is the only reliable way an admin ever
-    sees the password if the email doesn't land. `perform_create` should set
-    `self._provisioned` to the dict `provision_login()` returns (or leave it
-    unset/None when no login was provisioned).
+    The invite email has no delivery guarantee — nothing here fails if
+    SMTP isn't configured — so this is the only reliable way an admin can
+    share the invite link if the email doesn't land. `perform_create` should
+    set `self._provisioned` to the dict `provision_login()` returns (or leave
+    it unset/None when no login was provisioned).
     """
 
     def create(self, request, *args, **kwargs):
@@ -74,6 +74,6 @@ class ProvisionCredentialsMixin:
         if self._provisioned:
             response.data["provisioned_login"] = {
                 "username": self._provisioned["username"],
-                "password": self._provisioned["password"],
+                "invite_url": self._provisioned["invite_url"],
             }
         return response

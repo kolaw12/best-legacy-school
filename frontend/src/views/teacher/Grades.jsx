@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { UploadCloud, CheckCircle2 } from 'lucide-react';
+import { UploadCloud, CheckCircle2, Download } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { Select } from '../../components/ui/Field';
+import { exportCsv } from '../../utils/exportCsv';
 import useTeacherClass from '../../context/useTeacherClass';
 import ClassSwitcher from '../../components/teacher/ClassSwitcher';
 import QuickAddSubject from '../../components/teacher/QuickAddSubject';
@@ -38,6 +39,7 @@ const TeacherGrades = () => {
     const [domain, setDomain] = useState(NURSERY_DOMAINS[0].code); // nursery only
     const [termId, setTermId] = useState(null);
     const [rows, setRows] = useState({}); // studentId -> input state
+    const [selectedStudent, setSelectedStudent] = useState(null); // null = show all
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(null);
@@ -96,6 +98,7 @@ const TeacherGrades = () => {
                             ca2: rec?.ca2 ?? 0,
                             exam: rec?.exam ?? 0,
                             remark: rec?.remark || '',
+                            teacher_comment: rec?.teacher_comment || '',
                         };
                     });
                     setRows(init);
@@ -128,10 +131,11 @@ const TeacherGrades = () => {
                     subject: subjectId, term: termId,
                     rows: students.map(s => ({
                         student: s.id,
-                        ca1: Number(rows[s.id]?.ca1 || 0),
-                        ca2: Number(rows[s.id]?.ca2 || 0),
-                        exam: Number(rows[s.id]?.exam || 0),
+                        ca1: Math.min(20, Math.max(0, Number(rows[s.id]?.ca1 || 0))),
+                        ca2: Math.min(20, Math.max(0, Number(rows[s.id]?.ca2 || 0))),
+                        exam: Math.min(60, Math.max(0, Number(rows[s.id]?.exam || 0))),
                         remark: rows[s.id]?.remark || '',
+                        teacher_comment: rows[s.id]?.teacher_comment || '',
                     })),
                 };
                 const { data } = await axios.post(`${API_URL}/api/academics/grades/bulk/`, payload);
@@ -147,7 +151,12 @@ const TeacherGrades = () => {
 
     const summary = useMemo(() => {
         if (isNursery) return null;
-        const totals = students.map(s => (Number(rows[s.id]?.ca1 || 0) + Number(rows[s.id]?.ca2 || 0) + Number(rows[s.id]?.exam || 0)));
+        const totals = students.map(s => {
+            const ca1 = Math.min(20, Math.max(0, Number(rows[s.id]?.ca1 || 0)));
+            const ca2 = Math.min(20, Math.max(0, Number(rows[s.id]?.ca2 || 0)));
+            const exam = Math.min(60, Math.max(0, Number(rows[s.id]?.exam || 0)));
+            return ca1 + ca2 + exam;
+        });
         const avg = totals.length ? Math.round(totals.reduce((a, b) => a + b, 0) / totals.length) : 0;
         return { avg, max: Math.max(...totals, 0), min: Math.min(...totals, 0) };
     }, [rows, students, isNursery]);
@@ -156,7 +165,11 @@ const TeacherGrades = () => {
         if (isNursery) return students.filter(s => !!rows[s.id]?.remark || rows[s.id]?.rating).length;
         return students.filter(s => {
             const r = rows[s.id];
-            return r && (Number(r.ca1) > 0 || Number(r.ca2) > 0 || Number(r.exam) > 0);
+            if (!r) return false;
+            const ca1 = Math.min(20, Math.max(0, Number(r.ca1 || 0)));
+            const ca2 = Math.min(20, Math.max(0, Number(r.ca2 || 0)));
+            const exam = Math.min(60, Math.max(0, Number(r.exam || 0)));
+            return ca1 > 0 || ca2 > 0 || exam > 0;
         }).length;
     }, [rows, students, isNursery]);
 
@@ -185,15 +198,46 @@ const TeacherGrades = () => {
                         {isNursery
                             ? 'Rate each pupil per domain on a 5-point scale. Comments are optional.'
                             : 'Enter CA1 (0–20), CA2 (0–20), and Exam (0–60). Totals and letter grades are computed automatically.'}
-                        {' '}Prefer to work one pupil at a time across every subject? <Link to="/teacher/class" className="text-primary font-semibold hover:underline">Go to your class roster →</Link>
+                        {' '}Prefer to work one pupil at a time across every subject? <Link to="/admin/teacher/class" className="text-primary font-semibold hover:underline">Go to your class roster →</Link>
                     </p>
                 </div>
+                {students.length > 0 && (
+                    <button onClick={() => {
+                        const exportRows = students.map(s => {
+                            const r = rows[s.id] || {};
+                            return isNursery
+                                ? { admission_no: s.admission_no, student_name: s.full_name, domain, rating: r.rating || '', remark: r.remark || '' }
+                                : { admission_no: s.admission_no, student_name: s.full_name, ca1: r.ca1 ?? 0, ca2: r.ca2 ?? 0, exam: r.exam ?? 0, total: (r.ca1 ?? 0) + (r.ca2 ?? 0) + (r.exam ?? 0), remark: r.remark || '', teacher_comment: r.teacher_comment || '' };
+                        });
+                        const cols = isNursery
+                            ? [
+                                { key: 'admission_no', label: 'Admission No' },
+                                { key: 'student_name', label: 'Pupil' },
+                                { key: 'domain', label: 'Domain' },
+                                { key: 'rating', label: 'Rating' },
+                                { key: 'remark', label: 'Remark' },
+                              ]
+                            : [
+                                { key: 'admission_no', label: 'Admission No' },
+                                { key: 'student_name', label: 'Pupil' },
+                                { key: 'ca1', label: 'CA1' },
+                                { key: 'ca2', label: 'CA2' },
+                                { key: 'exam', label: 'Exam' },
+                                { key: 'total', label: 'Total' },
+                                { key: 'remark', label: 'Remark' },
+                                { key: 'teacher_comment', label: 'Comment' },
+                              ];
+                        exportCsv(exportRows, cols, 'grades');
+                    }} className="text-xs font-semibold px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition inline-flex items-center gap-1.5">
+                        <Download className="w-3.5 h-3.5" /> Export CSV
+                    </button>
+                )}
             </header>
 
-            {/* Term / subject / upload — the one place everything needed to submit results lives, kept sticky so it never scrolls out of reach */}
+            {/* Term / subject / student / upload */}
             <div className="sticky top-16 z-10 bg-white rounded-2xl border border-gray-100 shadow-card p-4 mb-4">
                 <div className="flex flex-col lg:flex-row lg:items-end gap-3">
-                    <div className="flex-1 grid sm:grid-cols-2 gap-3">
+                    <div className="flex-1 grid sm:grid-cols-3 gap-3">
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 mb-1.5">Term</label>
                             <Select value={termId || ''} onChange={e => setTermId(Number(e.target.value))}>
@@ -225,6 +269,15 @@ const TeacherGrades = () => {
                                 </Select>
                             </div>
                         )}
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Student</label>
+                            <Select value={selectedStudent || ''} onChange={e => setSelectedStudent(e.target.value || null)}>
+                                <option value="">All students</option>
+                                {students.map(s => (
+                                    <option key={s.id} value={s.id}>{s.full_name}</option>
+                                ))}
+                            </Select>
+                        </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                         <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">
@@ -273,13 +326,15 @@ const TeacherGrades = () => {
                                             <th className="text-center px-3 py-3 w-20">CA2 / 20</th>
                                             <th className="text-center px-3 py-3 w-20">Exam / 60</th>
                                             <th className="text-center px-3 py-3 w-20">Total</th>
-                                            <th className="text-left px-3 py-3 w-40">Comment</th>
+                                            <th className="text-left px-3 py-3 w-40">Report Card Comment</th>
                                         </>
                                     )}
                                 </tr>
                             </thead>
                             <tbody>
-                                {students.map(s => {
+                                {students
+                                    .filter(s => !selectedStudent || String(s.id) === String(selectedStudent))
+                                    .map(s => {
                                     const r = rows[s.id] || {};
                                     const total = isNursery ? 0 : (Number(r.ca1 || 0) + Number(r.ca2 || 0) + Number(r.exam || 0));
                                     return (
@@ -316,20 +371,23 @@ const TeacherGrades = () => {
                                             ) : (
                                                 <>
                                                     <td className="px-3 py-3 text-center">
-                                                        <input type="number" min={0} max={20} value={r.ca1 || 0} onChange={e => set(s.id, 'ca1', e.target.value)}
+                                                        <input type="number" min={0} max={20} value={r.ca1 || 0}
+                                                            onChange={e => set(s.id, 'ca1', Math.min(20, Math.max(0, Number(e.target.value) || 0)))}
                                                             className="w-16 text-center text-sm px-2 py-1 border border-gray-200 rounded-lg focus:outline-none focus:border-primary" />
                                                     </td>
                                                     <td className="px-3 py-3 text-center">
-                                                        <input type="number" min={0} max={20} value={r.ca2 || 0} onChange={e => set(s.id, 'ca2', e.target.value)}
+                                                        <input type="number" min={0} max={20} value={r.ca2 || 0}
+                                                            onChange={e => set(s.id, 'ca2', Math.min(20, Math.max(0, Number(e.target.value) || 0)))}
                                                             className="w-16 text-center text-sm px-2 py-1 border border-gray-200 rounded-lg focus:outline-none focus:border-primary" />
                                                     </td>
                                                     <td className="px-3 py-3 text-center">
-                                                        <input type="number" min={0} max={60} value={r.exam || 0} onChange={e => set(s.id, 'exam', e.target.value)}
+                                                        <input type="number" min={0} max={60} value={r.exam || 0}
+                                                            onChange={e => set(s.id, 'exam', Math.min(60, Math.max(0, Number(e.target.value) || 0)))}
                                                             className="w-16 text-center text-sm px-2 py-1 border border-gray-200 rounded-lg focus:outline-none focus:border-primary" />
                                                     </td>
-                                                    <td className="px-3 py-3 text-center font-bold text-ink">{total}</td>
+                                                    <td className={`px-3 py-3 text-center font-bold ${total > 100 ? 'text-rose-600' : 'text-ink'}`}>{Math.min(total, 100)}</td>
                                                     <td className="px-3 py-3">
-                                                        <input value={r.remark || ''} onChange={e => set(s.id, 'remark', e.target.value)} placeholder="optional"
+                                                        <input value={r.teacher_comment || ''} onChange={e => set(s.id, 'teacher_comment', e.target.value)} placeholder="e.g. Great improvement this term"
                                                             className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:border-primary w-full" />
                                                     </td>
                                                 </>
@@ -342,6 +400,32 @@ const TeacherGrades = () => {
                     </div>
                 )}
             </div>
+
+            {/* Student navigation when viewing single student */}
+            {selectedStudent && students.length > 1 && (() => {
+                const idx = students.findIndex(s => String(s.id) === String(selectedStudent));
+                const prev = idx > 0 ? students[idx - 1] : null;
+                const next = idx < students.length - 1 ? students[idx + 1] : null;
+                return (
+                    <div className="flex items-center justify-between mt-4">
+                        <button
+                            onClick={() => prev && setSelectedStudent(String(prev.id))}
+                            disabled={!prev}
+                            className="text-xs font-semibold px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        >
+                            ← {prev?.full_name || 'Previous'}
+                        </button>
+                        <span className="text-xs text-gray-400">{idx + 1} of {students.length}</span>
+                        <button
+                            onClick={() => next && setSelectedStudent(String(next.id))}
+                            disabled={!next}
+                            className="text-xs font-semibold px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        >
+                            {next?.full_name || 'Next'} →
+                        </button>
+                    </div>
+                );
+            })()}
         </>
     );
 };

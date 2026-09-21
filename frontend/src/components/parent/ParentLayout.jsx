@@ -1,21 +1,24 @@
 import { useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Home, Calendar, MessageCircle, Banknote, LogOut, Menu, X } from 'lucide-react';
+import { Home, Calendar, MessageCircle, Banknote, UserCircle, LogOut, Menu, X, FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Breadcrumbs from '../ui/Breadcrumbs';
 import FeeDueChip from './FeeDueChip';
 import NotificationBell from '../ui/NotificationBell';
 import Logo from '../ui/Logo';
+import BottomNav from '../ui/BottomNav';
 
 const NAV = [
-    { to: '/parent/dashboard', label: 'Dashboard', icon: 'home' },
-    { to: '/parent/calendar',  label: 'Calendar',  icon: 'calendar' },
-    { to: '/parent/messages',  label: 'Messages',  icon: 'chat' },
-    { to: '/parent/fees',      label: 'Fees',      icon: 'cash' },
+    { to: '/portal/dashboard', label: 'Dashboard', icon: 'home' },
+    { to: '/portal/calendar',  label: 'Calendar',  icon: 'calendar' },
+    { to: '/portal/messages',  label: 'Messages',  icon: 'chat' },
+    { to: '/portal/fees',      label: 'Fees',      icon: 'cash' },
+    { to: '/portal/bill',      label: 'School Bill', icon: 'receipt' },
+    { to: '/portal/profile',   label: 'Profile',   icon: 'profile' },
 ];
 
-const ICONS = { home: Home, cash: Banknote, calendar: Calendar, chat: MessageCircle, logout: LogOut };
+const ICONS = { home: Home, cash: Banknote, calendar: Calendar, chat: MessageCircle, profile: UserCircle, logout: LogOut, receipt: FileText };
 
 const Icon = ({ name }) => {
     const Cmp = ICONS[name] || Home;
@@ -29,7 +32,7 @@ const ParentLayout = () => {
 
     const handleLogout = async () => {
         await logout();
-        navigate('/admin-login');
+        navigate('/parent-login');
     };
 
     const initials = (profile?.full_name || profile?.username || 'P')
@@ -104,7 +107,7 @@ const ParentLayout = () => {
                 </div>
             )}
 
-            <div className="lg:pl-64 print:pl-0">
+            <div className="lg:pl-64 print:pl-0 w-full overflow-x-hidden">
                 <div className="print:hidden sticky top-0 z-20 bg-bg/80 backdrop-blur-md border-b border-gray-100">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -123,10 +126,11 @@ const ParentLayout = () => {
                     </div>
                 </div>
 
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 print:p-0 print:max-w-none">
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 lg:pb-8 print:p-0 print:max-w-none">
                     <Outlet />
                 </main>
             </div>
+            <BottomNav />
         </div>
     );
 };

@@ -335,6 +335,7 @@ class BasicGrade(SoftDeleteModel):
     total = models.PositiveSmallIntegerField(default=0)
     grade = models.CharField(max_length=2, blank=True)
     remark = models.CharField(max_length=100, blank=True)
+    teacher_comment = models.TextField(blank=True, help_text="Custom comment for the report card")
     teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True, blank=True, related_name="grades_entered")
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -360,7 +361,10 @@ class BasicGrade(SoftDeleteModel):
             "A": "Excellent", "B": "Very Good", "C": "Good",
             "D": "Fair", "E": "Pass", "F": "Needs Improvement",
         }
-        if not self.remark:
+        # Auto-update remark when the grade changes. Only preserve a remark
+        # if the teacher typed something custom (not one of the auto-generated ones).
+        auto_remarks = set(remark_map.values())
+        if not self.remark or self.remark in auto_remarks:
             self.remark = remark_map.get(self.grade, "")
 
         # QuerySet.update_or_create()'s update path (as used by bulk_save)

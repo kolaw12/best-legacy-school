@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Trash2 } from 'lucide-react';
+import { Trash2, KeyRound, Eye, EyeOff } from 'lucide-react';
 import AdminPageHeader from '../../components/admin/PageHeader';
 import DataTable from '../../components/admin/DataTable';
 import BulkActionBar from '../../components/admin/BulkActionBar';
@@ -8,7 +8,9 @@ import { selectionColumn } from '../../components/admin/selectionColumn';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
-import { Input } from '../../components/ui/Field';
+import Modal from '../../components/ui/Modal';
+import Field, { Input } from '../../components/ui/Field';
+import CopyButton from '../../components/ui/CopyButton';
 import GuardianForm from '../../components/admin/forms/GuardianForm';
 import useRowSelection from '../../hooks/useRowSelection';
 import adminApi from '../../config/adminApi';
@@ -22,22 +24,35 @@ const GuardiansPage = () => {
     const [q, setQ] = useState('');
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState(null);
-    const [confirm, setConfirm] = useState(null); // { rows: [...] } | null
+    const [confirm, setConfirm] = useState(null);
     const [busy, setBusy] = useState(false);
+    const [resetTarget, setResetTarget] = useState(null);
+    const [resetPassword, setResetPassword] = useState('');
+    const [showResetPassword, setShowResetPassword] = useState(false);
+    const [resetResult, setResetResult] = useState(null);
+    const [resetting, setResetting] = useState(false);
 
     const load = useCallback(() => {
         setLoading(true);
         adminApi.guardians()
-            .then(r => setRows(Array.isArray(r.data) ? r.data : r.data.results || []))
+            .then(r => {
+                const data = r.data;
+                setRows(Array.isArray(data) ? data : (data?.results || []));
+            })
+            .catch(err => {
+                console.error('Failed to load guardians:', err);
+                setRows([]);
+            })
             .finally(() => setLoading(false));
     }, []);
 
     useEffect(load, [load]);
 
     const filtered = useMemo(() => {
-        if (!q) return rows;
+        const list = rows || [];
+        if (!q) return list;
         const t = q.toLowerCase();
-        return rows.filter(r =>
+        return list.filter(r =>
             r.full_name?.toLowerCase().includes(t) ||
             r.phone?.toLowerCase().includes(t) ||
             r.email?.toLowerCase().includes(t),
@@ -61,6 +76,28 @@ const GuardiansPage = () => {
         setBusy(false);
         setConfirm(null);
         if (failed.length) alert(`Some records couldn't be moved to the trash:\n\n${failed.join('\n')}`);
+    };
+
+    const doResetPassword = async () => {
+        if (!resetTarget) return;
+        setResetting(true);
+        try {
+            const payload = {};
+            if (resetPassword.trim()) payload.password = resetPassword.trim();
+            const { data } = await axios.post(`${API_URL}/api/auth/reset-guardian-password/${resetTarget.id}/`, payload);
+            setResetResult({
+                guardian: resetTarget.full_name,
+                username: data.username,
+                password: data.password,
+                created: data.created || false,
+            });
+            setResetTarget(null);
+            setResetPassword('');
+        } catch (e) {
+            alert(e.response?.data?.error || 'Failed to reset password.');
+        } finally {
+            setResetting(false);
+        }
     };
 
     return (
@@ -112,13 +149,22 @@ const GuardiansPage = () => {
                     {
                         key: 'actions', label: '',
                         render: r => (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); setConfirm({ rows: [r] }); }}
-                                title="Move to trash"
-                                className="p-2 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                            >
-                                <Trash2 className="w-4 h-4" strokeWidth={2} />
-                            </button>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setResetTarget(r); setResetPassword(''); }}
+                                    title="Reset parent portal password"
+                                    className="p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-primary-soft transition"
+                                >
+                                    <KeyRound className="w-4 h-4" strokeWidth={2} />
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setConfirm({ rows: [r] }); }}
+                                    title="Move to trash"
+                                    className="p-2 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                                >
+                                    <Trash2 className="w-4 h-4" strokeWidth={2} />
+                                </button>
+                            </div>
                         ),
                     },
                 ]}
@@ -141,6 +187,73 @@ const GuardiansPage = () => {
                 confirmLabel={confirm?.rows.length > 1 ? `Move ${confirm.rows.length} to trash` : 'Move to trash'}
                 tone="danger"
             />
+
+            {/* Reset password dialog */}
+            <Modal
+                open={!!resetTarget}
+                onClose={() => { setResetTarget(null); setResetPassword(''); }}
+                title={`Reset password for ${resetTarget?.full_name || ''}`}
+                size="sm"
+                footer={[
+                    <Button key="cancel" variant="outline" size="sm" onClick={() => { setResetTarget(null); setResetPassword(''); }}>Cancel</Button>,
+                    <Button key="reset" size="sm" onClick={doResetPassword} disabled={resetting}>
+                        {resetting ? 'Working…' : 'Reset password'}
+                    </Button>,
+                ]}
+            >
+                <p className="text-sm text-gray-500 mb-4">
+                    Leave blank to auto-generate a random password, or type a specific one.
+                </p>
+                <Field label="New password (optional)">
+                    <div className="relative">
+                        <Input
+                            type={showResetPassword ? 'text' : 'password'}
+                            value={resetPassword}
+                            onChange={e => setResetPassword(e.target.value)}
+                            placeholder="Auto-generate if empty"
+                            className="pr-10"
+                        />
+                        <button type="button" onClick={() => setShowResetPassword(v => !v)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-ink transition">
+                            {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                    </div>
+                </Field>
+            </Modal>
+
+            {/* Reset result */}
+            <Modal
+                open={!!resetResult}
+                onClose={() => setResetResult(null)}
+                title={resetResult?.created ? 'Account created' : 'Password reset'}
+                size="sm"
+                footer={[<Button key="done" size="sm" onClick={() => setResetResult(null)}>Done</Button>]}
+            >
+                <p className="text-sm text-gray-600 mb-3">
+                    {resetResult?.created
+                        ? `A new portal account has been created for ${resetResult?.guardian}.`
+                        : `Password reset for ${resetResult?.guardian}.`
+                    }
+                    Share these details securely — they won't be shown again.
+                </p>
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+                        <div>
+                            <div className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold">Username</div>
+                            <div className="font-mono text-sm text-ink">{resetResult?.username}</div>
+                        </div>
+                        <CopyButton value={resetResult?.username} label="username" />
+                    </div>
+                    <div className="flex items-center justify-between gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+                        <div>
+                            <div className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold">Password</div>
+                            <div className="font-mono text-sm text-ink">{resetResult?.password}</div>
+                        </div>
+                        <CopyButton value={resetResult?.password} label="password" />
+                    </div>
+                </div>
+                <p className="text-xs text-gray-400 mt-3">Parent portal: <span className="font-mono">/parent-login</span></p>
+            </Modal>
         </>
     );
 };

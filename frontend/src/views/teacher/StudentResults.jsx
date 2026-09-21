@@ -165,7 +165,7 @@ const TeacherStudentResults = () => {
 
     return (
         <>
-            <Link to="/teacher/class" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline mb-4">
+            <Link to="/admin/teacher/class" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline mb-4">
                 <ArrowLeft className="w-3.5 h-3.5" strokeWidth={2} /> Back to class
             </Link>
 
@@ -264,12 +264,20 @@ const TeacherStudentResults = () => {
     );
 };
 
-const NumField = ({ label, max, value, onChange }) => (
-    <label className="flex flex-col items-center">
-        <span className="text-[10px] uppercase tracking-wide">{label}</span>
-        <input type="number" min={0} max={max} value={value ?? 0} onChange={e => onChange(e.target.value)}
-            className="w-14 text-center text-sm px-1.5 py-1 border border-gray-200 rounded-lg focus:outline-none focus:border-primary" />
-    </label>
-);
+const NumField = ({ label, max, value, onChange }) => {
+    const handleChange = (e) => {
+        let v = e.target.value === '' ? '' : Number(e.target.value);
+        if (v !== '' && v > max) v = max;
+        if (v !== '' && v < 0) v = 0;
+        onChange(v);
+    };
+    return (
+        <label className="flex flex-col items-center">
+            <span className="text-[10px] uppercase tracking-wide">{label}</span>
+            <input type="number" min={0} max={max} value={value ?? 0} onChange={handleChange}
+                className="w-14 text-center text-sm px-1.5 py-1 border border-gray-200 rounded-lg focus:outline-none focus:border-primary" />
+        </label>
+    );
+};
 
 export default TeacherStudentResults;

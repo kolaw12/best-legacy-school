@@ -6,6 +6,7 @@ import { ArrowRight, Award, Star, AlertTriangle } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Reveal from '../../components/ui/Reveal';
+import { openReceiptPdf } from '../../utils/openReceiptPdf';
 import API_URL from '../../config/api';
 
 const naira = (v) => `₦${Number(v || 0).toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
@@ -88,7 +89,7 @@ const Child = () => {
                         <div className="text-xs text-gray-500 font-mono">{child.admission_no} · {child.gender === 'M' ? 'Boy' : 'Girl'}</div>
                     </div>
                     <div className="hidden md:block">
-                        <Link to="/parent/dashboard" className="text-sm text-gray-500 hover:text-primary">← All children</Link>
+                        <Link to="/portal/dashboard" className="text-sm text-gray-500 hover:text-primary">← All children</Link>
                     </div>
                 </header>
             </Reveal>
@@ -150,7 +151,7 @@ const Child = () => {
                             <BasicReport data={report} />
                         )}
                         <div className="mt-6 flex justify-end">
-                            <Link to={`/parent/report-cards/${child.id}`} target="_blank" rel="noreferrer" className="text-sm font-semibold text-primary hover:underline">
+                            <Link to={`/portal/report-cards/${child.id}`} target="_blank" rel="noreferrer" className="text-sm font-semibold text-primary hover:underline">
                                 Open printable view →
                             </Link>
                         </div>
@@ -394,7 +395,7 @@ const ChildFees = ({ invoices, child }) => {
                             {i.status === 'paid' ? (
                                 <Badge tone="mint">Paid in full</Badge>
                             ) : (
-                                <Link to="/parent/fees" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-ink font-semibold text-sm hover:bg-secondary-dark transition">
+                                <Link to="/portal/fees" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-ink font-semibold text-sm hover:bg-secondary-dark transition">
                                     Pay
                                     <ArrowRight className="w-4 h-4" strokeWidth={2} />
                                 </Link>
@@ -407,11 +408,11 @@ const ChildFees = ({ invoices, child }) => {
                             <ul className="flex flex-wrap gap-2">
                                 {i.payments.map(p => (
                                     <li key={p.id}>
-                                        <a href={`${API_URL}/api/finance/payments/${p.id}/receipt/`} target="_blank" rel="noreferrer"
+                                        <button onClick={() => openReceiptPdf(p.id)}
                                            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary-soft text-primary-dark hover:bg-primary hover:text-white transition">
                                             <span className="font-mono">{p.receipt_no}</span>
                                             <span className="opacity-70">· {naira(p.amount)}</span>
-                                        </a>
+                                        </button>
                                     </li>
                                 ))}
                             </ul>

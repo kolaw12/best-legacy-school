@@ -184,22 +184,23 @@ const DAY_STOPS = [
 const FEATURES = [
     { n: '01', t: 'Creative learning', d: 'Hands-on activities for every subject. Even mathematics becomes a game when you teach it well.', img: '/cultural_day.jpg' },
     { n: '02', t: 'Trained teachers',  d: 'Every class teacher holds a B.Ed or NCE. We don’t hire shortcuts.', img: '/staff_members.jpg' },
-    { n: '03', t: 'Whole-child care',  d: 'Academic, social, emotional, spiritual. We track all four because parents do too.', img: '/school_hero_Section.jpg' },
+    { n: '03', t: 'Whole-child care',  d: 'Academic, social, emotional, spiritual. We track all four because parents do too.', img: '/school_ceremony.jpg' },
     { n: '04', t: 'Safe & familiar',   d: 'Locked-gate campus, named visitor logbook, and a school nurse on duty.', img: '/fun_in_the_pool.jpg' },
 ];
 
 const TIERS = [
-    { name: 'Nursery (1 & 2)', age: '3–5 years',  price: '₦75,000',  featured: false },
-    { name: 'Basic 1 – 3', age: '6–8 years',  price: '₦95,000',  featured: true },
-    { name: 'Basic 4 – 6', age: '9–11 years', price: '₦115,000', featured: false },
+    { name: 'Nursery (KG 1 & 2)', age: '3–5 years',  price: '₦82,000',  featured: false },
+    { name: 'Basic 1 – 5', age: '6–10 years',  price: '₦88,000',  featured: true },
+    { name: 'Basic 6', age: '10–11 years', price: '₦90,000', featured: false },
 ];
 
 const INCLUDED = [
-    'Tuition & class materials',
+    'Tuition & school fee',
+    'Uniform (2 sets) & sport wear',
     'Textbooks & exercise books',
-    'Daily hot lunch & snack',
-    'Termly reports & PTA meetings',
-    'School nurse on call',
+    'Thursday wear & Funday wear',
+    'Examination levy',
+    'Lesson & computer fees',
 ];
 
 const PARENT_STORIES = [
@@ -342,7 +343,7 @@ const Hero = () => {
                                 className="absolute -inset-4 border border-gold/40 rounded-2xl -z-0 hidden md:block"
                             />
                             <RevealImage
-                                src="/school_hero_Section.jpg"
+                                src="/school_ceremony.jpg"
                                 alt="Pupil at Best Legacy Divine School"
                                 aspect=""
                                 className="w-full h-[280px] md:h-[420px]"
@@ -408,7 +409,7 @@ const IntroSpread = () => (
                             transition={{ duration: 0.9, delay: 0.15, ease: EASE }}
                             className="absolute -inset-4 border border-gold/40 rounded-2xl -z-0 hidden md:block"
                         />
-                        <RevealImage src="/school_library.jpg" alt="Best Legacy library corner" aspect="aspect-[4/5]" parallax delay={0.1} />
+                        <RevealImage src="/group_celebration.jpg" alt="Best Legacy library corner" aspect="aspect-[4/5]" parallax delay={0.1} />
                     </div>
                 </Reveal>
             </div>
@@ -485,7 +486,7 @@ const DayAtSchool = () => {
 
                 <div className="mt-10 grid md:grid-cols-12 gap-10 md:gap-16 md:items-start">
                     <div className="md:col-span-5">
-                        <RevealImage src="/school_library.jpg" alt="A morning at Best Legacy" aspect="aspect-[4/5] md:aspect-[3/4]" className="max-h-[420px]" breathe />
+                        <RevealImage src="/group_celebration.jpg" alt="A morning at Best Legacy" aspect="aspect-[4/5] md:aspect-[3/4]" className="max-h-[420px]" breathe />
                     </div>
 
                     <div className="md:col-span-7 relative" ref={listRef}>
@@ -581,7 +582,7 @@ const Programmes = () => {
                         Termly fees, kept simple.
                     </h2>
                     <p className="mt-4 text-gray-600 max-w-xl">
-                        All amounts in naira, per term. Books and feeding included. Sibling discount on the second child.
+                        All amounts in naira, per term. Includes uniform, books, and all levies. 5% sibling discount on tuition.
                     </p>
                 </Reveal>
 
@@ -593,7 +594,7 @@ const Programmes = () => {
                                 highlight={!p.featured}
                                 className={`relative rounded-2xl p-8 md:p-10 flex flex-col h-full overflow-hidden ${
                                     p.featured
-                                        ? 'bg-ink text-white shadow-[0_30px_60px_-15px_rgba(27,31,59,0.5)] md:-my-6 md:py-14'
+                                        ? 'bg-[#1B1F3B] text-white shadow-[0_30px_60px_-15px_rgba(27,31,59,0.5)] md:-my-6 md:py-14'
                                         : 'bg-white text-ink border border-gray-200 shadow-card'
                                 }`}
                             >

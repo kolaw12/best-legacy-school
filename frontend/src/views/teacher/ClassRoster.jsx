@@ -42,9 +42,13 @@ const ClassRoster = () => {
                         key: 'student', label: 'Pupil',
                         render: r => (
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full bg-primary-soft text-primary-dark flex items-center justify-center font-bold text-xs">
-                                    {(r.first_name?.[0] || '') + (r.last_name?.[0] || '')}
-                                </div>
+                                {r.photo ? (
+                                    <img src={r.photo} alt={r.full_name} className="w-9 h-9 rounded-full object-cover border border-gray-200" />
+                                ) : (
+                                    <div className="w-9 h-9 rounded-full bg-primary-soft text-primary-dark flex items-center justify-center font-bold text-xs">
+                                        {(r.first_name?.[0] || '') + (r.last_name?.[0] || '')}
+                                    </div>
+                                )}
                                 <div>
                                     <div className="font-semibold text-ink">{r.full_name}</div>
                                     <div className="text-xs text-gray-400 font-mono">{r.admission_no}</div>
@@ -60,8 +64,8 @@ const ClassRoster = () => {
                         key: 'action', label: '',
                         render: r => (
                             <div className="flex items-center gap-3 whitespace-nowrap">
-                                <Link to={`/teacher/students/${r.id}/results`} className="text-xs font-semibold text-primary hover:underline">Enter results →</Link>
-                                <Link to={`/teacher/report-cards/${r.id}`} className="text-xs font-semibold text-gray-400 hover:text-gray-600 hover:underline">View report</Link>
+                                <Link to={`/admin/teacher/students/${r.id}/results`} className="text-xs font-semibold text-primary hover:underline">Enter results →</Link>
+                                <Link to={`/admin/teacher/report-cards/${r.id}`} className="text-xs font-semibold text-gray-400 hover:text-gray-600 hover:underline">View report</Link>
                             </div>
                         ),
                     },

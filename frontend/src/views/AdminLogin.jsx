@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -9,6 +10,7 @@ import Logo from '../components/ui/Logo';
 const AdminLogin = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
@@ -29,14 +31,20 @@ const AdminLogin = () => {
                 if (target === '/admin-dashboard') target = '/admin/dashboard';
                 navigate(target);
             } else if (profile.role === 'teacher') {
-                navigate(from.startsWith('/teacher') ? from : '/teacher/dashboard');
+                const target = from.startsWith('/admin/teacher') ? from : '/admin/teacher/dashboard';
+                navigate(target);
             } else if (profile.role === 'parent') {
-                navigate(from.startsWith('/parent') ? from : '/parent/dashboard');
+                const target = from.startsWith('/portal') ? from : '/portal/dashboard';
+                navigate(target);
             } else {
                 setError(`Your role (${profile.role_display}) doesn't have a workspace yet.`);
             }
         } catch (err) {
-            setError(err.response?.data?.non_field_errors?.[0] || 'Invalid username or password.');
+            setError(
+                err.response?.data?.non_field_errors?.[0]
+                || err.response?.data?.detail
+                || 'Invalid username or password.'
+            );
         } finally {
             setLoading(false);
         }
@@ -63,15 +71,26 @@ const AdminLogin = () => {
                         <Input value={username} onChange={e => setUsername(e.target.value)} autoFocus required />
                     </Field>
                     <Field label="Password" required>
-                        <Input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+                        <div className="relative">
+                            <Input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required className="pr-10" />
+                            <button type="button" onClick={() => setShowPassword(v => !v)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-ink transition">
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                        </div>
                     </Field>
                     <Button type="submit" size="lg" disabled={loading} className="w-full">
                         {loading ? 'Signing in…' : 'Sign in'}
                     </Button>
                 </form>
 
-                <div className="mt-6 text-center text-xs text-gray-500">
-                    Need an account? Ask a school admin to set one up for you.
+                <div className="mt-6 text-center space-y-2">
+                    <p className="text-xs text-gray-500">
+                        Need an account? Ask a school admin to set one up for you.
+                    </p>
+                    <Link to="/parent-login" className="text-xs text-gray-400 hover:text-ink transition">
+                        Parent login →
+                    </Link>
                 </div>
             </div>
         </div>

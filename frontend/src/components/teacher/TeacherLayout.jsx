@@ -5,14 +5,15 @@ import { useAuth } from '../../context/AuthContext';
 import Breadcrumbs from '../ui/Breadcrumbs';
 import NotificationBell from '../ui/NotificationBell';
 import Logo from '../ui/Logo';
+import TeacherBottomNav from './TeacherBottomNav';
 
 const NAV = [
-    { to: '/teacher/dashboard',   label: 'Dashboard',   icon: 'home' },
-    { to: '/teacher/class',       label: 'My Class',    icon: 'users' },
-    { to: '/teacher/attendance',  label: 'Attendance',  icon: 'check' },
-    { to: '/teacher/grades',      label: 'Grades',      icon: 'book' },
-    { to: '/teacher/assignments', label: 'Assignments', icon: 'clipboard' },
-    { to: '/teacher/messages',    label: 'Messages',    icon: 'chat' },
+    { to: '/admin/teacher/dashboard',   label: 'Dashboard',   icon: 'home' },
+    { to: '/admin/teacher/class',       label: 'My Class',    icon: 'users' },
+    { to: '/admin/teacher/attendance',  label: 'Attendance',  icon: 'check' },
+    { to: '/admin/teacher/grades',      label: 'Grades',      icon: 'book' },
+    { to: '/admin/teacher/assignments', label: 'Assignments', icon: 'clipboard' },
+    { to: '/admin/teacher/messages',    label: 'Messages',    icon: 'chat' },
 ];
 
 const ICONS = {
@@ -110,7 +111,7 @@ const TeacherLayout = () => {
                 </div>
             )}
 
-            <div className="lg:pl-64 print:pl-0">
+            <div className="lg:pl-64 print:pl-0 w-full overflow-x-hidden">
                 <div className="print:hidden sticky top-0 z-20 bg-bg/80 backdrop-blur-md border-b border-gray-100">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -128,10 +129,11 @@ const TeacherLayout = () => {
                     </div>
                 </div>
 
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 print:p-0 print:max-w-none">
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 lg:pb-8 print:p-0 print:max-w-none">
                     <Outlet />
                 </main>
             </div>
+            <TeacherBottomNav />
         </div>
     );
 };

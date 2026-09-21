@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Trash2, Pencil } from 'lucide-react';
+import { Trash2, Pencil, Download } from 'lucide-react';
 import AdminPageHeader from '../../components/admin/PageHeader';
 import DataTable from '../../components/admin/DataTable';
 import BulkActionBar from '../../components/admin/BulkActionBar';
@@ -13,6 +13,7 @@ import { Input, Select } from '../../components/ui/Field';
 import StudentForm from '../../components/admin/forms/StudentForm';
 import useRowSelection from '../../hooks/useRowSelection';
 import adminApi from '../../config/adminApi';
+import { exportCsv } from '../../utils/exportCsv';
 import API_URL from '../../config/api';
 import { CLASS_LEVELS } from '../../config/school';
 
@@ -110,6 +111,19 @@ const StudentsPage = () => {
                     label="Move to trash"
                     onAction={() => setConfirm({ rows: selection.selectedRows })}
                 />
+                <button onClick={() => exportCsv(filtered, [
+                    { key: 'admission_no', label: 'Admission No' },
+                    { key: 'full_name', label: 'Name' },
+                    { key: 'class_name', label: 'Class' },
+                    { key: 'gender', label: 'Gender' },
+                    { key: 'guardian_name', label: 'Guardian' },
+                    { key: 'guardian_phone', label: 'Phone' },
+                    { key: 'status', label: 'Status' },
+                ], 'students')}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition inline-flex items-center gap-1.5"
+                >
+                    <Download className="w-3.5 h-3.5" /> Export CSV
+                </button>
             </div>
 
             <DataTable
@@ -123,9 +137,13 @@ const StudentsPage = () => {
                         key: 'student', label: 'Student',
                         render: r => (
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full bg-primary-soft text-primary-dark flex items-center justify-center font-bold text-xs">
-                                    {(r.first_name?.[0] || '') + (r.last_name?.[0] || '')}
-                                </div>
+                                {r.photo ? (
+                                    <img src={r.photo} alt={r.full_name} className="w-9 h-9 rounded-full object-cover" />
+                                ) : (
+                                    <div className="w-9 h-9 rounded-full bg-primary-soft text-primary-dark flex items-center justify-center font-bold text-xs">
+                                        {(r.first_name?.[0] || '') + (r.last_name?.[0] || '')}
+                                    </div>
+                                )}
                                 <div>
                                     <div className="font-semibold text-ink">{r.full_name}</div>
                                     <div className="text-xs text-gray-400 font-mono">{r.admission_no}</div>

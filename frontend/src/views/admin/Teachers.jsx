@@ -93,9 +93,13 @@ const TeachersPage = () => {
                         key: 'teacher', label: 'Staff',
                         render: r => (
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full bg-secondary-soft text-secondary-dark flex items-center justify-center font-bold text-xs">
-                                    {(r.first_name?.[0] || '') + (r.last_name?.[0] || '')}
-                                </div>
+                                {r.photo ? (
+                                    <img src={r.photo} alt={r.full_name} className="w-9 h-9 rounded-full object-cover" />
+                                ) : (
+                                    <div className="w-9 h-9 rounded-full bg-secondary-soft text-secondary-dark flex items-center justify-center font-bold text-xs">
+                                        {(r.first_name?.[0] || '') + (r.last_name?.[0] || '')}
+                                    </div>
+                                )}
                                 <div>
                                     <div className="font-semibold text-ink">{r.full_name}</div>
                                     <div className="text-xs text-gray-400 font-mono">{r.staff_id}</div>

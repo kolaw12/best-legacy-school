@@ -104,8 +104,8 @@ const Navbar = () => {
 
                         <div className="w-px h-5 bg-gray-200" />
 
-                        <Link to="/admin-login" className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-500 hover:text-ink transition-colors">
-                            {t('nav.signin')}
+                        <Link to="/parent-login" className="text-[13px] font-semibold uppercase tracking-[0.1em] text-gray-500 hover:text-ink transition-colors">
+                            Parent Portal
                         </Link>
 
                         <Link
@@ -152,8 +152,8 @@ const Navbar = () => {
                                 <button onClick={() => changeLanguage('yo')}  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${i18n.language.startsWith('yo') ? 'bg-primary-soft text-primary-dark' : 'bg-gray-50 text-gray-600'}`}>YO</button>
                                 <button onClick={() => changeLanguage('pcm')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${i18n.language.startsWith('pcm') ? 'bg-primary-soft text-primary-dark' : 'bg-gray-50 text-gray-600'}`}>PCM</button>
                             </div>
-                            <Link to="/admin-login" className="block text-center mt-3 px-1 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-gray-500">
-                                {t('nav.signin')}
+                            <Link to="/parent-login" className="block text-center mt-2 bg-secondary-soft text-secondary-dark font-bold uppercase tracking-[0.1em] text-sm py-3 rounded-full">
+                                Parent Portal
                             </Link>
                             <Link to="/admissions" className="block text-center mt-2 bg-primary text-white font-bold uppercase tracking-[0.1em] text-sm py-3.5 rounded-full shadow-sm">
                                 {t('nav.apply')}

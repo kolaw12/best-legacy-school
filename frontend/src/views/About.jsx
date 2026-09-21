@@ -111,7 +111,7 @@ const AboutHero = () => (
                     <div className="relative">
                         <div className="absolute -inset-4 border border-gold/40 rounded-2xl hidden md:block" />
                         <div className="relative rounded-2xl overflow-hidden shadow-card-lg aspect-[4/5]">
-                            <img src="/school_hero_Section.jpg" alt="Pupils at Best Legacy Divine School" className="w-full h-full object-cover" />
+                            <img src="/school_ceremony.jpg" alt="Pupils at Best Legacy Divine School" className="w-full h-full object-cover" />
                         </div>
                         <div className="absolute -bottom-5 -left-5 bg-ink text-white rounded-2xl px-4 py-3 shadow-[0_20px_45px_-12px_rgba(27,31,59,0.45)] hidden sm:block">
                             <div className="text-[10px] uppercase tracking-[0.15em] text-white/60">Est.</div>
@@ -211,7 +211,7 @@ const Story = () => (
                 </Fade>
                 <Fade delay={0.15}>
                     <div className="mt-8 rounded-2xl overflow-hidden aspect-[4/3] shadow-card-lg">
-                        <img src="/school_library.jpg" alt="School life" className="w-full h-full object-cover" />
+                        <img src="/group_celebration.jpg" alt="School life" className="w-full h-full object-cover" />
                     </div>
                 </Fade>
             </div>

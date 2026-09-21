@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
-import { Banknote, CheckCircle2, AlertTriangle, Receipt } from 'lucide-react';
+import { Banknote, CheckCircle2, AlertTriangle, Receipt, ChevronDown, ChevronRight } from 'lucide-react';
 import AdminPageHeader from '../../components/admin/PageHeader';
 import DataTable from '../../components/admin/DataTable';
 import KpiCard from '../../components/admin/KpiCard';
@@ -10,6 +10,7 @@ import Modal from '../../components/ui/Modal';
 import Field, { Input, Select } from '../../components/ui/Field';
 import CopyButton from '../../components/ui/CopyButton';
 import API_URL from '../../config/api';
+import { openReceiptPdf } from '../../utils/openReceiptPdf';
 
 const naira = (v) => `₦${Number(v || 0).toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
 
@@ -20,9 +21,15 @@ const AdminFinance = () => {
     const [summary, setSummary] = useState(null);
     const [fees, setFees] = useState([]);
     const [invoices, setInvoices] = useState([]);
+    const [billItems, setBillItems] = useState([]);
+    const [bookItems, setBookItems] = useState([]);
+    const [classes, setClasses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [paymentFor, setPaymentFor] = useState(null);
     const [statusFilter, setStatusFilter] = useState('');
+    const [billClassFilter, setBillClassFilter] = useState('');
+    const [bookSectionFilter, setBookSectionFilter] = useState('');
+    const [expandedClass, setExpandedClass] = useState(null);
 
     const load = useCallback(() => {
         setLoading(true);
@@ -30,10 +37,16 @@ const AdminFinance = () => {
             axios.get(`${API_URL}/api/finance/summary/`),
             axios.get(`${API_URL}/api/finance/fees/`),
             axios.get(`${API_URL}/api/finance/invoices/`, { params: statusFilter ? { status: statusFilter } : {} }),
-        ]).then(([s, f, i]) => {
+            axios.get(`${API_URL}/api/finance/bill-items/`),
+            axios.get(`${API_URL}/api/finance/book-items/`),
+            axios.get(`${API_URL}/api/academics/classes/`),
+        ]).then(([s, f, i, bi, bk, cl]) => {
             setSummary(s.data);
             setFees(f.data || []);
             setInvoices(i.data || []);
+            setBillItems(bi.data || []);
+            setBookItems(bk.data || []);
+            setClasses(cl.data || []);
         }).finally(() => setLoading(false));
     }, [statusFilter]);
 
@@ -70,6 +83,8 @@ const AdminFinance = () => {
                     { id: 'invoices', label: 'Invoices' },
                     { id: 'fees', label: 'Fee Schedules' },
                     { id: 'payments', label: 'Recent Payments' },
+                    { id: 'bill-items', label: 'Bill Items' },
+                    { id: 'book-list', label: 'Book List' },
                 ].map(t => (
                     <button key={t.id} onClick={() => setTab(t.id)}
                         className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition ${
@@ -162,11 +177,98 @@ const AdminFinance = () => {
                         { key: 'method', label: 'Method', render: r => <Badge tone="neutral">{r.method}</Badge> },
                         { key: 'received_on', label: 'Received' },
                         { key: 'actions', label: '', render: r => (
-                            <a href={`${API_URL}/api/finance/payments/${r.id}/receipt/`} target="_blank" rel="noreferrer"
-                               className="text-xs font-semibold text-primary hover:underline">Receipt PDF →</a>
+                            <button onClick={() => openReceiptPdf(r.id)}
+                               className="text-xs font-semibold text-primary hover:underline">Receipt PDF →</button>
                         ) },
                     ]}
                 />
+            )}
+
+            {tab === 'bill-items' && (
+                <div className="space-y-2">
+                    {(() => {
+                        const grouped = {};
+                        const items = billClassFilter ? billItems.filter(b => String(b.class_level) === billClassFilter) : billItems;
+                        items.forEach(b => {
+                            if (!grouped[b.class_name]) grouped[b.class_name] = { items: [], total: 0 };
+                            grouped[b.class_name].items.push(b);
+                            grouped[b.class_name].total += Number(b.amount);
+                        });
+                        return Object.entries(grouped).map(([cls, data]) => (
+                            <div key={cls} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                                <button
+                                    onClick={() => setExpandedClass(expandedClass === cls ? null : cls)}
+                                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        {expandedClass === cls
+                                            ? <ChevronDown className="w-4 h-4 text-gray-400" />
+                                            : <ChevronRight className="w-4 h-4 text-gray-400" />}
+                                        <span className="font-semibold text-ink">{cls}</span>
+                                        <span className="text-xs text-gray-400">{data.items.length} items</span>
+                                    </div>
+                                    <span className="font-bold text-primary tabular-nums">{naira(data.total)}</span>
+                                </button>
+                                {expandedClass === cls && (
+                                    <div className="border-t border-gray-50">
+                                        {data.items.map((b, i) => (
+                                            <div key={b.id} className={`flex items-center justify-between px-5 py-2.5 ${i < data.items.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-xs text-gray-400 w-5 text-right">{b.sn}</span>
+                                                    <span className="text-sm text-ink">{b.name}</span>
+                                                </div>
+                                                <span className="text-sm font-semibold text-ink tabular-nums">{naira(b.amount)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ));
+                    })()}
+                </div>
+            )}
+
+            {tab === 'book-list' && (
+                <div className="space-y-2">
+                    {(() => {
+                        const grouped = {};
+                        const items = bookSectionFilter ? bookItems.filter(b => b.section === bookSectionFilter) : bookItems;
+                        items.forEach(b => {
+                            if (!grouped[b.section_display]) grouped[b.section_display] = [];
+                            grouped[b.section_display].push(b);
+                        });
+                        return Object.entries(grouped).map(([section, data]) => (
+                            <div key={section} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                                <button
+                                    onClick={() => setExpandedClass(expandedClass === section ? null : section)}
+                                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        {expandedClass === section
+                                            ? <ChevronDown className="w-4 h-4 text-gray-400" />
+                                            : <ChevronRight className="w-4 h-4 text-gray-400" />}
+                                        <span className="font-semibold text-ink">{section}</span>
+                                        <span className="text-xs text-gray-400">{data.length} items</span>
+                                    </div>
+                                    <span className="font-bold text-secondary tabular-nums">{naira(data.reduce((s, b) => s + Number(b.price), 0))}</span>
+                                </button>
+                                {expandedClass === section && (
+                                    <div className="border-t border-gray-50">
+                                        {data.map((b, i) => (
+                                            <div key={b.id} className={`flex items-center justify-between px-5 py-2.5 ${i < data.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                                                <div className="min-w-0 flex-1">
+                                                    <span className="text-sm text-ink">{b.name}</span>
+                                                    {b.note && <span className="text-xs text-gray-400 ml-1">({b.note})</span>}
+                                                </div>
+                                                <span className="text-sm font-semibold text-ink tabular-nums shrink-0 ml-3">{b.price > 0 ? naira(b.price) : '—'}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ));
+                    })()}
+                </div>
             )}
 
             <PaymentModal

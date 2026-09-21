@@ -169,3 +169,39 @@ class Payment(SoftDeleteModel):
         inv.amount_paid = paid
         inv.recompute_status()
         inv.save(update_fields=["amount_paid", "status"])
+
+
+class BillItem(models.Model):
+    """Itemized fee breakdown per class level. Parents see this as their child's bill."""
+    class_level = models.ForeignKey(ClassLevel, on_delete=models.CASCADE, related_name="bill_items")
+    name = models.CharField(max_length=100, help_text='e.g. "School Fee", "Uniform"')
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    sn = models.PositiveIntegerField(default=0, help_text="Serial number for ordering")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["class_level__order", "sn", "name"]
+        unique_together = [("class_level", "name")]
+
+    def __str__(self):
+        return f"{self.class_level.name} · {self.name} · ₦{self.amount:,.0f}"
+
+
+class BookItem(models.Model):
+    """Required books and stationery per class level."""
+    SECTION_CHOICES = [("nursery", "Nursery / KG"), ("basic", "Primary")]
+
+    section = models.CharField(max_length=10, choices=SECTION_CHOICES)
+    name = models.CharField(max_length=150, help_text='e.g. "Mathematics", "Notebook 20pcs"')
+    price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    note = models.CharField(max_length=200, blank=True, help_text='e.g. "@₦600 each"')
+    sn = models.PositiveIntegerField(default=0, help_text="Serial number for ordering")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["section", "sn", "name"]
+
+    def __str__(self):
+        return f"{self.get_section_display()} · {self.name} · ₦{self.price:,.0f}"

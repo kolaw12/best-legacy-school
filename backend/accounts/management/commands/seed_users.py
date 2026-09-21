@@ -52,6 +52,10 @@ class Command(BaseCommand):
             if created:
                 user.set_password(spec["password"])
                 user.save()
+            else:
+                # Always refresh the password so seed_users is truly idempotent.
+                user.set_password(spec["password"])
+                user.save(update_fields=["password"])
 
             profile, _ = UserProfile.objects.get_or_create(user=user)
             profile.role = spec["role"]

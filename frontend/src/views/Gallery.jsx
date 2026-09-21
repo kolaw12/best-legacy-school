@@ -43,8 +43,8 @@ const Gallery = () => {
     const staticImages = [
         { id: 's1', image: funPool, alt: 'Fun in the pool' },
         { id: 's2', image: staffImg, alt: 'Our dedicated staff' },
-        { id: 's3', image: '/school_library.jpg', alt: 'A pupil at work in the library' },
-        { id: 's4', image: '/school_hero_Section.jpg', alt: 'Pupils smiling together' },
+        { id: 's3', image: '/group_celebration.jpg', alt: 'A pupil at work in the library' },
+        { id: 's4', image: '/school_ceremony.jpg', alt: 'Pupils smiling together' },
         { id: 's5', image: culturalImg, alt: 'Cultural day performance' },
     ];
 
@@ -115,12 +115,12 @@ const Gallery = () => {
                         </Fade>
                         <Fade delay={0.22} className="absolute top-4 right-0 w-[48%] sm:w-[44%] aspect-[3/4] rotate-4">
                             <div className="w-full h-full rounded-xl overflow-hidden shadow-card-lg border-4 border-white">
-                                <img src="/school_library.jpg" alt="A pupil at work at Best Legacy" className="w-full h-full object-cover" />
+                                <img src="/group_celebration.jpg" alt="A pupil at work at Best Legacy" className="w-full h-full object-cover" />
                             </div>
                         </Fade>
                         <Fade delay={0.34} className="absolute bottom-0 left-10 sm:left-16 w-[42%] sm:w-[38%] aspect-square rotate-3">
                             <div className="w-full h-full rounded-xl overflow-hidden shadow-card-lg border-4 border-white">
-                                <img src="/school_hero_Section.jpg" alt="Pupils smiling at Best Legacy" className="w-full h-full object-cover" />
+                                <img src="/school_ceremony.jpg" alt="Pupils smiling at Best Legacy" className="w-full h-full object-cover" />
                             </div>
                         </Fade>
                     </div>

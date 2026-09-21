@@ -223,13 +223,36 @@ Best Legacy Divine School"""
                 "relationship": "guardian",
             },
         )
+
+        login_credentials = None
         if guardian_created and guardian.email:
+            # Has email — send invite link
             from accounts.models import Role
             from accounts.provisioning import provision_login
             provision_login(
                 email=guardian.email, first_name=guardian.first_name, last_name=guardian.last_name,
                 role=Role.PARENT, guardian=guardian,
             )
+        elif guardian_created and not guardian.email:
+            # No email — admin may have provided a temp password
+            temp_password = (request.data.get("temp_password") or "").strip()
+            if temp_password:
+                from django.contrib.auth.models import User
+                from accounts.models import UserProfile, Role
+                from accounts.provisioning import _unique_username
+
+                username = _unique_username(guardian.email or guardian.phone)
+                user = User.objects.create_user(
+                    username=username,
+                    email=guardian.email or "",
+                    password=temp_password,
+                    first_name=g_first,
+                    last_name=g_last,
+                )
+                UserProfile.objects.create(
+                    user=user, role=Role.PARENT, guardian=guardian,
+                )
+                login_credentials = {"username": username, "password": temp_password}
 
         # Split child name
         cparts = (admission.student_name or "").strip().split(" ", 1)
@@ -256,10 +279,10 @@ Best Legacy Divine School"""
                 defaults={"class_level": class_level, "status": "active"},
             )
 
-        return Response(
-            {"detail": "enrolled", "student": StudentSerializer(student).data},
-            status=201,
-        )
+        resp = {"detail": "enrolled", "student": StudentSerializer(student).data}
+        if login_credentials:
+            resp["login_credentials"] = login_credentials
+        return Response(resp, status=201)
 
     @action(detail=False, methods=['post'])
     def test_email(self, request):

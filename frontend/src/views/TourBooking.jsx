@@ -42,7 +42,7 @@ const TourBooking = () => {
     if (done) {
         return (
             <>
-                <PageHero eyebrow="TOUR BOOKED" title="Thank you. See you soon." subtitle="We'll confirm via WhatsApp + email shortly." bgImage="/school_hero_Section.jpg" />
+                <PageHero eyebrow="TOUR BOOKED" title="Thank you. See you soon." subtitle="We'll confirm via WhatsApp + email shortly." bgImage="/school_ceremony.jpg" />
                 <section className="max-w-2xl mx-auto px-4 py-16 text-center">
                     <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                                 className="bg-mint border-2 border-primary/20 rounded-3xl p-8">
@@ -71,7 +71,7 @@ const TourBooking = () => {
             />
             <PageHero eyebrow="VISIT THE SCHOOL" title="Book a campus tour"
                       subtitle="Pick a day, pick a time, walk the halls. Fifteen minutes is enough to know."
-                      bgImage="/school_hero_Section.jpg" />
+                      bgImage="/school_ceremony.jpg" />
             <section className="max-w-2xl mx-auto px-4 py-16">
                 {error && <div className="mb-4 bg-rose-50 border border-rose-200 rounded-xl p-3 text-sm text-rose-700 whitespace-pre-wrap">{error}</div>}
                 <form onSubmit={submit} className="bg-white rounded-3xl shadow-card-lg p-6 md:p-8 space-y-4">

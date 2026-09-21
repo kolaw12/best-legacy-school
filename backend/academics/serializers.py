@@ -62,6 +62,7 @@ class TeacherSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(read_only=True)
     class_teacher_of_name = serializers.CharField(source="class_teacher_of.name", read_only=True)
     subjects_detail = SubjectSerializer(source="subjects", many=True, read_only=True)
+    user_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Teacher
@@ -69,9 +70,13 @@ class TeacherSerializer(serializers.ModelSerializer):
             "id", "staff_id", "first_name", "last_name", "full_name",
             "email", "phone", "qualification", "photo", "hire_date", "is_active",
             "class_teacher_of", "class_teacher_of_name",
-            "subjects", "subjects_detail", "classes", "created_at",
+            "subjects", "subjects_detail", "classes", "created_at", "user_id",
         ]
         read_only_fields = ("staff_id",)
+
+    def get_user_id(self, instance):
+        profile = getattr(instance, "user_profile", None)
+        return profile.user_id if profile else None
 
     def to_representation(self, instance):
         # Swap the raw MEDIA path for a signed, time-limited link on the way
@@ -179,7 +184,7 @@ class BasicGradeSerializer(serializers.ModelSerializer):
             "id", "student", "student_name", "admission_no",
             "subject", "subject_name", "term", "term_label",
             "ca1", "ca2", "exam", "total", "grade", "remark",
-            "teacher", "updated_at",
+            "teacher_comment", "teacher", "updated_at",
         ]
         read_only_fields = ("total", "grade", "updated_at")
 
