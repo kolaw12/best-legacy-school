@@ -20,5 +20,6 @@ urlpatterns = [
     path("invite/accept/", views.accept_invite, name="auth-accept-invite"),
     path("search/", views.global_search, name="auth-search"),
     path("send-sms/", views.send_sms_view, name="auth-send-sms"),
+    path("setup/", views.setup_admin, name="auth-setup"),
     path("", include(router.urls)),
 ]

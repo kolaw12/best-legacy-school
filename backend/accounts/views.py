@@ -626,3 +626,34 @@ def global_search(request):
         })
 
     return Response(results)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def setup_admin(request):
+    """One-time setup: create or reset the admin user. Call from browser."""
+    admin_user, created = User.objects.get_or_create(
+        username='admin',
+        defaults={
+            'email': 'admin@bestlegacy.sch',
+            'first_name': 'School',
+            'last_name': 'Admin',
+            'is_staff': True,
+        },
+    )
+    admin_user.set_password('admin123')
+    admin_user.save(update_fields=['password'])
+
+    profile, _ = UserProfile.objects.get_or_create(
+        user=admin_user,
+        defaults={'role': Role.SCHOOL_ADMIN},
+    )
+    if profile.role != Role.SCHOOL_ADMIN:
+        profile.role = Role.SCHOOL_ADMIN
+        profile.save(update_fields=['role'])
+
+    return Response({
+        "message": "Admin user ready",
+        "username": "admin",
+        "action": "created" if created else "password_reset",
+    })
