@@ -8,6 +8,7 @@ import FeeDueChip from './FeeDueChip';
 import NotificationBell from '../ui/NotificationBell';
 import Logo from '../ui/Logo';
 import BottomNav from '../ui/BottomNav';
+import DarkModeToggle from '../ui/DarkModeToggle';
 
 const NAV = [
     { to: '/portal/dashboard', label: 'Dashboard', icon: 'home' },
@@ -116,9 +117,10 @@ const ParentLayout = () => {
                             </button>
                             <Breadcrumbs />
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                             <FeeDueChip />
                             <NotificationBell />
+                            <DarkModeToggle />
                             <div className="text-xs text-gray-500 hidden md:block">
                                 {new Date().toLocaleDateString('en-NG', { weekday: 'long', day: 'numeric', month: 'long' })}
                             </div>

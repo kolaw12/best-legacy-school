@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Globe, Menu, X } from 'lucide-react';
 import Logo from './ui/Logo';
+import DarkModeToggle from './ui/DarkModeToggle';
 
 const NAV_LINKS = [
     { to: '/',           labelKey: 'nav.home',       end: true },
@@ -101,6 +102,8 @@ const Navbar = () => {
                                 </div>
                             )}
                         </div>
+
+                        <DarkModeToggle />
 
                         <div className="w-px h-5 bg-gray-200" />
 

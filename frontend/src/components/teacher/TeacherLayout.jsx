@@ -6,6 +6,7 @@ import Breadcrumbs from '../ui/Breadcrumbs';
 import NotificationBell from '../ui/NotificationBell';
 import Logo from '../ui/Logo';
 import TeacherBottomNav from './TeacherBottomNav';
+import DarkModeToggle from '../ui/DarkModeToggle';
 
 const NAV = [
     { to: '/admin/teacher/dashboard',   label: 'Dashboard',   icon: 'home' },
@@ -125,6 +126,7 @@ const TeacherLayout = () => {
                                 {new Date().toLocaleDateString('en-NG', { weekday: 'long', day: 'numeric', month: 'long' })}
                             </div>
                             <NotificationBell />
+                            <DarkModeToggle />
                         </div>
                     </div>
                 </div>

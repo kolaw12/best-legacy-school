@@ -3,15 +3,15 @@ import { NavLink, Link, Outlet, Navigate, useNavigate } from 'react-router-dom';
 import {
     Home, Inbox, Users, Upload, ArrowUp, Briefcase, Layers, BookOpen,
     CheckCircle2, Car, Clock, GraduationCap, Banknote, Bell, Shield, LogOut,
-    Menu, X, Trash2, CalendarRange, MessageSquare, Moon, Sun,
+    Menu, X, Trash2, CalendarRange, MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import Breadcrumbs from '../ui/Breadcrumbs';
 import NotificationBell from '../ui/NotificationBell';
 import Logo from '../ui/Logo';
 import SearchBar from './SearchBar';
 import AdminBottomNav from './AdminBottomNav';
+import DarkModeToggle from '../ui/DarkModeToggle';
 
 const NAV = [
     { to: '/admin/dashboard',  label: 'Dashboard',   icon: 'home' },
@@ -168,6 +168,7 @@ const AdminLayout = () => {
                             </div>
                             <SearchBar />
                             <NotificationBell />
+                            <DarkModeToggle />
                             <Link to="/admin/profile" className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm hover:opacity-90 transition" title={profile?.full_name}>{initials}</Link>
                         </div>
                     </div>
@@ -179,16 +180,6 @@ const AdminLayout = () => {
             </div>
             <AdminBottomNav />
         </div>
-    );
-};
-
-const DarkModeToggle = () => {
-    const { dark, toggle } = useTheme();
-    return (
-        <button onClick={toggle} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:text-ink rounded-xl hover:bg-gray-50 transition">
-            {dark ? <Sun className="w-5 h-5 shrink-0" strokeWidth={2} /> : <Moon className="w-5 h-5 shrink-0" strokeWidth={2} />}
-            {dark ? 'Light mode' : 'Dark mode'}
-        </button>
     );
 };
 
