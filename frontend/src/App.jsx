@@ -6,20 +6,20 @@ import RequireRole from './components/RequireRole';
 import PageTransition from './components/ui/PageTransition';
 import { ThemeProvider } from './context/ThemeContext';
 
-// Public pages (small, load eagerly)
+// Public pages — eager load only the smallest; lazy-load the rest
 import Home from './views/Home';
-import About from './views/About';
-import Admissions from './views/Admissions';
-import Gallery from './views/Gallery';
-import Contact from './views/Contact';
-import FAQ from './views/FAQ';
-import VirtualTour from './views/VirtualTour';
-import NotFound from './views/NotFound';
 import AdminLogin from './views/AdminLogin';
 import ParentLogin from './views/ParentLogin';
-import AcceptInvite from './views/AcceptInvite';
-import TourBooking from './views/TourBooking';
-import ApplicationStatus from './views/ApplicationStatus';
+const About = lazy(() => import('./views/About'));
+const Admissions = lazy(() => import('./views/Admissions'));
+const Gallery = lazy(() => import('./views/Gallery'));
+const Contact = lazy(() => import('./views/Contact'));
+const FAQ = lazy(() => import('./views/FAQ'));
+const VirtualTour = lazy(() => import('./views/VirtualTour'));
+const NotFound = lazy(() => import('./views/NotFound'));
+const AcceptInvite = lazy(() => import('./views/AcceptInvite'));
+const TourBooking = lazy(() => import('./views/TourBooking'));
+const ApplicationStatus = lazy(() => import('./views/ApplicationStatus'));
 
 // Lazy-loaded portal chunks
 const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));

@@ -36,10 +36,6 @@ const Gallery = () => {
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchImages();
-    }, []);
-
     const staticImages = [
         { id: 's1', image: funPool, alt: 'Fun in the pool' },
         { id: 's2', image: staffImg, alt: 'Our dedicated staff' },
@@ -48,22 +44,25 @@ const Gallery = () => {
         { id: 's5', image: culturalImg, alt: 'Cultural day performance' },
     ];
 
-    const fetchImages = async () => {
-        try {
-            const response = await axios.get(`${API_URL}/api/gallery/`);
-            // Dynamic images from DB
-            const dbImages = response.data.map(img => ({
-                ...img,
-                isDynamic: true
-            }));
-            setImages([...staticImages, ...dbImages]);
-        } catch (error) {
-            console.error('Error fetching gallery images:', error);
-            setImages(staticImages);
-        } finally {
-            setLoading(false);
-        }
-    };
+    useEffect(() => {
+        // Show static images immediately, then try to load API images
+        setImages(staticImages);
+        setLoading(false);
+
+        const controller = new AbortController();
+        axios.get(`${API_URL}/api/gallery/`, { signal: controller.signal, timeout: 5000 })
+            .then(response => {
+                const dbImages = response.data.map(img => ({
+                    ...img,
+                    isDynamic: true
+                }));
+                setImages(prev => [...staticImages, ...dbImages]);
+            })
+            .catch(() => {
+                // API unavailable — static images already shown, no problem
+            });
+        return () => controller.abort();
+    }, []);
 
     const getImageUrl = (img) => {
         if (!img) return null;

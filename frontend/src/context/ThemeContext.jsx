@@ -7,10 +7,10 @@ export const ThemeProvider = ({ children }) => {
         try {
             const stored = localStorage.getItem('bls.darkMode');
             if (stored !== null) return stored === 'true';
-            return window.matchMedia('(prefers-color-scheme: dark)').matches;
         } catch {
-            return false;
+            // ignore
         }
+        return false; // default to light mode
     });
 
     useEffect(() => {
