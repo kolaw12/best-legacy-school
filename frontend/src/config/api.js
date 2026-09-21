@@ -8,8 +8,8 @@ if (API_URL && API_URL.endsWith('/')) {
     API_URL = API_URL.slice(0, -1);
 }
 
-// Global timeout: 15s for regular requests
-axios.defaults.timeout = 15000;
+// Global timeout: 60s — Render free tier cold starts take 30-60s
+axios.defaults.timeout = 60000;
 
 // Show a helpful toast if a request is taking long (cold start indicator)
 let _toastFn = null;
@@ -19,12 +19,12 @@ export const setGlobalToast = (fn) => { _toastFn = fn; };
 
 axios.interceptors.request.use((config) => {
     const id = config.url || 'req';
-    // After 4 seconds, show a "waking up" hint
+    // After 3 seconds, show a "waking up" hint
     const timer = setTimeout(() => {
         if (_toastFn) {
-            _toastFn.info('Server is waking up — this only takes a few seconds on first load.', { duration: 8000 });
+            _toastFn.info('Server is waking up — this takes 30-60s on first load. Please wait...', { duration: 55000 });
         }
-    }, 4000);
+    }, 3000);
     _pendingTimers.set(id, timer);
     return config;
 });

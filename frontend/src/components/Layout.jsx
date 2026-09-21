@@ -1,9 +1,19 @@
+import { useEffect } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import MobileEnquireBar from './MobileEnquireBar';
 import ScrollToTop from './ui/ScrollToTop';
+import API_URL from '../config/api';
 
 const Layout = ({ children }) => {
+    // Keep-alive ping: hit the backend every 10 min to prevent Render cold starts
+    useEffect(() => {
+        const ping = () => fetch(`${API_URL}/api/auth/me/`, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+        ping();
+        const id = setInterval(ping, 10 * 60 * 1000);
+        return () => clearInterval(id);
+    }, []);
+
     return (
         <div className="flex flex-col min-h-screen">
             <div className="noise-overlay" aria-hidden="true"></div>

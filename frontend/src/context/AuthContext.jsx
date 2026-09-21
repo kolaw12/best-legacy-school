@@ -7,8 +7,8 @@ const PROFILE_KEY = 'bls_auth_profile';
 
 const AuthContext = createContext(null);
 
-// Short timeout so cold backend doesn't block UI for 30+ seconds
-const FAST_TIMEOUT = 8000;
+// Timeout for auth verification — Render cold starts need more time
+const FAST_TIMEOUT = 30000;
 
 const setAxiosAuth = (token) => {
     if (token) {
