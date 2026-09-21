@@ -1,9 +1,9 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, GraduationCap, Clock, CheckCircle2, Inbox, Wallet, ShieldCheck } from 'lucide-react';
 import AdminPageHeader from '../../components/admin/PageHeader';
 import KpiCard from '../../components/admin/KpiCard';
-const Charts = lazy(() => import('../../components/admin/Charts'));
+import { StudentsByClassChart, GenderPieChart } from '../../components/admin/Charts';
 import DataTable from '../../components/admin/DataTable';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
@@ -78,16 +78,15 @@ const AdminDashboard = () => {
                              : "New enrolments"} />
             </div>
 
-            <Suspense fallback={<div className="h-64 bg-gray-50 rounded-2xl animate-pulse" />}>
-                <div className="grid lg:grid-cols-3 gap-6">
-                    {/* Students by Class chart */}
-                    <div className="lg:col-span-2">
-                        <Charts.StudentsByClassChart data={data?.per_class || []} />
-                    </div>
+            <div className="grid lg:grid-cols-3 gap-6">
+                {/* Students by Class chart */}
+                <div className="lg:col-span-2">
+                    <StudentsByClassChart data={data?.per_class || []} />
+                </div>
 
-                    {/* Gender chart + quick actions */}
-                    <div className="space-y-6">
-                        <Charts.GenderPieChart male={data?.gender_split?.male || 0} female={data?.gender_split?.female || 0} />
+                {/* Gender chart + quick actions */}
+                <div className="space-y-6">
+                    <GenderPieChart male={data?.gender_split?.male || 0} female={data?.gender_split?.female || 0} />
 
                     <div className="bg-white dark:bg-[#1A1D2B] rounded-2xl border border-gray-100 dark:border-[#2D3348] p-6 shadow-card">
                         <h3 className="font-bold text-ink mb-4">Quick Actions</h3>
@@ -99,8 +98,7 @@ const AdminDashboard = () => {
                         </div>
                     </div>
                 </div>
-                </div>
-            </Suspense>
+            </div>
 
             {/* Recent admissions */}
             <div className="mt-8">
