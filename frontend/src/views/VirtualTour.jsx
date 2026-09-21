@@ -140,7 +140,7 @@ const VirtualTour = () => {
                 photo or split text/image layout. */}
             <section className="relative bg-ink overflow-hidden pt-24 md:pt-28 pb-16 md:pb-20">
                 <div className="absolute inset-0 grain-dot opacity-20 mix-blend-overlay pointer-events-none" />
-                <div className="absolute top-0 right-0 w-[60%] h-full bg-gradient-to-l from-primary/20 to-transparent blur-3xl pointer-events-none" />
+                <div className="absolute top-0 right-0 w-[60%] h-full bg-gradient-to-l from-primary/20 to-transparent blur-3xl pointer-events-none hidden md:block" />
 
                 <div className="relative max-w-3xl mx-auto px-6 sm:px-8 text-center">
                     <Fade>
@@ -192,7 +192,7 @@ const VirtualTour = () => {
                                     <img 
                                         src={stop.image} 
                                         alt={stop.title} 
-                                        className="relative z-10 w-full h-[400px] object-cover transition-transform duration-1000 group-hover:scale-105"
+                                        className="relative z-10 w-full h-64 md:h-[400px] object-cover transition-transform duration-1000 group-hover:scale-105"
                                     />
                                 </div>
                             </div>
