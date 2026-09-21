@@ -80,7 +80,10 @@ const ParentLogin = () => {
                         </Button>
                     </form>
 
-                    <div className="mt-6 text-center">
+                    <div className="mt-6 text-center space-y-2">
+                        <Link to="/forgot-password" className="text-xs text-primary font-semibold hover:underline">
+                            Forgot password?
+                        </Link>
                         <p className="text-xs text-gray-500">
                             New parent? Your login details were sent to you after your child's enrollment.
                         </p>

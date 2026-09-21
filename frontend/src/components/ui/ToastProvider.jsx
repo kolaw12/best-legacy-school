@@ -1,9 +1,8 @@
-import { createContext, useCallback, useContext, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { createContext, useCallback, useContext, useState, useEffect } from 'react';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 /**
- * Lightweight toast system.
+ * Lightweight toast system using CSS transitions (no framer-motion).
  *   const toast = useToast();
  *   toast.success("Saved");
  *   toast.error("Failed", { duration: 5000 });
@@ -17,6 +16,37 @@ const TONES = {
 };
 
 let _id = 0;
+
+const ToastItem = ({ toast, onDismiss }) => {
+    const [entering, setEntering] = useState(true);
+
+    useEffect(() => {
+        const raf = requestAnimationFrame(() => setEntering(false));
+        return () => cancelAnimationFrame(raf);
+    }, []);
+
+    const tone = TONES[toast.tone] || TONES.info;
+
+    return (
+        <div
+            className={`pointer-events-auto bg-white rounded-2xl shadow-card-lg p-4 flex items-start gap-3 ring-1 ${tone.ring} transition-all duration-300 ease-out ${
+                entering ? 'opacity-0 translate-x-10 scale-95' : 'opacity-100 translate-x-0 scale-100'
+            }`}
+        >
+            <span className={`shrink-0 w-7 h-7 rounded-full ${tone.dot} text-white flex items-center justify-center`}>
+                <tone.icon className="w-4 h-4" strokeWidth={2.5} />
+            </span>
+            <div className={`flex-1 text-sm font-semibold ${tone.text}`}>{toast.message}</div>
+            <button
+                onClick={() => onDismiss(toast.id)}
+                aria-label="Dismiss"
+                className="shrink-0 text-gray-400 hover:text-ink p-1 -m-1"
+            >
+                <X className="w-4 h-4" strokeWidth={2} />
+            </button>
+        </div>
+    );
+};
 
 export const ToastProvider = ({ children }) => {
     const [toasts, setToasts] = useState([]);
@@ -49,33 +79,9 @@ export const ToastProvider = ({ children }) => {
                 aria-label="Notifications"
                 aria-live="polite"
             >
-                <AnimatePresence>
-                    {toasts.map(t => {
-                        const tone = TONES[t.tone] || TONES.info;
-                        return (
-                            <motion.div
-                                key={t.id}
-                                initial={{ opacity: 0, x: 40, scale: 0.95 }}
-                                animate={{ opacity: 1, x: 0, scale: 1 }}
-                                exit={{ opacity: 0, x: 40, scale: 0.95 }}
-                                transition={{ type: 'spring', stiffness: 240, damping: 22 }}
-                                className={`pointer-events-auto bg-white rounded-2xl shadow-card-lg p-4 flex items-start gap-3 ring-1 ${tone.ring}`}
-                            >
-                                <span className={`shrink-0 w-7 h-7 rounded-full ${tone.dot} text-white flex items-center justify-center`}>
-                                    <tone.icon className="w-4 h-4" strokeWidth={2.5} />
-                                </span>
-                                <div className={`flex-1 text-sm font-semibold ${tone.text}`}>{t.message}</div>
-                                <button
-                                    onClick={() => dismiss(t.id)}
-                                    aria-label="Dismiss"
-                                    className="shrink-0 text-gray-400 hover:text-ink p-1 -m-1"
-                                >
-                                    <X className="w-4 h-4" strokeWidth={2} />
-                                </button>
-                            </motion.div>
-                        );
-                    })}
-                </AnimatePresence>
+                {toasts.map(t => (
+                    <ToastItem key={t.id} toast={t} onDismiss={dismiss} />
+                ))}
             </div>
         </ToastContext.Provider>
     );
@@ -84,7 +90,6 @@ export const ToastProvider = ({ children }) => {
 export const useToast = () => {
     const ctx = useContext(ToastContext);
     if (!ctx) {
-        // Fallback: don't throw, just no-op so components don't crash if forgotten
         return { success: () => {}, error: () => {}, info: () => {}, dismiss: () => {} };
     }
     return ctx;

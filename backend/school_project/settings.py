@@ -118,6 +118,7 @@ INSTALLED_APPS = [
     'assignments',
     'wellbeing',
     'operations',
+    'backup',
 ]
 
 MIDDLEWARE = [
@@ -263,4 +264,15 @@ if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# SSL / HTTPS — Render, Vercel, and most PaaS terminate TLS at the edge.
+# These settings tell Django to trust the X-Forwarded-Proto header.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True') == 'True'
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 

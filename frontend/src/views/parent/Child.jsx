@@ -6,6 +6,7 @@ import { ArrowRight, Award, Star, AlertTriangle } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Reveal from '../../components/ui/Reveal';
+import WhatsAppShare from '../../components/ui/WhatsAppShare';
 import { openReceiptPdf } from '../../utils/openReceiptPdf';
 import API_URL from '../../config/api';
 
@@ -150,8 +151,12 @@ const Child = () => {
                         ) : (
                             <BasicReport data={report} />
                         )}
-                        <div className="mt-6 flex justify-end">
-                            <Link to={`/portal/report-cards/${child.id}`} target="_blank" rel="noreferrer" className="text-sm font-semibold text-primary hover:underline">
+                        <div className="mt-6 flex justify-end gap-3">
+                            <WhatsAppShare
+                                text={`${child.full_name}'s report card is ready at Best Legacy Divine School`}
+                                url={`${window.location.origin}/portal/report-cards/${child.id}`}
+                            />
+                            <Link to={`/portal/report-cards/${child.id}`} target="_blank" rel="noreferrer" className="text-sm font-semibold text-primary hover:underline self-center">
                                 Open printable view →
                             </Link>
                         </div>

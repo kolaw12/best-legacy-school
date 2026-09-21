@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-
 import { useTranslation } from 'react-i18next';
 import { Globe, Menu, X } from 'lucide-react';
 import Logo from './ui/Logo';
@@ -48,9 +46,9 @@ const Navbar = () => {
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16 md:h-[4.5rem]">
                     <Link to="/" className="flex items-center gap-2.5 group">
-                        <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }} className="flex items-center">
+                        <div className="flex items-center transition-transform duration-200 hover:scale-105">
                             <Logo size="sm" />
-                        </motion.div>
+                        </div>
                         <span className="hidden sm:flex flex-col leading-none">
                             <span className="text-sm font-bold tracking-[0.08em] text-ink">BEST LEGACY</span>
                             <span className="text-[9px] font-semibold tracking-[0.2em] text-gray-400 uppercase">Divine School</span>
@@ -131,40 +129,31 @@ const Navbar = () => {
             </nav>
 
             {/* Mobile menu */}
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                        className="lg:hidden overflow-hidden border-t border-gray-100"
-                    >
-                        <div className="px-4 sm:px-6 pt-3 pb-6 space-y-1">
-                            {NAV_LINKS.map(link => (
-                                <NavLink key={link.to} to={link.to} end={link.end}
-                                    className={({ isActive }) =>
-                                        `block px-4 py-3 rounded-xl text-sm font-semibold uppercase tracking-[0.08em] transition-colors ${
-                                            isActive ? 'bg-primary-soft text-primary-dark' : 'text-gray-600 hover:bg-gray-50'
-                                        }`
-                                    }
-                                >{t(link.labelKey)}</NavLink>
-                            ))}
-                            <div className="flex gap-2 mt-4 px-1">
-                                <button onClick={() => changeLanguage('en')}  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${i18n.language.startsWith('en') ? 'bg-primary-soft text-primary-dark' : 'bg-gray-50 text-gray-600'}`}>EN</button>
-                                <button onClick={() => changeLanguage('yo')}  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${i18n.language.startsWith('yo') ? 'bg-primary-soft text-primary-dark' : 'bg-gray-50 text-gray-600'}`}>YO</button>
-                                <button onClick={() => changeLanguage('pcm')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${i18n.language.startsWith('pcm') ? 'bg-primary-soft text-primary-dark' : 'bg-gray-50 text-gray-600'}`}>PCM</button>
-                            </div>
-                            <Link to="/parent-login" className="block text-center mt-2 bg-secondary-soft text-secondary-dark font-bold uppercase tracking-[0.1em] text-sm py-3 rounded-full">
-                                Parent Portal
-                            </Link>
-                            <Link to="/admissions" className="block text-center mt-2 bg-primary text-white font-bold uppercase tracking-[0.1em] text-sm py-3.5 rounded-full shadow-sm">
-                                {t('nav.apply')}
-                            </Link>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <div className={`lg:hidden overflow-hidden border-t border-gray-100 transition-all duration-300 ease-out ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 border-t-0'}`}>
+                <div className="px-4 sm:px-6 pt-3 pb-6 space-y-1">
+                    {NAV_LINKS.map(link => (
+                        <NavLink key={link.to} to={link.to} end={link.end}
+                            onClick={() => setIsOpen(false)}
+                            className={({ isActive }) =>
+                                `block px-4 py-3 rounded-xl text-sm font-semibold uppercase tracking-[0.08em] transition-colors ${
+                                    isActive ? 'bg-primary-soft text-primary-dark' : 'text-gray-600 hover:bg-gray-50'
+                                }`
+                            }
+                        >{t(link.labelKey)}</NavLink>
+                    ))}
+                    <div className="flex gap-2 mt-4 px-1">
+                        <button onClick={() => changeLanguage('en')}  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${i18n.language.startsWith('en') ? 'bg-primary-soft text-primary-dark' : 'bg-gray-50 text-gray-600'}`}>EN</button>
+                        <button onClick={() => changeLanguage('yo')}  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${i18n.language.startsWith('yo') ? 'bg-primary-soft text-primary-dark' : 'bg-gray-50 text-gray-600'}`}>YO</button>
+                        <button onClick={() => changeLanguage('pcm')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${i18n.language.startsWith('pcm') ? 'bg-primary-soft text-primary-dark' : 'bg-gray-50 text-gray-600'}`}>PCM</button>
+                    </div>
+                    <Link to="/parent-login" className="block text-center mt-2 bg-secondary-soft text-secondary-dark font-bold uppercase tracking-[0.1em] text-sm py-3 rounded-full">
+                        Parent Portal
+                    </Link>
+                    <Link to="/admissions" className="block text-center mt-2 bg-primary text-white font-bold uppercase tracking-[0.1em] text-sm py-3.5 rounded-full shadow-sm">
+                        {t('nav.apply')}
+                    </Link>
+                </div>
+            </div>
         </header>
     );
 };

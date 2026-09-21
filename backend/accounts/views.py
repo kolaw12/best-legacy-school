@@ -657,3 +657,83 @@ def setup_admin(request):
         "username": "admin",
         "action": "created" if created else "password_reset",
     })
+
+
+# ── Password reset ─────────────────────────────────────────────────────────
+
+import secrets
+from django.core.mail import send_mail
+from django.conf import settings
+
+# In-memory reset tokens (production: use DB or cache)
+_reset_tokens = {}  # {token: {"user_id": int, "expires": datetime}}
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def password_reset_request(request):
+    """Request a password reset link. Sends email with token."""
+    email = (request.data.get("email") or "").strip().lower()
+    if not email:
+        return Response({"error": "Email is required."}, status=400)
+
+    users = User.objects.filter(email__iexact=email)
+    if not users.exists():
+        # Don't reveal whether email exists
+        return Response({"message": "If an account with that email exists, a reset link has been sent."})
+
+    user = users.first()
+    token = secrets.token_urlsafe(32)
+    _reset_tokens[token] = {
+        "user_id": user.id,
+        "expires": timezone.now() + timezone.timedelta(hours=1),
+    }
+
+    frontend_url = os.environ.get("FRONTEND_URL", "https://www.blds.com.ng")
+    reset_url = f"{frontend_url}/reset-password?token={token}"
+
+    try:
+        send_mail(
+            subject="Best Legacy Divine School — Password Reset",
+            message=f"Click the link below to reset your password:\n\n{reset_url}\n\nThis link expires in 1 hour.",
+            from_email=settings.DEFAULT_FROM_EMAIL or "noreply@bestlegacy.sch",
+            recipient_list=[user.email],
+            fail_silently=True,
+        )
+    except Exception:
+        pass  # Email may not be configured in dev
+
+    return Response({"message": "If an account with that email exists, a reset link has been sent."})
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def password_reset_confirm(request):
+    """Set new password using reset token."""
+    token = (request.data.get("token") or "").strip()
+    new_password = request.data.get("password", "")
+
+    if not token or not new_password:
+        return Response({"error": "Token and password are required."}, status=400)
+
+    if len(new_password) < 8:
+        return Response({"error": "Password must be at least 8 characters."}, status=400)
+
+    data = _reset_tokens.get(token)
+    if not data:
+        return Response({"error": "Invalid or expired reset link."}, status=400)
+
+    if timezone.now() > data["expires"]:
+        del _reset_tokens[token]
+        return Response({"error": "Reset link has expired. Request a new one."}, status=400)
+
+    try:
+        user = User.objects.get(id=data["user_id"])
+    except User.DoesNotExist:
+        return Response({"error": "User not found."}, status=404)
+
+    user.set_password(new_password)
+    user.save(update_fields=["password"])
+    del _reset_tokens[token]
+
+    return Response({"message": "Password reset successfully. You can now log in."})

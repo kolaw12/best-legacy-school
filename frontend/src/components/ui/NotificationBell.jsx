@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { Bell } from 'lucide-react';
 import API_URL from '../../config/api';
@@ -90,26 +89,13 @@ const NotificationBell = () => {
             >
                 <Bell className="w-5 h-5" strokeWidth={2} />
                 {unread > 0 && (
-                    <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 320, damping: 18 }}
-                        className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-secondary text-ink text-[10px] font-black flex items-center justify-center shadow-sm"
-                    >
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-secondary text-ink text-[10px] font-black flex items-center justify-center shadow-sm animate-bounce">
                         {unread > 9 ? '9+' : unread}
-                    </motion.span>
+                    </span>
                 )}
             </button>
 
-            <AnimatePresence>
-                {open && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                        transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                        className="fixed inset-x-4 top-20 lg:absolute lg:inset-auto lg:right-0 lg:top-full lg:mt-3 lg:w-[380px] bg-white rounded-2xl shadow-card-lg border border-gray-100 z-50 overflow-hidden"
-                    >
+            <div className={`fixed inset-x-4 top-20 lg:absolute lg:inset-auto lg:right-0 lg:top-full lg:mt-3 lg:w-[380px] bg-white rounded-2xl shadow-card-lg border border-gray-100 z-50 overflow-hidden transition-all duration-200 ease-out ${open ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-96 pointer-events-none'}`}>
                         <header className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                             <span className="text-sm font-bold text-ink">Notifications</span>
                             {unread > 0 && (
@@ -158,9 +144,7 @@ const NotificationBell = () => {
                                 </ul>
                             )}
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    </div>
         </div>
     );
 };

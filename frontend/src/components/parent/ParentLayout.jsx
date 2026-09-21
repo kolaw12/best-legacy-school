@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Home, Calendar, MessageCircle, Banknote, UserCircle, LogOut, Menu, X, FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Breadcrumbs from '../ui/Breadcrumbs';
@@ -88,9 +87,9 @@ const ParentLayout = () => {
 
             {open && (
                 <div className="lg:hidden fixed inset-0 z-40 bg-black/40" onClick={() => setOpen(false)}>
-                    <motion.aside
-                        initial={{ x: -300 }} animate={{ x: 0 }} exit={{ x: -300 }}
-                        className="absolute left-0 top-0 bottom-0 w-72 bg-white flex flex-col"
+                    <aside
+                        className="absolute left-0 top-0 bottom-0 w-72 bg-white flex flex-col transition-transform duration-300 ease-out"
+                        style={{ transform: open ? 'translateX(0)' : 'translateX(-100%)' }}
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="px-5 py-5 border-b border-gray-100 flex items-center justify-between">
@@ -104,7 +103,7 @@ const ParentLayout = () => {
                         <div className="flex-1 h-0 min-h-0 overflow-y-auto custom-scrollbar overscroll-contain" data-lenis-prevent>
                             <NavList onClickLink={() => setOpen(false)} />
                         </div>
-                    </motion.aside>
+                    </aside>
                 </div>
             )}
 

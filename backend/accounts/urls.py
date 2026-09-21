@@ -21,5 +21,7 @@ urlpatterns = [
     path("search/", views.global_search, name="auth-search"),
     path("send-sms/", views.send_sms_view, name="auth-send-sms"),
     path("setup/", views.setup_admin, name="auth-setup"),
+    path("password-reset/", views.password_reset_request, name="auth-password-reset"),
+    path("password-reset/confirm/", views.password_reset_confirm, name="auth-password-reset-confirm"),
     path("", include(router.urls)),
 ]

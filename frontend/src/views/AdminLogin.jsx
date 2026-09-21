@@ -85,6 +85,9 @@ const AdminLogin = () => {
                 </form>
 
                 <div className="mt-6 text-center space-y-2">
+                    <Link to="/forgot-password" className="text-xs text-primary font-semibold hover:underline">
+                        Forgot password?
+                    </Link>
                     <p className="text-xs text-gray-500">
                         Need an account? Ask a school admin to set one up for you.
                     </p>

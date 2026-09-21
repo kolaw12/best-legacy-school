@@ -1,11 +1,18 @@
 import { Link } from 'react-router-dom';
-import { Inbox, GraduationCap, BookOpen, CalendarRange, ClipboardList, Shield, Trash2, ChevronRight, Users, UserCircle } from 'lucide-react';
+import { Inbox, GraduationCap, BookOpen, CalendarRange, ClipboardList, Shield, Trash2, ChevronRight, Users, UserCircle, Images } from 'lucide-react';
 
 const SECTIONS = [
     {
         title: 'Account',
         items: [
             { to: '/admin/profile',      label: 'My Profile', icon: UserCircle, desc: 'Account settings' },
+        ],
+    },
+    {
+        title: 'Content',
+        items: [
+            { to: '/admin/gallery-mgmt', label: 'Gallery', icon: Images, desc: 'Manage school photos' },
+            { to: '/admin/announcements', label: 'Announcements', icon: Inbox, desc: 'News & updates' },
         ],
     },
     {

@@ -1,15 +1,16 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import Layout from './components/Layout';
 import RequireRole from './components/RequireRole';
 import PageTransition from './components/ui/PageTransition';
 import { ThemeProvider } from './context/ThemeContext';
 
-// Public pages — eager load only the smallest; lazy-load the rest
-import Home from './views/Home';
+// Only the smallest pages are eager-loaded
 import AdminLogin from './views/AdminLogin';
 import ParentLogin from './views/ParentLogin';
+
+// Lazy-load everything else (including Home, which pulls in framer-motion)
+const Home = lazy(() => import('./views/Home'));
 const About = lazy(() => import('./views/About'));
 const Admissions = lazy(() => import('./views/Admissions'));
 const Gallery = lazy(() => import('./views/Gallery'));
@@ -20,6 +21,8 @@ const NotFound = lazy(() => import('./views/NotFound'));
 const AcceptInvite = lazy(() => import('./views/AcceptInvite'));
 const TourBooking = lazy(() => import('./views/TourBooking'));
 const ApplicationStatus = lazy(() => import('./views/ApplicationStatus'));
+const ForgotPassword = lazy(() => import('./views/ForgotPassword'));
+const ResetPassword = lazy(() => import('./views/ResetPassword'));
 
 // Lazy-loaded portal chunks
 const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
@@ -53,6 +56,7 @@ const AdminTerms = lazy(() => import('./views/admin/Terms'));
 const AdminProfile = lazy(() => import('./views/admin/Profile'));
 const AdminLatePickup = lazy(() => import('./views/admin/LatePickup'));
 const AdminMore = lazy(() => import('./views/admin/More'));
+const AdminGallery = lazy(() => import('./views/admin/Gallery'));
 
 // Teacher portal chunk
 const TeacherDashboard = lazy(() => import('./views/teacher/Dashboard'));
@@ -90,7 +94,6 @@ const PortalLoader = () => (
 const AnimatedRoutes = () => {
   const location = useLocation();
   return (
-    <AnimatePresence mode="wait">
       <Suspense fallback={<PortalLoader />}>
         <Routes location={location} key={location.pathname}>
           {/* ---- Public / marketing ---- */}
@@ -105,6 +108,8 @@ const AnimatedRoutes = () => {
           <Route path="/application-status" element={<ApplicationStatus />} />
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/parent-login" element={<ParentLogin />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/accept-invite" element={<AcceptInvite />} />
 
           {/* ---- Admin console ---- */}
@@ -133,6 +138,7 @@ const AnimatedRoutes = () => {
             <Route path="terms"       element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminTerms /></PageTransition></RequireRole>} />
             <Route path="sms"         element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminSms /></PageTransition></RequireRole>} />
             <Route path="more"        element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminMore /></PageTransition></RequireRole>} />
+          <Route path="gallery-mgmt" element={<RequireRole roles={ADMIN_ROLES}><PageTransition><AdminGallery /></PageTransition></RequireRole>} />
             <Route path="report-cards/:studentId" element={<PageTransition><ReportCardView /></PageTransition>} />
           </Route>
 
@@ -167,7 +173,6 @@ const AnimatedRoutes = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
-    </AnimatePresence>
   );
 };
 
