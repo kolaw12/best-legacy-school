@@ -52,7 +52,7 @@ const Footer = () => {
                             <li><Link to="/admissions" className="hover:text-primary transition-colors">Apply</Link></li>
                             <li><Link to="/book-tour" className="hover:text-primary transition-colors">Book a tour</Link></li>
                             <li><Link to="/application-status" className="hover:text-primary transition-colors">Track application</Link></li>
-                            <li><Link to="/admin-login" className="hover:text-primary transition-colors">Portal</Link></li>
+                            <li><Link to="/parent-login" className="hover:text-primary transition-colors">Portal</Link></li>
                         </ul>
                     </div>
 
