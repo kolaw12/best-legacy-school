@@ -47,10 +47,17 @@ if not SECRET_KEY:
             'DJANGO_SECRET_KEY environment variable must be set when DEBUG=False.'
         )
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+_allowed = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
+for _h in ['blds.com.ng', 'www.blds.com.ng', '.onrender.com']:
+    if _h not in _allowed:
+        _allowed.append(_h)
+ALLOWED_HOSTS = _allowed
 
 # CSRF Trusted Origins for production
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://*.vercel.app,https://*.onrender.com').split(',')
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://*.vercel.app,https://*.onrender.com').split(',') if o.strip()]
+for _origin in ['https://blds.com.ng', 'https://www.blds.com.ng']:
+    if _origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_origin)
 if DEBUG:
     CSRF_TRUSTED_ORIGINS += ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:8000', 'http://127.0.0.1:8000']
 
@@ -73,13 +80,18 @@ if SENTRY_DSN:
     except ImportError:
         pass
 
-# Permissive by default only in DEBUG. In production, set CORS_ALLOWED_ORIGINS
-# (comma-separated) or FRONTEND_URL on the host — see .env.example.
+# CORS — allow the frontend to call the API
 CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True' if DEBUG else 'False') == 'True'
-_cors_origins = [o for o in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if o]
+_cors_origins = [o.strip() for o in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if o.strip()]
 _frontend_url = os.environ.get('FRONTEND_URL')
 if _frontend_url and _frontend_url not in _cors_origins:
     _cors_origins.append(_frontend_url)
+
+# Always allow the production domain (with and without www)
+for _domain in ['https://blds.com.ng', 'https://www.blds.com.ng']:
+    if _domain not in _cors_origins:
+        _cors_origins.append(_domain)
+
 CORS_ALLOWED_ORIGINS = _cors_origins
 FRONTEND_URL = _frontend_url or 'http://localhost:5173'
 CORS_ALLOW_CREDENTIALS = True
