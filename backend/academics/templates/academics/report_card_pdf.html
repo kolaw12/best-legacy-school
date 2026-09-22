@@ -67,7 +67,7 @@
 </div>
 
 <h1>Report Card</h1>
-<div class="sub">{{ term.name }} Term, {{ term.session }} session.</div>
+<div class="sub">{{ term.name }} Term, {{ term.session }} session · {{ generated_at }}</div>
 
 <table class="info-grid">
     <tr>
@@ -196,6 +196,35 @@
     <div class="lbl">Resumption Date</div>
     <div class="val">{% if resumption_date %}{{ resumption_date|date:"j F Y" }}{% else %}To be announced{% endif %}</div>
 </div>
+
+{% if bill_items %}
+<div style="margin-top: 3mm;">
+    <h3>Next Term Fees</h3>
+    <table class="results">
+        <thead>
+            <tr>
+                <th>S/N</th>
+                <th>Item</th>
+                <th style="width:60pt; text-align:right">Amount (₦)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in bill_items %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ item.name }}</td>
+                <td class="num" style="text-align:right">{% if item.amount > 0 %}{{ item.amount|floatformat:0 }}{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+            <tr style="font-weight:bold; background:#EEF0FF;">
+                <td colspan="2">Total</td>
+                <td class="num" style="text-align:right">{{ total_bill|floatformat:0 }}</td>
+            </tr>
+        </tbody>
+    </table>
+    <div style="font-size:6pt; color:#9CA3AF; margin-top:1mm;">Discount: 5% sibling discount on tuition for parents with 2+ children.</div>
+</div>
+{% endif %}
 
 <div class="signatures">
     <table>

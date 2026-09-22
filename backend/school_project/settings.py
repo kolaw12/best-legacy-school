@@ -119,6 +119,7 @@ INSTALLED_APPS = [
     'wellbeing',
     'operations',
     'backup',
+    'notifications',
 ]
 
 MIDDLEWARE = [

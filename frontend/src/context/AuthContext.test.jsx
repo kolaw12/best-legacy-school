@@ -45,7 +45,8 @@ describe('AuthContext', () => {
         });
         expect(axios.post).toHaveBeenCalledWith(
             expect.stringContaining('/api/auth/login/'),
-            { username: 'admin', password: 'admin123' }
+            { username: 'admin', password: 'admin123' },
+            expect.objectContaining({ timeout: 30000 })
         );
         expect(screen.getByTestId('auth-state')).toHaveTextContent('out');
     });
@@ -63,7 +64,8 @@ describe('AuthContext', () => {
         });
         expect(axios.post).toHaveBeenCalledWith(
             expect.stringContaining('/api/auth/login/'),
-            { username: 'real.user', password: 'hunter2' }
+            { username: 'real.user', password: 'hunter2' },
+            expect.objectContaining({ timeout: 30000 })
         );
         expect(screen.getByTestId('auth-state')).toHaveTextContent('in:teacher');
         expect(localStorage.getItem('bls_auth_token')).toBe('real-token-123');

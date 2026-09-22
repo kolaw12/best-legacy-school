@@ -987,6 +987,14 @@ def report_card_pdf(request, student_id):
     payload["logo_data_uri"] = logo_data_uri()
     payload["letterhead_bg_data_uri"] = letterhead_bg_data_uri()
 
+    # Add bill breakdown for next term
+    from finance.models import BillItem
+    bill_items = BillItem.objects.filter(
+        class_level=student.class_level, is_active=True
+    ).order_by("sn").values("name", "amount")
+    payload["bill_items"] = list(bill_items)
+    payload["total_bill"] = sum(item["amount"] for item in bill_items)
+
     html = render_to_string("academics/report_card_pdf.html", payload)
 
     # xhtml2pdf is pure Python, so it works on Windows without GTK. CSS support
