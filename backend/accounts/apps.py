@@ -16,43 +16,36 @@ class AccountsConfig(AppConfig):
             self._auto_seed()
 
     def _auto_seed(self):
-        """Ensure admin user exists with correct password and profile."""
+        """Create admin user only if it doesn't exist. Never reset password."""
         try:
             from django.contrib.auth.models import User
             from accounts.models import UserProfile, Role
 
-            # Get or create the admin user
-            user, created = User.objects.get_or_create(
+            # Only create if admin user doesn't exist at all
+            if User.objects.filter(username='admin').exists():
+                # User exists — just verify profile, never touch password
+                user = User.objects.get(username='admin')
+                profile, _ = UserProfile.objects.get_or_create(
+                    user=user,
+                    defaults={'role': Role.SCHOOL_ADMIN},
+                )
+                if profile.role != Role.SCHOOL_ADMIN:
+                    profile.role = Role.SCHOOL_ADMIN
+                    profile.save(update_fields=['role'])
+                return
+
+            # First time only — create the admin user
+            user = User.objects.create_user(
                 username='admin',
-                defaults={
-                    'email': 'admin@bestlegacy.sch',
-                    'first_name': 'School',
-                    'last_name': 'Admin',
-                    'is_staff': True,
-                },
+                email='admin@bestlegacy.sch',
+                password='admin123',
+                first_name='School',
+                last_name='Admin',
+                is_staff=True,
             )
-
-            # Always ensure password is correct (idempotent)
-            if not user.check_password('admin123'):
-                user.set_password('admin123')
-                user.save(update_fields=['password'])
-                print('[auto-seed] Reset admin password')
-
-            # Always ensure profile exists with correct role
-            profile, p_created = UserProfile.objects.get_or_create(
-                user=user,
-                defaults={'role': Role.SCHOOL_ADMIN},
-            )
-            if profile.role != Role.SCHOOL_ADMIN:
-                profile.role = Role.SCHOOL_ADMIN
-                profile.save(update_fields=['role'])
-
-            if created:
-                print('[auto-seed] Created admin user: admin / admin123')
-            else:
-                print('[auto-seed] Admin user verified')
+            UserProfile.objects.create(user=user, role=Role.SCHOOL_ADMIN)
+            print('[auto-seed] Created admin user: admin / admin123')
 
         except Exception as e:
-            # Don't crash — DB might not be migrated yet on first boot
             import logging
             logging.getLogger('accounts').warning(f'Auto-seed skipped: {e}')
