@@ -83,6 +83,7 @@ const ClassesPage = () => {
             <ClassForm
                 open={showForm}
                 editing={editing}
+                existingRows={rows}
                 onClose={handleFormClose}
                 onSaved={() => { load(); handleFormClose(); }}
             />
@@ -172,13 +173,18 @@ const SectionTable = ({ title, sectionKey, rows, loading, onEdit, onDelete }) =>
     );
 };
 
-const ClassForm = ({ open, editing, onClose, onSaved }) => {
+const ClassForm = ({ open, editing, existingRows = [], onClose, onSaved }) => {
     const isEdit = !!editing;
     const [name, setName] = useState('');
     const [section, setSection] = useState('basic');
     const [order, setOrder] = useState('');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
+
+    // Auto-suggest next available order
+    const nextOrder = existingRows.length > 0
+        ? Math.max(...existingRows.map(r => r.order || 0)) + 1
+        : 1;
 
     useEffect(() => {
         if (editing) {
@@ -188,10 +194,10 @@ const ClassForm = ({ open, editing, onClose, onSaved }) => {
         } else {
             setName('');
             setSection('basic');
-            setOrder('');
+            setOrder(String(nextOrder));
         }
         setError(null);
-    }, [editing, open]);
+    }, [editing, open, nextOrder]);
 
     const submit = async (e) => {
         e.preventDefault();
@@ -245,7 +251,7 @@ const ClassForm = ({ open, editing, onClose, onSaved }) => {
                 <Field label="Class name" required>
                     <Input
                         value={name}
-                        onChange={e => setName(e.target.value)}
+                        onChange={e => setName(e.target.value.replace(/\b\w/g, c => c.toUpperCase()))}
                         required
                         placeholder="e.g. KG 1, Nursery 2, Primary 3"
                     />
