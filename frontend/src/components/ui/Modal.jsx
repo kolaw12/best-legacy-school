@@ -32,7 +32,7 @@ const Modal = ({ open, onClose, title, subtitle, children, footer, size = 'md' }
                         <X className="w-5 h-5" strokeWidth={2} />
                     </button>
                 </header>
-                <div className="flex-1 overflow-y-auto px-6 py-6" data-lenis-prevent>{children}</div>
+                <div className="flex-1 h-0 min-h-0 overflow-y-auto px-6 py-6" data-lenis-prevent>{children}</div>
                 {footer && <footer className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-3">{footer}</footer>}
             </div>
         </div>
