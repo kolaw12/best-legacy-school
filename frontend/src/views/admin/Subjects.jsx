@@ -47,6 +47,7 @@ const SubjectsPage = () => {
         if (failed.length) alert(`Some subjects couldn't be moved to the trash:\n\n${failed.join('\n')}`);
     };
 
+    const kg = rows.filter(r => r.section === 'kg');
     const nursery = rows.filter(r => r.section === 'nursery');
     const basic = rows.filter(r => r.section === 'basic');
 
@@ -54,7 +55,7 @@ const SubjectsPage = () => {
         <>
             <AdminPageHeader
                 title="Subjects"
-                subtitle="Nursery focuses on developmental skills. Basic follows the Nigerian primary curriculum."
+                subtitle="KG focuses on early learning. Nursery builds developmental skills. Primary follows the Nigerian curriculum."
                 actions={[
                     <BulkActionBar
                         key="bulk"
@@ -69,11 +70,14 @@ const SubjectsPage = () => {
                 ]}
             />
 
-            <div className="grid lg:grid-cols-2 gap-6">
+            <div className="grid lg:grid-cols-3 gap-6">
+                <Panel title="Kindergarten subjects" rows={kg} loading={loading} tone="warm"
+                       hint="Early learning, play-based, graded E / VG / G / F / NI."
+                       selection={selection} onDelete={(row) => setConfirm({ rows: [row] })} />
                 <Panel title="Nursery subjects" rows={nursery} loading={loading} tone="warm"
                        hint="Teacher-led, play-based, graded E / VG / G / F / NI."
                        selection={selection} onDelete={(row) => setConfirm({ rows: [row] })} />
-                <Panel title="Basic subjects" rows={basic} loading={loading} tone="mint"
+                <Panel title="Primary subjects" rows={basic} loading={loading} tone="mint"
                        hint="CA1 + CA2 + Exam out of 100. Graded A–F."
                        selection={selection} onDelete={(row) => setConfirm({ rows: [row] })} />
             </div>
@@ -150,8 +154,9 @@ const SubjectForm = ({ open, onClose, onCreated }) => {
                 </Field>
                 <Field label="Section" required>
                     <Select value={section} onChange={e => setSection(e.target.value)}>
+                        <option value="kg">Kindergarten</option>
                         <option value="nursery">Nursery</option>
-                        <option value="basic">Basic</option>
+                        <option value="basic">Primary</option>
                     </Select>
                 </Field>
                 <Field label="Short code" hint="Optional — e.g. MTH, ENG, PHY">

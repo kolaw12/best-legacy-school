@@ -146,7 +146,7 @@ const AdminFinance = () => {
                     rows={fees}
                     empty="No fee schedules. Run `python manage.py seed_fees` or add in Django admin."
                     columns={[
-                        { key: 'class_name', label: 'Class', render: r => <Badge tone={r.section === 'nursery' ? 'warm' : 'mint'}>{r.class_name}</Badge> },
+                        { key: 'class_name', label: 'Class', render: r => <Badge tone={(r.section === 'nursery' || r.section === 'kg') ? 'warm' : 'mint'}>{r.class_name}</Badge> },
                         { key: 'name', label: 'Fee name' },
                         { key: 'term_label', label: 'Term' },
                         { key: 'amount', label: 'Amount', className: 'text-right tabular-nums', render: r => naira(r.amount) },

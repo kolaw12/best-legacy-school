@@ -5,7 +5,7 @@ from finance.models import BillItem, BookItem
 
 
 # Bill items per class level — amounts extracted from paper bills
-# KG bill total: ₦82,000 | Primary 1-5 bill total: ₦88,000 | Primary 6 bill total: ₦90,000
+# KG bill total: ₦82,000 | Primary 1-5 bill total: ₦88,000
 BILL_ITEMS = {
     "KG": [
         ("School Fee",            33000),
@@ -29,18 +29,6 @@ BILL_ITEMS = {
         ("Thursday Wear",          7000),
         ("Funday Wear",            5000),
         ("Lesson",                 4000),
-        ("Xmas Party",             2000),
-    ],
-    "PRIMARY_6": [
-        ("School Fee",            39000),
-        ("Stationeries/Note-book", 0),
-        ("Development Fee",        1000),
-        ("Uniform (2 Types)",     20000),
-        ("Sport Wear",             7000),
-        ("Examination Levy",       3000),
-        ("Thursday Wear",          7000),
-        ("Funday Wear",            5000),
-        ("Lesson",                 6000),
         ("Xmas Party",             2000),
     ],
 }
@@ -82,9 +70,7 @@ class Command(BaseCommand):
         for name, cl in classes.items():
             if "KG" in name or "NURSERY" in name:
                 bill_map[cl] = BILL_ITEMS["KG"]
-            elif name == "BASIC 6":
-                bill_map[cl] = BILL_ITEMS["PRIMARY_6"]
-            elif "BASIC" in name:
+            elif "PRIMARY" in name:
                 bill_map[cl] = BILL_ITEMS["PRIMARY_LOW"]
 
         created_bi = 0

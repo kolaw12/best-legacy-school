@@ -245,7 +245,7 @@ const TeacherForm = ({ open, onClose, initial, onSaved }) => {
 
                 <Field label="Subjects taught" className="md:col-span-2">
                     <CheckboxGrid
-                        options={allSubjects.map(s => ({ id: s.id, label: `${s.name} (${s.section === 'nursery' ? 'Nursery' : 'Basic'})` }))}
+                        options={allSubjects.map(s => ({ id: s.id, label: `${s.name} (${s.section === 'kg' ? 'KG' : s.section === 'nursery' ? 'Nursery' : 'Primary'})` }))}
                         selected={form.subjects}
                         onToggle={id => toggleInList('subjects', id)}
                     />

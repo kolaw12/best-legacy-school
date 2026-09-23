@@ -268,7 +268,7 @@ def calendar_for_month(request):
         is_published=True, start_date__gte=first, start_date__lte=last,
     )
     if _role(request) == Role.PARENT:
-        in_range = in_range.filter(audience__in=["all", "parents", "nursery", "basic"])
+        in_range = in_range.filter(audience__in=["all", "parents", "kg", "nursery", "basic"])
 
     events = in_range.distinct().order_by("start_date", "starts_at")
     return Response({

@@ -115,7 +115,7 @@ const ParentDashboard = () => {
                                         <div className="font-bold text-ink text-lg truncate">{c.full_name}</div>
                                         <div className="text-xs text-gray-500 font-mono">{c.admission_no}</div>
                                     </div>
-                                    <Badge tone={c.class_section === 'nursery' ? 'warm' : 'mint'}>{c.class_name}</Badge>
+                                    <Badge tone={(c.class_section === 'nursery' || c.class_section === 'kg') ? 'warm' : 'mint'}>{c.class_name}</Badge>
                                 </div>
 
                                 <div className="mt-5 grid grid-cols-2 gap-3 text-center">

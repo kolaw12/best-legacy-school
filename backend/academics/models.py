@@ -1,7 +1,7 @@
 """
 Academic domain models for Best Legacy Divine School.
 
-Only Nursery 1, Nursery 2, Basic 1..Basic 6 are recognised.
+Recognised levels: KG 1, KG 2, Nursery 1, Nursery 2, Primary 1..Primary 5.
 Do NOT introduce secondary-school levels.
 """
 from django.db import models
@@ -14,22 +14,25 @@ from core.soft_delete import SoftDeleteModel
 # ---------------------------------------------------------------------------
 # Canonical class levels (seed-only; use DB-backed ClassLevel for FKs)
 # ---------------------------------------------------------------------------
+SECTION_KG = "kg"
 SECTION_NURSERY = "nursery"
-SECTION_BASIC = "basic"
+SECTION_BASIC = "basic"  # internally stored as "basic"; displayed as "Primary"
 SECTION_CHOICES = [
+    (SECTION_KG, "Kindergarten"),
     (SECTION_NURSERY, "Nursery"),
-    (SECTION_BASIC, "Basic"),
+    (SECTION_BASIC, "Primary"),
 ]
 
 CANONICAL_LEVELS = [
-    ("Nursery 1", SECTION_NURSERY, 1),
-    ("Nursery 2", SECTION_NURSERY, 2),
-    ("Basic 1", SECTION_BASIC, 3),
-    ("Basic 2", SECTION_BASIC, 4),
-    ("Basic 3", SECTION_BASIC, 5),
-    ("Basic 4", SECTION_BASIC, 6),
-    ("Basic 5", SECTION_BASIC, 7),
-    ("Basic 6", SECTION_BASIC, 8),
+    ("KG 1", SECTION_KG, 1),
+    ("KG 2", SECTION_KG, 2),
+    ("Nursery 1", SECTION_NURSERY, 3),
+    ("Nursery 2", SECTION_NURSERY, 4),
+    ("Primary 1", SECTION_BASIC, 5),
+    ("Primary 2", SECTION_BASIC, 6),
+    ("Primary 3", SECTION_BASIC, 7),
+    ("Primary 4", SECTION_BASIC, 8),
+    ("Primary 5", SECTION_BASIC, 9),
 ]
 ALLOWED_LEVEL_NAMES = [n for n, _, _ in CANONICAL_LEVELS]
 
@@ -84,10 +87,10 @@ class Term(models.Model):
 # Academic structure
 # ---------------------------------------------------------------------------
 class ClassLevel(SoftDeleteModel):
-    """One of the 8 allowed class levels. Seeded once; never add JSS/SSS."""
+    """A class level — KG 1 through Primary 5."""
     name = models.CharField(max_length=20, unique=True)
     section = models.CharField(max_length=10, choices=SECTION_CHOICES)
-    order = models.PositiveSmallIntegerField(unique=True, help_text="1..8 for display order")
+    order = models.PositiveSmallIntegerField(unique=True, help_text="Display order")
 
     class Meta:
         ordering = ["order"]
@@ -96,16 +99,13 @@ class ClassLevel(SoftDeleteModel):
     def __str__(self):
         return self.name
 
-    def clean(self):
-        if self.name not in ALLOWED_LEVEL_NAMES:
-            raise ValidationError(
-                f"'{self.name}' is not a recognised class level. "
-                f"Allowed: {', '.join(ALLOWED_LEVEL_NAMES)}"
-            )
-
     @property
     def is_nursery(self):
         return self.section == SECTION_NURSERY
+
+    @property
+    def is_kg(self):
+        return self.section == SECTION_KG
 
 
 class Subject(SoftDeleteModel):

@@ -112,7 +112,7 @@ const BulkImport = () => {
                         ))}
                     </ul>
                     <p className="mt-5 text-xs text-gray-600 leading-relaxed">
-                        <strong>class_level</strong> must match exactly: <span className="font-mono">Nursery 1</span>, <span className="font-mono">Nursery 2</span>, <span className="font-mono">Basic 1</span> … <span className="font-mono">Basic 6</span>.
+                        <strong>class_level</strong> must match exactly: <span className="font-mono">KG 1</span>, <span className="font-mono">KG 2</span>, <span className="font-mono">Nursery 1</span>, <span className="font-mono">Nursery 2</span>, <span className="font-mono">Primary 1</span> … <span className="font-mono">Primary 5</span>.
                         Date format: <span className="font-mono">YYYY-MM-DD</span>.
                     </p>
                 </aside>

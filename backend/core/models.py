@@ -82,7 +82,7 @@ class TourBooking(models.Model):
     parent_email = models.EmailField(blank=True)
     children_count = models.PositiveIntegerField(default=1)
     interest_class = models.CharField(max_length=50, blank=True,
-                                      help_text='e.g. "Nursery 1", "Basic 3"')
+                                      help_text='e.g. "Nursery 1", "Primary 3"')
     requested_date = models.DateField()
     requested_slot = models.CharField(max_length=20, default="10:00",
                                       help_text='e.g. "10:00" or "14:30"')
@@ -130,7 +130,7 @@ class StudentResult(models.Model):
     grade = models.CharField(max_length=2)
     term = models.CharField(max_length=50, default="First Term")
     session = models.CharField(max_length=20, default="2025/2026")
-    student_class = models.CharField(max_length=50, default="Nursery 1")
+    student_class = models.CharField(max_length=50, default="KG 1")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

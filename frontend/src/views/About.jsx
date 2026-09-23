@@ -36,12 +36,12 @@ const VALUES = [
     { title: 'Child-First Learning', desc: 'Every decision starts with what helps a child grow into a confident, curious learner.', icon: Users },
     { title: 'Character & Faith', desc: 'We pair academic rigour with moral instruction rooted in Christian values and Nigerian culture.', icon: Heart },
     { title: 'Warm Partnership', desc: 'Teachers and parents move in step: progress notes, open days, and honest conversation.', icon: Handshake },
-    { title: 'Play Meets Purpose', desc: 'Play-based activities in Nursery, structured learning in Basic, joyful discovery in both.', icon: Puzzle },
+    { title: 'Play Meets Purpose', desc: 'Play-based activities in KG & Nursery, structured learning in Primary, joyful discovery in both.', icon: Puzzle },
 ];
 
 const MILESTONES = [
     { year: '2009', title: 'Our beginning', desc: 'Started as a small nursery centre in Mowe, Ogun State with 14 children.' },
-    { year: '2014', title: 'Primary section opens', desc: 'Expanded to offer Basic 1–6 with a full Nigerian curriculum.' },
+    { year: '2014', title: 'Primary section opens', desc: 'Expanded to offer Primary 1–5 with a full Nigerian curriculum.' },
     { year: '2019', title: 'ICT & creative studio', desc: 'Built our computer lab and creative arts room to support modern learning.' },
     { year: '2024', title: '500+ legacy builders', desc: 'Over 500 children have passed through our halls, and that number keeps growing.' },
 ];
@@ -140,7 +140,7 @@ const MissionVision = () => (
                         To raise well-rounded Nigerian children: academically strong, morally grounded, and ready for the next stage.
                     </h3>
                     <p className="mt-4 text-gray-600 leading-relaxed">
-                        We nurture every child through play-based Nursery learning, a rigorous Basic curriculum, and teachers who know each student by name.
+                        We nurture every child through play-based Nursery learning, a rigorous Primary curriculum, and teachers who know each student by name.
                     </p>
                 </div>
             </Fade>
@@ -156,7 +156,7 @@ const MissionVision = () => (
                         A primary school known for the quiet, steady confidence of its graduates.
                     </h3>
                     <p className="mt-4 text-gray-600 leading-relaxed">
-                        By Basic 6, our pupils read fluently, think clearly, lead kindly, and carry a strong Christian foundation into secondary school.
+                        By Primary 5, our pupils read fluently, think clearly, lead kindly, and carry a strong Christian foundation into secondary school.
                     </p>
                 </div>
             </Fade>
@@ -256,7 +256,7 @@ const Principal = () => (
                     When a parent hands us their child, they are handing us a trust. We take that seriously. Every teacher here knows every pupil in their class: what they love, what they struggle with, what makes them laugh. That&rsquo;s the Best Legacy way.
                 </p>
                 <p className="mt-4 text-white/70 leading-relaxed">
-                    If you&rsquo;re considering our school, come and visit. Watch a Nursery class sing, sit in on a Basic 5 maths lesson, and talk to our teachers. Then decide.
+                    If you&rsquo;re considering our school, come and visit. Watch a Nursery class sing, sit in on a Primary 5 maths lesson, and talk to our teachers. Then decide.
                 </p>
                 <div className="mt-6">
                     <div className="font-semibold">Mrs Olusola Kolawole</div>

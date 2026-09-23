@@ -5,7 +5,7 @@ import { Mail, Clock, Handshake, Receipt, Check, PartyPopper, ArrowRight } from 
 import Button from '../components/ui/Button';
 import Field, { Input, Select, Textarea, FileInput } from '../components/ui/Field';
 import API_URL from '../config/api';
-import { CLASS_LEVELS, NURSERY_LEVELS } from '../config/school';
+import { CLASS_LEVELS, NURSERY_LEVELS, KG_LEVELS } from '../config/school';
 import ConfettiBurst from '../components/ui/ConfettiBurst';
 import CopyButton from '../components/ui/CopyButton';
 
@@ -63,7 +63,7 @@ const Eyebrow = ({ children, tone = 'light', center = false }) => (
 
 const ADMISSIONS_TICKER = [
     'Applications open for 2026 / 2027',
-    'Nursery 1 → Basic 6',
+    'KG 1 → Primary 5',
     'Reply within 2 working days',
     'One-on-one assessment, not a group test',
     'Sibling discount on the second child',
@@ -80,7 +80,7 @@ const validators = {
         const ageMs = Date.now() - d.getTime();
         const ageYrs = ageMs / (365.25 * 24 * 3600 * 1000);
         if (ageYrs < 2)  return 'Best Legacy admits from age 3. Please double-check the date.';
-        if (ageYrs > 13) return 'We admit up to Basic 6 (age ~11). For older children, please contact us.';
+        if (ageYrs > 13) return 'We admit up to Primary 5 (age ~11). For older children, please contact us.';
         return '';
     },
     class_applying_for: (v) => !v ? 'Pick a class level.' : '',
@@ -101,9 +101,10 @@ const validators = {
 
 // --- fee calculator & currency data ---------------------------------------------
 const FEE_BANDS = [
-    { match: ['Nursery 1', 'Nursery 2'],            amount: 75000,  label: 'Nursery (1 & 2)' },
-    { match: ['Basic 1', 'Basic 2', 'Basic 3'],     amount: 95000,  label: 'Basic 1 – 3' },
-    { match: ['Basic 4', 'Basic 5', 'Basic 6'],     amount: 115000, label: 'Basic 4 – 6' },
+    { match: ['KG 1', 'KG 2'],                       amount: 75000,  label: 'KG (1 & 2)' },
+    { match: ['Nursery 1', 'Nursery 2'],              amount: 75000,  label: 'Nursery (1 & 2)' },
+    { match: ['Primary 1', 'Primary 2', 'Primary 3'], amount: 95000,  label: 'Primary 1 – 3' },
+    { match: ['Primary 4', 'Primary 5'],               amount: 115000, label: 'Primary 4 – 5' },
 ];
 
 const EXCHANGE_RATES = {
@@ -127,14 +128,15 @@ const ageToClass = (dobStr) => {
     const cutoff = new Date(new Date().getFullYear(), 8, 1);
     const ageOnCutoff = (cutoff - dob) / (365.25 * 24 * 3600 * 1000);
     if (ageOnCutoff < 3)   return null;
-    if (ageOnCutoff < 4)   return 'Nursery 1';
-    if (ageOnCutoff < 5)   return 'Nursery 2';
-    if (ageOnCutoff < 6)   return 'Basic 1';
-    if (ageOnCutoff < 7)   return 'Basic 2';
-    if (ageOnCutoff < 8)   return 'Basic 3';
-    if (ageOnCutoff < 9)   return 'Basic 4';
-    if (ageOnCutoff < 10)  return 'Basic 5';
-    if (ageOnCutoff < 12)  return 'Basic 6';
+    if (ageOnCutoff < 4)   return 'KG 1';
+    if (ageOnCutoff < 5)   return 'KG 2';
+    if (ageOnCutoff < 6)   return 'Nursery 1';
+    if (ageOnCutoff < 7)   return 'Nursery 2';
+    if (ageOnCutoff < 8)   return 'Primary 1';
+    if (ageOnCutoff < 9)   return 'Primary 2';
+    if (ageOnCutoff < 10)  return 'Primary 3';
+    if (ageOnCutoff < 11)  return 'Primary 4';
+    if (ageOnCutoff < 12)  return 'Primary 5';
     return null;
 };
 
@@ -286,13 +288,13 @@ const Admissions = () => {
         }
     };
 
-    const selectedIsNursery = NURSERY_LEVELS.includes(formData.class_applying_for);
+    const selectedIsNursery = [...NURSERY_LEVELS, ...KG_LEVELS].includes(formData.class_applying_for);
 
     return (
         <div className="bg-white -mt-16 md:-mt-[4.5rem]">
             <Seo
                 title="Admissions — Apply Now"
-                description="Applications are open for Nursery 1 through Basic 6 at Best Legacy Divine School, Mowe. See fees, the application process, and apply online today."
+                description="Applications are open for KG 1 through Primary 5 at Best Legacy Divine School, Mowe. See fees, the application process, and apply online today."
                 path="/admissions"
             />
             {/* Full-bleed dark hero — deliberately different from the light,
@@ -312,7 +314,7 @@ const Admissions = () => {
                             A warm start for every new <span className="italic text-gold">Legacy learner</span>.
                         </h1>
                         <p className="mt-6 max-w-xl mx-auto text-white/75 text-lg leading-relaxed">
-                            Applications are open for Nursery 1 through Basic 6. Here&rsquo;s how the process works and how to apply.
+                            Applications are open for KG 1 through Primary 5. Here&rsquo;s how the process works and how to apply.
                         </p>
                         <div className="mt-9 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
                             <a
@@ -351,7 +353,7 @@ const Admissions = () => {
                             </h2>
                             <div className="mt-5 space-y-4 text-gray-600 leading-relaxed">
                                 <p>
-                                    Every September we admit about 40 new pupils across Nursery 1 to Basic 6. Before we ever ask for paperwork, we&rsquo;d rather meet your child at a low-pressure 30-minute visit where they play, we listen, and you ask anything.
+                                    Every September we admit about 40 new pupils across KG 1 to Primary 5. Before we ever ask for paperwork, we&rsquo;d rather meet your child at a low-pressure 30-minute visit where they play, we listen, and you ask anything.
                                 </p>
                                 <p>
                                     Fill the form below to begin. We reply by email within <span className="font-semibold text-ink">2 working days</span>; if it&rsquo;s urgent, the head teacher&rsquo;s number is on the contact page and she answers it herself.
@@ -426,7 +428,7 @@ const Admissions = () => {
                         <div className="h-full bg-white rounded-2xl border border-gray-100 shadow-card hover:shadow-card-lg transition-shadow p-8">
                             <Eyebrow>Open for 2026 / 2027</Eyebrow>
                             <h3 className="mt-5 font-serif text-2xl text-ink">Class levels currently admitting</h3>
-                            <p className="mt-2 text-gray-600 text-sm">We admit from Nursery 1 and continue through Basic 6. Class sizes are limited to maintain quality.</p>
+                            <p className="mt-2 text-gray-600 text-sm">We admit from KG 1 and continue through Primary 5. Class sizes are limited to maintain quality.</p>
                             <div className="mt-6 grid grid-cols-2 gap-3">
                                 {CLASS_LEVELS.map((c) => (
                                     <div key={c} className="flex items-center gap-2 text-sm text-ink bg-primary-soft/60 rounded-xl px-4 py-2.5">
@@ -514,7 +516,7 @@ const Admissions = () => {
                                         </motion.div>
                                     ) : formData.date_of_birth ? (
                                         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 text-xs text-secondary-dark">
-                                            That age sits outside our Nursery 1 → Basic 6 range. <a href="/contact" className="font-semibold underline hover:text-primary">Send us a note</a> and we&rsquo;ll discuss.
+                                            That age sits outside our KG 1 → Primary 5 range. <a href="/contact" className="font-semibold underline hover:text-primary">Send us a note</a> and we&rsquo;ll discuss.
                                         </motion.p>
                                     ) : (
                                         <p className="mt-3 text-xs text-gray-500">Sibling discount: 10% off the second child&rsquo;s tuition.</p>
@@ -648,11 +650,14 @@ const Admissions = () => {
                                         >
                                             <Select name="class_applying_for" required value={formData.class_applying_for} onChange={handleChange} onBlur={handleBlur} error={!!(touched.class_applying_for && errors.class_applying_for)}>
                                                 <option value="" disabled>Select a class level</option>
+                                                <optgroup label="Kindergarten">
+                                                    {['KG 1','KG 2'].map(c => <option key={c} value={c}>{c}</option>)}
+                                                </optgroup>
                                                 <optgroup label="Nursery Section">
                                                     {['Nursery 1','Nursery 2'].map(c => <option key={c} value={c}>{c}</option>)}
                                                 </optgroup>
-                                                <optgroup label="Basic Section">
-                                                    {['Basic 1','Basic 2','Basic 3','Basic 4','Basic 5','Basic 6'].map(c => <option key={c} value={c}>{c}</option>)}
+                                                <optgroup label="Primary Section">
+                                                    {['Primary 1','Primary 2','Primary 3','Primary 4','Primary 5'].map(c => <option key={c} value={c}>{c}</option>)}
                                                 </optgroup>
                                             </Select>
                                         </Field>

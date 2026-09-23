@@ -15,7 +15,7 @@ const FAQ_GROUPS = [
         items: [
             {
                 q: 'What ages do you admit?',
-                a: 'Nursery 1 starts at 3 years old; we admit through Basic 6 (typically up to age 11). Children must be 3 by 1 September of the academic year for Nursery 1.',
+                a: 'KG 1 starts at 3 years old; we admit through Primary 5 (typically up to age 11). Children must be 3 by 1 September of the academic year for KG 1.',
             },
             {
                 q: 'When does the school year start?',

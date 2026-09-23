@@ -74,7 +74,7 @@ def unpaid_invoice(db):
     term = Term.objects.create(
         session=academic_session, name="first", start_date=date(2025, 9, 1), end_date=date(2025, 12, 15), is_current=True,
     )
-    class_level = ClassLevel.objects.create(name="Basic 1", section="basic", order=1)
+    class_level = ClassLevel.objects.create(name="Primary 1", section="basic", order=5)
     guardian = Guardian.objects.create(first_name="Grace", last_name="Lovelace", phone="08012345678")
     student = Student.objects.create(
         first_name="Ada", last_name="Lovelace", date_of_birth=date(2018, 5, 1), gender="F",

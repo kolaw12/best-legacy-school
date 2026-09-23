@@ -31,7 +31,7 @@ const AdminGrades = () => {
     }, []);
 
     const selectedClass = classes.find(c => String(c.id) === String(classId));
-    const isNursery = selectedClass?.section === 'nursery';
+    const isNursery = selectedClass?.section === 'nursery' || selectedClass?.section === 'kg';
 
     const getGrade = (avg) => {
         if (avg >= 80) return 'A';

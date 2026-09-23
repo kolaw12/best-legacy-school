@@ -14,9 +14,20 @@ from django.db import transaction
 from academics.models import (
     Session, Term, ClassLevel, Subject,
     Guardian, Teacher, Student, Enrollment,
-    CANONICAL_LEVELS, SECTION_NURSERY, SECTION_BASIC,
+    CANONICAL_LEVELS, SECTION_KG, SECTION_NURSERY, SECTION_BASIC,
 )
 
+
+KG_SUBJECTS = [
+    ("Phonics / Letter Work", "PHO"),
+    ("Number Work", "NUM"),
+    ("Rhymes & Songs", "RYM"),
+    ("Creative Arts", "CRA"),
+    ("Social Habits", "SOC"),
+    ("Physical Development", "PHY"),
+    ("Bible Knowledge", "BIB"),
+    ("Story Time", "STY"),
+]
 
 NURSERY_SUBJECTS = [
     ("English / Literacy", "ENG"),
@@ -104,6 +115,8 @@ class Command(BaseCommand):
 
     # -- subjects ------------------------------------------------------------
     def _seed_subjects(self):
+        for name, code in KG_SUBJECTS:
+            Subject.objects.get_or_create(name=name, section=SECTION_KG, defaults={"code": code})
         for name, code in NURSERY_SUBJECTS:
             Subject.objects.get_or_create(name=name, section=SECTION_NURSERY, defaults={"code": code})
         for name, code in BASIC_SUBJECTS:
@@ -118,14 +131,15 @@ class Command(BaseCommand):
         # Teachers — one class teacher per class level + a floating subject teacher
         class_levels = list(ClassLevel.objects.order_by("order"))
         sample_teachers = [
-            ("Abigail", "Okafor",  "abigail.okafor@bestlegacy.sch",  "Nursery 1", "NCE Early Years"),
-            ("Grace",   "Adeyemi", "grace.adeyemi@bestlegacy.sch",   "Nursery 2", "B.Ed Early Childhood"),
-            ("Samuel",  "Bello",   "samuel.bello@bestlegacy.sch",    "Basic 1",   "B.Ed Primary Ed"),
-            ("Mary",    "Johnson", "mary.johnson@bestlegacy.sch",    "Basic 2",   "B.Ed English"),
-            ("Daniel",  "Eze",     "daniel.eze@bestlegacy.sch",      "Basic 3",   "B.Sc Mathematics, PGDE"),
-            ("Esther",  "Akin",    "esther.akin@bestlegacy.sch",     "Basic 4",   "B.Ed Social Studies"),
-            ("Joshua",  "Ibrahim", "joshua.ibrahim@bestlegacy.sch",  "Basic 5",   "B.Sc ICT, PGDE"),
-            ("Ruth",    "Oladele", "ruth.oladele@bestlegacy.sch",    "Basic 6",   "B.Ed Integrated Science"),
+            ("Abigail", "Okafor",  "abigail.okafor@bestlegacy.sch",  "KG 1",       "NCE Early Years"),
+            ("Grace",   "Adeyemi", "grace.adeyemi@bestlegacy.sch",   "KG 2",       "B.Ed Early Childhood"),
+            ("Samuel",  "Bello",   "samuel.bello@bestlegacy.sch",    "Nursery 1",  "NCE Early Years"),
+            ("Mary",    "Johnson", "mary.johnson@bestlegacy.sch",    "Nursery 2",  "B.Ed Primary Ed"),
+            ("Daniel",  "Eze",     "daniel.eze@bestlegacy.sch",      "Primary 1",  "B.Ed English"),
+            ("Esther",  "Akin",    "esther.akin@bestlegacy.sch",     "Primary 2",  "B.Ed Social Studies"),
+            ("Joshua",  "Ibrahim", "joshua.ibrahim@bestlegacy.sch",  "Primary 3",  "B.Sc ICT, PGDE"),
+            ("Ruth",    "Oladele", "ruth.oladele@bestlegacy.sch",    "Primary 4",  "B.Ed Integrated Science"),
+            ("Ruth",    "Oladele", "ruth.oladele2@bestlegacy.sch",   "Primary 5",  "B.Ed Integrated Science"),
         ]
         for first, last, email, class_name, qual in sample_teachers:
             class_level = next((c for c in class_levels if c.name == class_name), None)
@@ -145,14 +159,15 @@ class Command(BaseCommand):
 
         # Guardians + students
         sample_students = [
-            ("Tomi",    "Adebayo",   "F", date(2021, 4, 12), "Nursery 1", "Kolade", "Adebayo", "mother",   "+2348031112200"),
-            ("David",   "Okoro",     "M", date(2020, 7, 3),  "Nursery 2", "Ifeoma", "Okoro",   "mother",   "+2348031112201"),
-            ("Amara",   "Nwosu",     "F", date(2019, 1, 22), "Basic 1",   "Chinedu","Nwosu",   "father",   "+2348031112202"),
-            ("Samuel",  "Eze",       "M", date(2018, 10, 5), "Basic 2",   "Ngozi",  "Eze",     "mother",   "+2348031112203"),
-            ("Ayomide", "Adeleke",   "M", date(2017, 5, 18), "Basic 3",   "Funke",  "Adeleke", "mother",   "+2348031112204"),
-            ("Zainab",  "Bello",     "F", date(2016, 8, 9),  "Basic 4",   "Musa",   "Bello",   "father",   "+2348031112205"),
-            ("Emmanuel","Ogundele",  "M", date(2015, 3, 27), "Basic 5",   "Biola",  "Ogundele","mother",   "+2348031112206"),
-            ("Precious","Olatunji",  "F", date(2014, 12, 14),"Basic 6",   "Segun",  "Olatunji","father",   "+2348031112207"),
+            ("Tomi",    "Adebayo",   "F", date(2022, 4, 12), "KG 1",       "Kolade", "Adebayo", "mother",   "+2348031112200"),
+            ("David",   "Okoro",     "M", date(2021, 7, 3),  "KG 2",       "Ifeoma", "Okoro",   "mother",   "+2348031112201"),
+            ("Amara",   "Nwosu",     "F", date(2020, 1, 22), "Nursery 1",  "Chinedu","Nwosu",   "father",   "+2348031112202"),
+            ("Samuel",  "Eze",       "M", date(2019, 10, 5), "Nursery 2",  "Ngozi",  "Eze",     "mother",   "+2348031112203"),
+            ("Ayomide", "Adeleke",   "M", date(2018, 5, 18), "Primary 1",  "Funke",  "Adeleke", "mother",   "+2348031112204"),
+            ("Zainab",  "Bello",     "F", date(2017, 8, 9),  "Primary 2",  "Musa",   "Bello",   "father",   "+2348031112205"),
+            ("Emmanuel","Ogundele",  "M", date(2016, 3, 27), "Primary 3",  "Biola",  "Ogundele","mother",   "+2348031112206"),
+            ("Precious","Olatunji",  "F", date(2015, 12, 14),"Primary 4",  "Segun",  "Olatunji","father",   "+2348031112207"),
+            ("Ifeanyi", "Chukwu",    "M", date(2014, 6, 8),  "Primary 5",  "Adaeze","Chukwu",  "mother",   "+2348031112208"),
         ]
         for first, last, gender, dob, class_name, g_first, g_last, rel, phone in sample_students:
             guardian, _ = Guardian.objects.get_or_create(

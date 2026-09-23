@@ -77,7 +77,7 @@ const TeacherDashboard = () => {
             <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
                 <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                        <Badge tone="warm" dot>{classLevel.section === 'nursery' ? 'Nursery Section' : 'Basic Section'}</Badge>
+                        <Badge tone="warm" dot>{classLevel.section === 'kg' ? 'KG Section' : classLevel.section === 'nursery' ? 'Nursery Section' : 'Primary Section'}</Badge>
                         <ClassSwitcher classes={classes} value={classLevel} onChange={setClassLevel} />
                     </div>
                     <h1 className="mt-3 text-2xl md:text-3xl font-black text-ink">Welcome, {teacher?.first_name}.</h1>
@@ -102,7 +102,7 @@ const TeacherDashboard = () => {
                          icon={<CheckSquare className="w-5 h-5" strokeWidth={2} />}/>
                 <KpiCard tone="sage" label="Attendance Rate" value={loading ? '—' : (rate != null ? `${rate}%` : '—')} hint="Today"
                          icon={<TrendingUp className="w-5 h-5" strokeWidth={2} />}/>
-                <KpiCard tone="ink" label={classLevel.section === 'nursery' ? 'Assessment Domains' : 'Subjects'} value={classLevel.section === 'nursery' ? 8 : '14'} hint="curriculum size"
+                <KpiCard tone="ink" label={(classLevel.section === 'nursery' || classLevel.section === 'kg') ? 'Assessment Domains' : 'Subjects'} value={(classLevel.section === 'nursery' || classLevel.section === 'kg') ? 8 : '14'} hint="curriculum size"
                          icon={<BookOpen className="w-5 h-5" strokeWidth={2} />}/>
             </div>
 

@@ -12,14 +12,15 @@ from assignments.models import Assignment
 
 SPECS = [
     # (class_name, subject_name_or_None, title, description)
-    ("Nursery 1", None,                          "Colours worksheet",   "Colour the fruits using the correct colours."),
-    ("Nursery 2", None,                          "Rhymes practice",      "Recite two rhymes at home and ask a parent to note how well."),
-    ("Basic 1",   "English Language",            "Alphabet writing",     "Write the lowercase alphabet three times in a notebook."),
-    ("Basic 2",   "Mathematics",                 "Addition drill",       "Complete 20 addition sums up to 50."),
-    ("Basic 3",   "Social Studies",              "My community essay",   "Write 10 sentences describing your community."),
-    ("Basic 4",   "Basic Science & Technology",  "Plants around us",     "List and sketch 5 plants you see at home or school."),
-    ("Basic 5",   "English Language",            "Reading comprehension","Read Chapter 3 and answer the 8 questions at the end."),
-    ("Basic 6",   "Mathematics",                 "Fractions problem set","Solve problems 1–15 in the exercise book."),
+    ("KG 1",       None,                          "Colours worksheet",   "Colour the fruits using the correct colours."),
+    ("KG 2",       None,                          "Rhymes practice",      "Recite two rhymes at home and ask a parent to note how well."),
+    ("Nursery 1",  None,                          "Letter tracing",       "Trace all 26 letters in your workbook."),
+    ("Nursery 2",  None,                          "Counting objects",     "Count and write numbers 1–20."),
+    ("Primary 1",  "English Language",            "Alphabet writing",     "Write the lowercase alphabet three times in a notebook."),
+    ("Primary 2",  "Mathematics",                 "Addition drill",       "Complete 20 addition sums up to 50."),
+    ("Primary 3",  "Social Studies",              "My community essay",   "Write 10 sentences describing your community."),
+    ("Primary 4",  "Basic Science & Technology",  "Plants around us",     "List and sketch 5 plants you see at home or school."),
+    ("Primary 5",  "English Language",            "Reading comprehension","Read Chapter 3 and answer the 8 questions at the end."),
 ]
 
 

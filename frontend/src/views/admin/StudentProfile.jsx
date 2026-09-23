@@ -120,7 +120,7 @@ const AdminStudentProfile = () => {
                     )}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <Badge tone={student.class_section === 'nursery' ? 'warm' : 'mint'}>{student.class_name}</Badge>
+                            <Badge tone={(student.class_section === 'nursery' || student.class_section === 'kg') ? 'warm' : 'mint'}>{student.class_name}</Badge>
                             <Badge tone={statusTone[student.status] || 'neutral'}>{student.status}</Badge>
                         </div>
                         <h1 className="mt-2 text-2xl md:text-3xl font-black text-primary truncate">{student.full_name}</h1>

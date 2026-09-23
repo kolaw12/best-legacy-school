@@ -92,7 +92,7 @@ const Promotion = () => {
         students.forEach(s => {
             (buckets[s.class_name] = buckets[s.class_name] || []).push(s);
         });
-        const order = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
+        const order = ['KG 1', 'KG 2', 'Nursery 1', 'Nursery 2', 'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5'];
         return order.filter(k => buckets[k]).map(k => ({ name: k, students: buckets[k] }));
     }, [students]);
 

@@ -1,24 +1,37 @@
 // Best Legacy Divine School — canonical academic structure.
-// Only these class levels exist. Do not add secondary levels.
+// KG 1, KG 2, Nursery 1, Nursery 2, Primary 1..Primary 5.
 
+export const KG_LEVELS = ['KG 1', 'KG 2'];
 export const NURSERY_LEVELS = ['Nursery 1', 'Nursery 2'];
-export const BASIC_LEVELS = ['Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
-export const CLASS_LEVELS = [...NURSERY_LEVELS, ...BASIC_LEVELS];
+export const PRIMARY_LEVELS = ['Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5'];
+export const CLASS_LEVELS = [...KG_LEVELS, ...NURSERY_LEVELS, ...PRIMARY_LEVELS];
 
+// Backwards compat aliases
+export const BASIC_LEVELS = PRIMARY_LEVELS;
+
+export const isKg = (level) => KG_LEVELS.includes(level);
 export const isNursery = (level) => NURSERY_LEVELS.includes(level);
-export const isBasic = (level) => BASIC_LEVELS.includes(level);
+export const isBasic = (level) => PRIMARY_LEVELS.includes(level);
+export const isPrimary = (level) => PRIMARY_LEVELS.includes(level);
 
-// Promotion flow map (source → target). Basic 6 is the terminal level.
+// Promotion flow map (source → target). Primary 5 is the terminal level.
 export const PROMOTION_MAP = {
+    'KG 1': 'KG 2',
+    'KG 2': 'Nursery 1',
     'Nursery 1': 'Nursery 2',
-    'Nursery 2': 'Basic 1',
-    'Basic 1': 'Basic 2',
-    'Basic 2': 'Basic 3',
-    'Basic 3': 'Basic 4',
-    'Basic 4': 'Basic 5',
-    'Basic 5': 'Basic 6',
-    'Basic 6': null,
+    'Nursery 2': 'Primary 1',
+    'Primary 1': 'Primary 2',
+    'Primary 2': 'Primary 3',
+    'Primary 3': 'Primary 4',
+    'Primary 4': 'Primary 5',
+    'Primary 5': null,
 };
+
+export const KG_SUBJECTS = [
+    'Phonics / Letter Work', 'Number Work', 'Rhymes & Songs',
+    'Creative Arts', 'Social Habits', 'Physical Development',
+    'Bible Knowledge', 'Story Time',
+];
 
 export const NURSERY_SUBJECTS = [
     'English / Literacy', 'Phonics', 'Numeracy', 'Basic Science',

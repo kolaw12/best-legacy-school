@@ -157,7 +157,7 @@ const FloatingIcon = ({ icon: Icon, className = '', size = 'w-10 h-10', color = 
    Content
    ======================================================================== */
 const TICKER_ITEMS = [
-    'Nursery 1 → Basic 6',
+    'KG 1 → Primary 5',
     'Sixteen years in Mowe',
     'Class teachers who know every child by name',
     'Apply for the 2026 / 2027 session',
@@ -174,10 +174,10 @@ const TRUST_ITEMS = [
 const DAY_STOPS = [
     { time: '7:30am',  title: 'Warm welcome',       body: 'Pupils arrive to a calm song, a hello from their class teacher and a quiet morning activity.' },
     { time: '8:00am',  title: 'Morning assembly',   body: 'A short assembly: hymn, a thought for the day, and a shout-out for one pupil who showed kindness yesterday.' },
-    { time: '9:00am',  title: 'Core lessons',       body: 'Phonics, numeracy and reading happen when little minds are freshest. Lessons run 30 minutes max for nursery, 45 for basic.' },
+    { time: '9:00am',  title: 'Core lessons',       body: 'Phonics, numeracy and reading happen when little minds are freshest. Lessons run 30 minutes max for nursery, 45 for primary.' },
     { time: '10:30am', title: 'Snack & free play',  body: 'A healthy snack provided by the school, then 30 minutes of unstructured outdoor play. No screens. Lots of running.' },
     { time: '11:30am', title: 'Creative block',     body: 'Art, music, drama, or science exploration depending on the day. Children rotate so every week covers all four.' },
-    { time: '1:00pm',  title: 'Lunch together',     body: 'Hot meal in the dining hall. Older basic pupils help nursery friends with their plates, a small thing that teaches a lot.' },
+    { time: '1:00pm',  title: 'Lunch together',     body: 'Hot meal in the dining hall. Older primary pupils help nursery friends with their plates, a small thing that teaches a lot.' },
     { time: '2:30pm',  title: 'Quiet close & home', body: 'Reading time, gentle reflection, then a tidy classroom and a smile at the gate. Parents collect by 3:00pm.' },
 ];
 
@@ -189,9 +189,8 @@ const FEATURES = [
 ];
 
 const TIERS = [
-    { name: 'Nursery (KG 1 & 2)', age: '3–5 years',  price: '₦82,000',  featured: false },
-    { name: 'Basic 1 – 5', age: '6–10 years',  price: '₦88,000',  featured: true },
-    { name: 'Basic 6', age: '10–11 years', price: '₦90,000', featured: false },
+    { name: 'KG & Nursery', age: '3–5 years',  price: '₦75,000',  featured: false },
+    { name: 'Primary 1 – 5', age: '6–10 years',  price: '₦95,000',  featured: true },
 ];
 
 const INCLUDED = [
@@ -206,21 +205,21 @@ const INCLUDED = [
 const PARENT_STORIES = [
     {
         name: 'Mrs Funke Adeleke',
-        child: 'Mother of Ayomide, Basic 3',
+        child: 'Mother of Ayomide, Primary 3',
         photo: '/staff_members.jpg',
         quote: 'In her first term I watched her go from shy at the gate to running ahead of me.',
         body: 'We moved to Mowe in 2024 and visited four schools before we landed here. What sold us was that Mrs Bello, her would-be class teacher, sat on the floor with her at the assessment. Two years on, Ayomide reads above her level and writes little stories in her journal at home.',
     },
     {
         name: 'Mr Musa Bello',
-        child: 'Father of Zainab, Basic 4',
+        child: 'Father of Zainab, Primary 4',
         photo: '/fun_in_the_pool.jpg',
         quote: 'Her teachers email us before there’s ever a problem. That alone is rare.',
         body: 'I work shifts and don’t always make it for pickup. Best Legacy never makes me feel like the absent parent. They send Friday updates, share photos from cultural day on time, and the head teacher actually answers her phone.',
     },
     {
         name: 'Mrs Ngozi Eze',
-        child: 'Mother of Samuel, Basic 2',
+        child: 'Mother of Samuel, Primary 2',
         photo: '/cultural_day.jpg',
         quote: 'We chose them for the values, we stayed for the discipline.',
         body: 'Samuel had been at a much bigger school where he was just a number. Here he has 18 classmates, a class teacher who knows his strengths, and a school that genuinely teaches respect.',
@@ -241,7 +240,7 @@ const Home = () => (
     <div className="-mt-16 md:-mt-[4.5rem] bg-white overflow-x-hidden w-full max-w-[100vw]">
         <Seo
             title="Nursery & Primary School in Mowe, Ogun State"
-            description="A warm, high-standards Nigerian school in Mowe where small classes and dedicated teachers build the foundation your child deserves. Nursery 1 through Basic 6."
+            description="A warm, high-standards Nigerian school in Mowe where small classes and dedicated teachers build the foundation your child deserves. KG 1 through Primary 5."
             path="/"
         />
         <ScrollProgress />
@@ -421,7 +420,7 @@ const IntroSpread = () => (
                         Play, structure and faith combine into a foundation that follows your child <span className="italic text-primary">for life</span>.
                     </h2>
                     <p className="mt-6 text-gray-600 leading-relaxed max-w-xl">
-                        Our nursery section runs on observation and play. From Basic 1 the days get more structured, but the values don&rsquo;t change: every child is known, every parent is heard, every teacher is qualified.
+                        Our nursery section runs on observation and play. From Primary 1 the days get more structured, but the values don&rsquo;t change: every child is known, every parent is heard, every teacher is qualified.
                     </p>
 
                     <div className="mt-10 flex flex-wrap items-center gap-x-10 gap-y-6">
@@ -675,7 +674,7 @@ const PullQuote = () => (
                     <img src="/cultural_day.jpg" alt="" className="w-10 h-10 rounded-full object-cover ring-2 ring-gold/40" loading="lazy" width={40} height={40} />
                     <div className="text-left">
                         <div className="font-semibold text-ink text-sm">Mrs Ngozi Eze</div>
-                        <div className="text-xs text-gray-500">Mother of Samuel, Basic 2</div>
+                        <div className="text-xs text-gray-500">Mother of Samuel, Primary 2</div>
                     </div>
                 </div>
             </Reveal>

@@ -78,8 +78,9 @@ class SchoolEvent(models.Model):
         ("all",     "Everyone"),
         ("staff",   "Staff only"),
         ("parents", "Parents + staff"),
+        ("kg",      "KG section only"),
         ("nursery", "Nursery section only"),
-        ("basic",   "Basic section only"),
+        ("basic",   "Primary section only"),
     ]
     title        = models.CharField(max_length=120)
     description  = models.TextField(blank=True)

@@ -35,9 +35,10 @@ const AdminDashboard = () => {
     }, []);
 
     const kpis = data?.kpis || {};
+    const kgCount = data?.section_breakdown?.kg || 0;
     const nurseryCount = data?.section_breakdown?.nursery || 0;
-    const basicCount = data?.section_breakdown?.basic || 0;
-    const totalActive = nurseryCount + basicCount;
+    const primaryCount = data?.section_breakdown?.basic || 0;
+    const totalActive = kgCount + nurseryCount + primaryCount;
 
     return (
         <>
@@ -63,7 +64,7 @@ const AdminDashboard = () => {
             {/* KPI row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <KpiCard tone="primary" icon={ICONS.students} label="Active Students" value={loading ? '—' : kpis.total_students ?? 0}
-                         hint={`${nurseryCount} Nursery · ${basicCount} Basic`} />
+                         hint={`${kgCount} KG · ${nurseryCount} Nursery · ${primaryCount} Primary`} />
                 <KpiCard tone="sage" icon={ICONS.teachers} label="Teaching Staff" value={loading ? '—' : kpis.total_teachers ?? 0}
                          hint="Active teachers" />
                 <KpiCard tone="warm" icon={ICONS.pending} label="Admissions Pending" value={loading ? '—' : kpis.admission_pending ?? 0}

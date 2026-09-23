@@ -127,7 +127,7 @@ const ReportCardView = () => {
                     </div>
                     <div className="text-right">
                         <Badge tone={is_nursery ? 'warm' : 'mint'}>
-                            {is_nursery ? 'Nursery Report' : 'Basic Report'}
+                            {is_nursery ? 'Nursery Report' : 'Primary Report'}
                         </Badge>
                         <div className="mt-2 text-xs text-gray-500">
                             {term.name} Term · {term.session}
@@ -139,7 +139,7 @@ const ReportCardView = () => {
                 <div className="report-print-head hidden print:block px-8 pt-6">
                     <div className="text-right">
                         <Badge tone={is_nursery ? 'warm' : 'mint'}>
-                            {is_nursery ? 'Nursery Report' : 'Basic Report'}
+                            {is_nursery ? 'Nursery Report' : 'Primary Report'}
                         </Badge>
                     </div>
                 </div>

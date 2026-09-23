@@ -83,7 +83,7 @@ const StudentsPage = () => {
         <>
             <AdminPageHeader
                 title="Students"
-                subtitle={`${rows.length} active learners across Nursery 1 – Basic 6.`}
+                subtitle={`${rows.length} active learners across KG 1 – Primary 5.`}
                 actions={[
                     <Button key="add" size="sm" onClick={() => { setEditing(null); setFormOpen(true); }}>
                         + New Student
@@ -97,8 +97,9 @@ const StudentsPage = () => {
                 </div>
                 <Select value={sectionFilter} onChange={e => setSectionFilter(e.target.value)} className="max-w-xs">
                     <option value="">All sections</option>
+                    <option value="kg">Kindergarten</option>
                     <option value="nursery">Nursery</option>
-                    <option value="basic">Basic</option>
+                    <option value="basic">Primary</option>
                 </Select>
                 <Select value={classFilter} onChange={e => setClassFilter(e.target.value)} className="max-w-xs">
                     <option value="">All classes</option>
@@ -151,7 +152,7 @@ const StudentsPage = () => {
                             </div>
                         ),
                     },
-                    { key: 'class_name', label: 'Class', render: r => <Badge tone={r.class_section === 'nursery' ? 'warm' : 'mint'}>{r.class_name}</Badge> },
+                    { key: 'class_name', label: 'Class', render: r => <Badge tone={(r.class_section === 'nursery' || r.class_section === 'kg') ? 'warm' : 'mint'}>{r.class_name}</Badge> },
                     { key: 'gender', label: 'Gender', render: r => r.gender === 'M' ? 'Boy' : 'Girl' },
                     { key: 'guardian_name', label: 'Guardian', render: r => r.guardian_name || <span className="text-gray-400">—</span> },
                     { key: 'guardian_phone', label: 'Phone', render: r => r.guardian_phone || <span className="text-gray-400">—</span> },

@@ -44,7 +44,7 @@ describe('Finance API', () => {
         it('fetches bill breakdown for a student', async () => {
             axios.get.mockResolvedValueOnce({
                 data: {
-                    student: { id: 1, name: 'Test Student', class: 'Basic 3' },
+                    student: { id: 1, name: 'Test Student', class: 'Primary 3' },
                     bill_items: [
                         { name: 'School Fee', amount: 39000 },
                         { name: 'Uniform', amount: 20000 },

@@ -14,7 +14,7 @@ from academics.models import Student, ClassLevel
 
 # ----- Library -------------------------------------------------------------
 class Book(models.Model):
-    SECTION = [("nursery", "Nursery"), ("basic", "Basic"), ("staff", "Staff")]
+    SECTION = [("kg", "KG"), ("nursery", "Nursery"), ("basic", "Primary"), ("staff", "Staff")]
     title       = models.CharField(max_length=200)
     author      = models.CharField(max_length=200, blank=True)
     isbn        = models.CharField(max_length=20, blank=True)
@@ -241,7 +241,7 @@ class Club(models.Model):
     capacity    = models.PositiveIntegerField(default=20)
     fee_naira   = models.DecimalField(max_digits=10, decimal_places=2, default=0,
                                       help_text="Per term. 0 = free.")
-    section     = models.CharField(max_length=10, blank=True, choices=[("nursery", "Nursery"), ("basic", "Basic")])
+    section     = models.CharField(max_length=10, blank=True, choices=[("kg", "KG"), ("nursery", "Nursery"), ("basic", "Primary")])
     is_active   = models.BooleanField(default=True)
     created_at  = models.DateTimeField(auto_now_add=True)
 

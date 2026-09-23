@@ -85,7 +85,7 @@ const Child = () => {
                         {(child.first_name?.[0] || '') + (child.last_name?.[0] || '')}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <Badge tone={child.class_section === 'nursery' ? 'warm' : 'mint'}>{child.class_name}</Badge>
+                        <Badge tone={(child.class_section === 'nursery' || child.class_section === 'kg') ? 'warm' : 'mint'}>{child.class_name}</Badge>
                         <h1 className="mt-2 text-2xl md:text-3xl font-black text-primary truncate">{child.full_name}</h1>
                         <div className="text-xs text-gray-500 font-mono">{child.admission_no} · {child.gender === 'M' ? 'Boy' : 'Girl'}</div>
                     </div>

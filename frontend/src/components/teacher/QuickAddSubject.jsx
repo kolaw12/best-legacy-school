@@ -62,7 +62,7 @@ const QuickAddSubject = ({ section, onAdded }) => {
                 open={open}
                 onClose={close}
                 title="Add a new subject"
-                subtitle={`Added to the shared ${section === 'nursery' ? 'Nursery' : 'Basic'} subject list — every teacher will see it in their dropdown.`}
+                subtitle={`Added to the shared ${section === 'kg' ? 'KG' : section === 'nursery' ? 'Nursery' : 'Primary'} subject list — every teacher will see it in their dropdown.`}
                 size="sm"
                 footer={[
                     <Button key="cancel" variant="outline" size="sm" onClick={close} type="button">Cancel</Button>,

@@ -7,7 +7,7 @@ import API_URL from '../config/api';
 import Seo from '../components/Seo';
 
 const SLOTS = ['09:00', '10:00', '11:00', '14:00', '15:00'];
-const CLASSES = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
+const CLASSES = ['KG 1', 'KG 2', 'Nursery 1', 'Nursery 2', 'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5'];
 
 const TourBooking = () => {
     const [form, setForm] = useState({

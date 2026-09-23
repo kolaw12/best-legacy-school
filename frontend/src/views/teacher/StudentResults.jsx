@@ -49,7 +49,7 @@ const TeacherStudentResults = () => {
     const [error, setError] = useState(null);
     const [savingAll, setSavingAll] = useState(false);
 
-    const isNursery = student?.class_section === 'nursery';
+    const isNursery = student?.class_section === 'nursery' || student?.class_section === 'kg';
 
     useEffect(() => {
         axios.get(`${API_URL}/api/academics/students/${studentId}/`)
@@ -68,7 +68,7 @@ const TeacherStudentResults = () => {
 
     useEffect(() => {
         if (!student?.class_section) return;
-        if (student.class_section === 'nursery') return;
+        if (student.class_section === 'nursery' || student.class_section === 'kg') return;
         axios.get(`${API_URL}/api/academics/subjects/`, { params: { section: student.class_section } })
             .then(r => setSubjects(r.data || []));
     }, [student?.class_section]);

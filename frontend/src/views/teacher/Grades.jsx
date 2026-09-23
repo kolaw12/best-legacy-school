@@ -44,7 +44,7 @@ const TeacherGrades = () => {
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(null);
 
-    const isNursery = classLevel?.section === 'nursery';
+    const isNursery = classLevel?.section === 'nursery' || classLevel?.section === 'kg';
 
     // Load shared reference data whenever the selected class changes
     useEffect(() => {

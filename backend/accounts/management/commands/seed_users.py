@@ -3,7 +3,7 @@ Seed demo user accounts for Best Legacy Divine School.
 
 Creates three login-ready users so the admin console works out-of-the-box:
     admin    / admin123    (school admin)
-    teacher  / teacher123  (teacher, linked to Basic 3 teacher if present)
+    teacher  / teacher123  (teacher, linked to Primary 3 teacher if present)
     student  / student123  (student, linked to a sample student if present)
 
 Idempotent — existing users are kept but have their role/link refreshed.

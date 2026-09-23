@@ -243,7 +243,7 @@ def promote_students(request):
         }
 
     Behaviour:
-        - "promote"  → moves to next ClassLevel (Basic 6 → graduate)
+        - "promote"  → moves to next ClassLevel (Primary 5 → graduate)
         - "repeat"   → stays in same ClassLevel
         - "graduate" → status = graduated, no enrollment created
         - "withdraw" → status = withdrawn, no enrollment created
@@ -278,7 +278,7 @@ def promote_students(request):
     levels = list(ClassLevel.objects.order_by("order"))
     next_by_id = {}
     for i, lvl in enumerate(levels):
-        next_by_id[lvl.id] = levels[i + 1] if i + 1 < len(levels) else None  # None = past Basic 6
+        next_by_id[lvl.id] = levels[i + 1] if i + 1 < len(levels) else None  # None = past Primary 5
 
     # Only process students that are explicitly in the actions list.
     # If no actions are sent, process nothing (frontend should always send actions).
@@ -300,7 +300,7 @@ def promote_students(request):
                 Enrollment.objects.update_or_create(
                     student=s, session=from_session,
                     defaults={"class_level": s.class_level, "status": "promoted",
-                              "note": note or "Graduated from Basic 6"},
+                              "note": note or "Graduated from Primary 5"},
                 )
                 graduated += 1
             elif action_kind == "withdraw":
@@ -371,7 +371,7 @@ def students_bulk_import(request):
         guardian_email, relationship, address
 
     Date format: YYYY-MM-DD. Gender: M / F. Class level must match the
-    canonical names exactly ("Nursery 1", "Basic 3" etc.).
+    canonical names exactly ("Nursery 1", "Primary 3" etc.).
     """
     role = _role(request)
     if role not in ADMIN_ROLES:
@@ -928,7 +928,7 @@ def _build_report_card_payload(student, term):
             "rate": round((attendance_present / attendance_total) * 100) if attendance_total else None,
         },
         "resumption_date": next_term.start_date if next_term else None,
-        "is_nursery": student.class_level.section == "nursery",
+        "is_nursery": student.class_level.section in ("nursery", "kg"),
     }
     if student.class_level.section == "basic":
         grades = list(
@@ -1080,6 +1080,7 @@ def admin_summary(request):
             "attendance_marked_today": today_total,
         },
         "section_breakdown": {
+            "kg": by_section.get("kg", 0),
             "nursery": by_section.get("nursery", 0),
             "basic": by_section.get("basic", 0),
         },

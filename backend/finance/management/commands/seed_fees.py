@@ -3,9 +3,9 @@ Seed default fee schedules for the current term + generate invoices for all
 active students. Idempotent.
 
 Defaults (NGN, per term):
-    Nursery 1 / 2        NGN 75,000
-    Basic 1 – 3          NGN 95,000
-    Basic 4 – 6          NGN115,000
+    KG 1 / 2, Nursery 1 / 2    NGN 75,000
+    Primary 1 – 3               NGN 95,000
+    Primary 4 – 5               NGN115,000
 
 Run:
     python manage.py seed_fees
@@ -19,9 +19,9 @@ from finance.models import FeeSchedule, Invoice
 
 
 PRICE_BANDS = [
-    (["Nursery 1", "Nursery 2"],            Decimal("75000")),
-    (["Basic 1", "Basic 2", "Basic 3"],     Decimal("95000")),
-    (["Basic 4", "Basic 5", "Basic 6"],     Decimal("115000")),
+    (["KG 1", "KG 2", "Nursery 1", "Nursery 2"],  Decimal("75000")),
+    (["Primary 1", "Primary 2", "Primary 3"],       Decimal("95000")),
+    (["Primary 4", "Primary 5"],                     Decimal("115000")),
 ]
 
 
